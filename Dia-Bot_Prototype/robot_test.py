@@ -1,4 +1,7 @@
+import sys
 import tkinter as tk
+from tkinter import *
+from PIL import ImageTk, Image
 import picamera
 import time
 import math
@@ -7,9 +10,10 @@ import pigpio
 import DCMotor
 import DualHBridge
 
+print("Python version: " + str(sys.version))
 import matplotlib
 matplotlib.use("TkAgg")
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 
 # Script to start camera preview
@@ -25,7 +29,7 @@ pwmPinB = 19
 motorBIn1 = 21
 motorBIn2 = 22
 motorEn = 18
-speed = 50
+speed = IntVar()
 #pwmPin2 = 19
 gpioMode = GPIO.BOARD
 GPIO.setwarnings(False)
@@ -69,16 +73,22 @@ def setSpeed(var):
     speed = var
     
 def forward():
-    print("Moving forward!")
+    print("Moving forward! Speed = " + str(speed.get()))
 
 def backward():
-    print("Moving backward!")
+    print("Moving backward! Speed = " + str(speed.get()))
     
 def turnRight():
     print("Turn right!")
     
 def turnLeft():
     print("Turn left!")
+    
+def stopMovement():
+    print("Emergency stop!")
+    
+def lock():
+    print("Locking suspension")
     
 def ledOn():
     print("Turning on LED")
@@ -113,6 +123,18 @@ def motorTurnTest():
         motors.go(dc)
         time.sleep(0.05)
     print("Motor turn done")
+    
+    
+def soundStatus():
+    print("Sound data status")
+    
+    
+def accelerationStatus():
+    print("Acceleration data status")
+    
+    
+def videoStatus():
+    print("Video status")
 
 
 def stopGpio():
@@ -127,51 +149,99 @@ def stopGpio():
 top.resizable(width=False, height=False)
 top.geometry("1600x900")
 
-buttonFrame = tk.Frame(top, width=400, height=900)
-dataFrame = tk.Frame(top, width=1120, height=270)
-videoFrame = tk.Frame(top, width=1120, height=630)
+controlFrame = tk.Frame(top, width=400, height=900)#, bg='orange')
+dataFrame = tk.Frame(top, width=1120, height=270)#, bg='blue')
+videoFrame = tk.Frame(top, width=1120, height=630)#, bg='red')
 
-buttonFrame.grid(row=1, column=1, sticky="nesw")
+controlFrame.grid(row=1, column=1, sticky="nesw")
 dataFrame.grid(row=1, column=2)
-#videoFrame.grid(row=2, column=2)
+videoFrame.grid(row=2, column=2)
 
 
-# Random data
-data1 = [[0, 1],
-         [1, 3],
-         [2, 7],
-         [3, 2],
-         [4, 4],
-         [5, -2],
-         [6, 3]]
+# ------------------ Controls Pane -----------------------
+# Controls top text
+controlsLabel = tk.Label(controlFrame, text="Controls", font="none 18 bold")
+controlsLabel.grid(row=1, column=1, columnspan=8)
+controlsLabel.config(anchor=CENTER)
+controlFrame.grid_rowconfigure(1, minsize=60)
 
+# Movement controls
+tk.Label(controlFrame, text="Speed", anchor=CENTER, font="bold").grid(row=2, column=2)
+speedScale = tk.Scale(controlFrame, from_=100, to=0, orient=tk.VERTICAL, variable = speed, length=150, showvalue=0, sliderlength=20)
+speedScale.grid(row=3, column=2, rowspan=4)
+speedScale.set(50)
 
-# Controls Pane
+# Directional buttons
+tk.Label(controlFrame, text="Direction", anchor=CENTER, font="bold").grid(row=2, column=4, columnspan=3)
+tk.Button(controlFrame, text="^", command=forward, anchor=CENTER, font="16").grid(row=3, column=5)
+tk.Button(controlFrame, text="v", command=backward, anchor=CENTER, font="16").grid(row=5, column=5)
+tk.Button(controlFrame, text="<", command=turnLeft, anchor=CENTER, font="16").grid(row=4, column=4)
+tk.Button(controlFrame, text=">", command=turnRight, anchor=CENTER, font="16").grid(row=4, column=6)
+
+# Stop and lock buttons
+tk.Label(controlFrame, text="Mode", anchor=CENTER, font="bold").grid(row=2, column=9)
+tk.Button(controlFrame, text="Stop", command=stopMovement, anchor=CENTER, fg="red", font="16").grid(row=3, column=9)
+tk.Button(controlFrame, text="Lock", command=lock, anchor=CENTER, font="16").grid(row=5, column=9)
+
+controlFrame.grid_columnconfigure(1, minsize=10)
+for i in range(2,10):
+    controlFrame.grid_columnconfigure(i, minsize=20)
+    
+# Other
+
+controlFrame.grid_rowconfigure(10, minsize=60)
 text = tk.StringVar()
 text.set("Testing the text box!")
-label = tk.Label(buttonFrame, textvariable=text).grid(row=1, column=1, columnspan=4)
+label = tk.Label(controlFrame, textvariable=text).grid(row=11, column=1, columnspan=5)
 
-tk.Button(buttonFrame, text="LED On", command=ledOn).grid(row=2, column=2)
-tk.Button(buttonFrame, text="LED Off", command=ledOff).grid(row=2, column=3)
+#tk.Button(controlFrame, text="LED On", command=ledOn).grid(row=12, column=2)
+#tk.Button(controlFrame, text="LED Off", command=ledOff).grid(row=12, column=3)
 
-tk.Button(buttonFrame, text="Forward", command=forward).grid(row=3, column=2)
-tk.Button(buttonFrame, text="Backward", command=backward).grid(row=3, column=3)
+#tk.Button(controlFrame, text="Forward", command=forward).grid(row=13, column=2)
+#tk.Button(controlFrame, text="Backward", command=backward).grid(row=13, column=3)
 
-tk.Button(buttonFrame, text="Motor", command=motorTurnTest).grid(row=4, column=2)
-tk.Button(buttonFrame, text="Stop", command=stopGpio).grid(row=4, column=3)
-
-tk.Scale(buttonFrame, from_=99, to=0, orient=tk.VERTICAL, label = "Speed", command=setSpeed, length=280).grid(row=1,column=6, rowspan=3)
-
-# Data Pane
-tk.Button(dataFrame, text="test1", command=print("test1")).grid(row=1, column=1)
-tk.Button(dataFrame, text="test2", command=print("test2")).grid(row=2, column=5, columnspan=8)
-
-# Video Pane
+#tk.Button(controlFrame, text="Motor", command=motorTurnTest).grid(row=14, column=2)
+#tk.Button(controlFrame, text="Stop", command=stopGpio).grid(row=14, column=3)
 
 
-buttonFrame.place(relx=0.01, rely=0.01, anchor=tk.NW)
+
+# ------------------ Data Pane -----------------------
+   # Data pane: Random data and plots
+x1 = [0, 1, 2, 3, 4, 5, 6]
+y1 = [1, 3, 7, 2, 4, -2, 3]
+fig = Figure(figsize=(3,3), dpi=80)
+plot1 = fig.add_subplot(111)
+plot1.plot(x1, y1)
+canvas = FigureCanvasTkAgg(fig, master=dataFrame)
+canvas.draw()
+canvas.get_tk_widget().grid(row=1, column=1, rowspan=3, columnspan=4)
+#toolbar = NavigationToolbar2Tk(canvas, dataFrame)
+#toolbar.update()
+#canvas.get_tk_widget().grid(row=4, column=1, columnspan=4)
+
+#dataFrame.grid_rowconfigure(3, minsize=200)
+dataFrame.grid_columnconfigure(5, minsize=200)
+
+tk.Button(dataFrame, text="Sound", command=soundStatus).grid(row=2, column=6)
+tk.Button(dataFrame, text="Accel", command=accelerationStatus).grid(row=1, column=7)
+tk.Button(dataFrame, text="Accel2", command=accelerationStatus).grid(row=3, column=7)
+
+
+# ------------------ Video Pane -----------------------
+#tk.Button(videoFrame, text="Video", command=videoStatus).grid(row=1, column=1)
+img = ImageTk.PhotoImage(Image.open("vanderlandeTest.png"))
+imgLabel = Label(videoFrame, image=img)
+imgLabel.pack()
+
+
+
+# Place the frames
+controlFrame.place(relx=0.01, rely=0.01, anchor=tk.NW)
 dataFrame.place(relx=0.3, rely=0.01, anchor=tk.NW)
-#videoFrame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+videoFrame.place(x=400, y=270, anchor=tk.NW)
+
+
+
 
 def main():
     #x = threading.Thread(target=update_distance, args=(1,))
