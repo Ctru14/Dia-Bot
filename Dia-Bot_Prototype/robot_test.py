@@ -124,7 +124,27 @@ def motorTurnTest():
         time.sleep(0.05)
     print("Motor turn done")
     
-    
+
+def cameraUp():
+    print("Camera tilt up!")
+
+
+def cameraDown():
+    print("Camera tilt down!")
+
+
+def cameraRight():
+    print("Camera tilt right!")
+
+
+def cameraLeft():
+    print("Camera tilt left!")
+
+
+def takePhoto():
+    print("Taking photo!")
+
+
 def soundStatus():
     print("Sound data status")
     
@@ -149,9 +169,16 @@ def stopGpio():
 top.resizable(width=False, height=False)
 top.geometry("1600x900")
 
+# Primary sections
 controlFrame = tk.Frame(top, width=400, height=900)#, bg='orange')
 dataFrame = tk.Frame(top, width=1120, height=270)#, bg='blue')
 videoFrame = tk.Frame(top, width=1120, height=630)#, bg='red')
+
+# Individual Control Frames
+movementControls = tk.Frame(controlFrame, width=400, height=280)#, bg='blue')
+cameraControls = tk.Frame(controlFrame, width=400, height=280)
+alertControls = tk.Frame(controlFrame, width=400, height=280)
+
 
 controlFrame.grid(row=1, column=1, sticky="nesw")
 dataFrame.grid(row=1, column=2)
@@ -165,43 +192,74 @@ controlsLabel.grid(row=1, column=1, columnspan=8)
 controlsLabel.config(anchor=CENTER)
 controlFrame.grid_rowconfigure(1, minsize=60)
 
-# Movement controls
-tk.Label(controlFrame, text="Speed", anchor=CENTER, font="bold").grid(row=2, column=2)
-speedScale = tk.Scale(controlFrame, from_=100, to=0, orient=tk.VERTICAL, variable = speed, length=150, showvalue=0, sliderlength=20)
+# ----- Movement controls -----
+movementControls.grid(row=2, column=1, rowspan=2, columnspan=10)
+tk.Label(movementControls, text="Movement", anchor=CENTER, font="none 14 bold").grid(row=1, column=1, columnspan=9)
+
+tk.Label(movementControls, text="Speed", anchor=CENTER, font="bold").grid(row=2, column=2)
+speedScale = tk.Scale(movementControls, from_=100, to=0, orient=tk.VERTICAL, variable = speed, length=150, showvalue=0, sliderlength=20)
 speedScale.grid(row=3, column=2, rowspan=4)
 speedScale.set(50)
 
 # Directional buttons
-tk.Label(controlFrame, text="Direction", anchor=CENTER, font="bold").grid(row=2, column=4, columnspan=3)
-tk.Button(controlFrame, text="^", command=forward, anchor=CENTER, font="16").grid(row=3, column=5)
-tk.Button(controlFrame, text="v", command=backward, anchor=CENTER, font="16").grid(row=5, column=5)
-tk.Button(controlFrame, text="<", command=turnLeft, anchor=CENTER, font="16").grid(row=4, column=4)
-tk.Button(controlFrame, text=">", command=turnRight, anchor=CENTER, font="16").grid(row=4, column=6)
+tk.Label(movementControls, text="Direction", anchor=CENTER, font="bold").grid(row=2, column=4, columnspan=3)
+tk.Button(movementControls, text="^", command=forward, anchor=CENTER, font="16").grid(row=3, column=5)
+tk.Button(movementControls, text="v", command=backward, anchor=CENTER, font="16").grid(row=5, column=5)
+tk.Button(movementControls, text="<", command=turnLeft, anchor=CENTER, font="16").grid(row=4, column=4)
+tk.Button(movementControls, text=">", command=turnRight, anchor=CENTER, font="16").grid(row=4, column=6)
 
 # Stop and lock buttons
-tk.Label(controlFrame, text="Mode", anchor=CENTER, font="bold").grid(row=2, column=9)
-tk.Button(controlFrame, text="Stop", command=stopMovement, anchor=CENTER, fg="red", font="16").grid(row=3, column=9)
-tk.Button(controlFrame, text="Lock", command=lock, anchor=CENTER, font="16").grid(row=5, column=9)
+tk.Label(movementControls, text="Mode", anchor=CENTER, font="bold").grid(row=2, column=9)
+tk.Button(movementControls, text="Stop", command=stopMovement, anchor=CENTER, fg="red", font="16").grid(row=3, column=9)
+tk.Button(movementControls, text="Lock", command=lock, anchor=CENTER, font="16").grid(row=5, column=9)
 
-controlFrame.grid_columnconfigure(1, minsize=10)
+movementControls.grid_columnconfigure(1, minsize=10)
 for i in range(2,10):
-    controlFrame.grid_columnconfigure(i, minsize=20)
+    movementControls.grid_columnconfigure(i, minsize=20)
     
-# Other
+# ----- Camera Controls -----
+cameraControls.grid(row=5, column=1, rowspan=1, columnspan=10)
+tk.Label(cameraControls, text="Camera", anchor=CENTER, font="none 14 bold").grid(row=1, column=1, columnspan=9)
+
+# Directional buttons
+tk.Label(cameraControls, text="Angle", anchor=CENTER, font="bold").grid(row=2, column=2, columnspan=3)
+tk.Button(cameraControls, text="^", command=cameraUp, anchor=CENTER, font="16").grid(row=3, column=3)
+tk.Button(cameraControls, text="v", command=cameraDown, anchor=CENTER, font="16").grid(row=5, column=3)
+tk.Button(cameraControls, text="<", command=cameraLeft, anchor=CENTER, font="16").grid(row=4, column=2)
+tk.Button(cameraControls, text=">", command=cameraRight, anchor=CENTER, font="16").grid(row=4, column=4)
+tk.Button(cameraControls, text="Pic", command=takePhoto, anchor=CENTER, font="16").grid(row=4, column=3)
+
+# Stop and lock buttons
+tk.Label(cameraControls, text="Light", anchor=CENTER, font="bold").grid(row=2, column=6)
+tk.Button(cameraControls, text="On", command=ledOn, anchor=CENTER, font="16").grid(row=4, column=6)
+tk.Button(cameraControls, text="Off", command=ledOff, anchor=CENTER, font="16").grid(row=5, column=6)
+
+tk.Label(cameraControls, text="Zoom", anchor=CENTER, font="bold").grid(row=2, column=8)
+speedScale = tk.Scale(cameraControls, from_=100, to=0, orient=tk.VERTICAL, variable = speed, length=150, showvalue=0, sliderlength=20)
+speedScale.grid(row=3, column=8, rowspan=4)
+speedScale.set(50)
+
+cameraControls.grid_columnconfigure(1, minsize=10)
+for i in range(2,10):
+    cameraControls.grid_columnconfigure(i, minsize=20)
+    
+
+    
+# ----- Other -----
 
 controlFrame.grid_rowconfigure(10, minsize=60)
 text = tk.StringVar()
-text.set("Testing the text box!")
+#text.set("Testing the text box!")
 label = tk.Label(controlFrame, textvariable=text).grid(row=11, column=1, columnspan=5)
 
-#tk.Button(controlFrame, text="LED On", command=ledOn).grid(row=12, column=2)
-#tk.Button(controlFrame, text="LED Off", command=ledOff).grid(row=12, column=3)
+#tk.Button(controlFrame, text="LED On", command=ledOn).grid(row=12, column=3, columnspan=2)
+#tk.Button(controlFrame, text="LED Off", command=ledOff).grid(row=12, column=5, columnspan=2)
 
 #tk.Button(controlFrame, text="Forward", command=forward).grid(row=13, column=2)
 #tk.Button(controlFrame, text="Backward", command=backward).grid(row=13, column=3)
 
 #tk.Button(controlFrame, text="Motor", command=motorTurnTest).grid(row=14, column=2)
-#tk.Button(controlFrame, text="Stop", command=stopGpio).grid(row=14, column=3)
+#tk.Button(controlFrame, text="Off", command=stopGpio).grid(row=14, column=3)
 
 
 
