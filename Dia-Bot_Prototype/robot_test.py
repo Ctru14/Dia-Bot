@@ -303,11 +303,11 @@ nextRow = 3
 
 def addAlert(name, thresholdUnits):
     global nextRow
-    print("Adding alert row for " + name)
+    #print("Adding alert row for " + name)
     tk.Label(alertControls, text=name, anchor="w", justify=LEFT, font="none 11").grid(row=nextRow, column=1, columnspan=3)
     tk.Checkbutton(alertControls, text="Enabled", anchor=CENTER, font="none 11").grid(row=nextRow, column=4, columnspan=2)
     tk.Entry(alertControls, justify=CENTER, width=5, font="none 11").grid(row=nextRow, column=6, columnspan=2)
-    tk.Label(alertControls, text=thresholdUnits, anchor=CENTER, font="none 11").grid(row=nextRow, column=8, columnspan=2)
+    tk.Label(alertControls, text=thresholdUnits, anchor="w", justify=LEFT, font="none 11").grid(row=nextRow, column=8, columnspan=2)
     if randint(0,1) == 1:
         tk.Label(alertControls, text="Error", anchor=CENTER, font="none 11 bold", fg="red").grid(row=nextRow, column=10, columnspan=2)
     else:
@@ -317,12 +317,14 @@ def addAlert(name, thresholdUnits):
     
 addAlert("Vibration", "m/s2")
 addAlert("Sound", "dB")
-addAlert("Throughput", "item/s")
+addAlert("Temperature", "F")
 
 
 alertControls.grid_columnconfigure(1, minsize=10)
 for i in range(2,10):
     alertControls.grid_columnconfigure(i, minsize=20)
+for i in range(2, nextRow+1):
+    alertControls.grid_rowconfigure(i, minsize=30)
 
     
 # ----- Other -----
@@ -342,32 +344,58 @@ tk.Button(controlFrame, text="Off", command=stopGpio).grid(row=14, column=3)
 
 
 # ------------------ Data Pane -----------------------
-   # Data pane: Random data and plots
-x1 = [0, 1, 2, 3, 4, 5, 6]
-y1 = [1, 3, 7, 2, 4, -2, 3]
-fig = Figure(figsize=(3,3), dpi=80)
-plot1 = fig.add_subplot(111)
-plot1.plot(x1, y1)
-canvas = FigureCanvasTkAgg(fig, master=dataFrame)
-canvas.draw()
-canvas.get_tk_widget().grid(row=1, column=1, rowspan=3, columnspan=4)
+
+tk.Label(dataFrame, text="Data", font="none 18 bold").grid(row=1, column=1, columnspan=50)
+
+# Individual Frames
+soundLevelFrame = tk.Frame(dataFrame, width=350, height=350)#, bg="red")
+vibrationFrame = tk.Frame(dataFrame, width=350, height=350)#, bg="yellow")
+temperatureFrame = tk.Frame(dataFrame, width=350, height=350)#, bg="orange")
+positionFrame = tk.Frame(dataFrame, width=350, height=350)#, bg="green")
+dataFrames = {soundLevelFrame, vibrationFrame, temperatureFrame, positionFrame}
+
+
+# Sound Level
+tk.Label(soundLevelFrame, text="Sound Level", font="none 12 bold").grid(row=1, column=1, columnspan=5)
+soundLevelFrame.grid(row=2, column=1, padx=10)
+
+
+# Vibration
+tk.Label(vibrationFrame, text="Vibration", font="none 12 bold").grid(row=1, column=1, columnspan=5)
+vibrationFrame.grid(row=2, column=2, padx=10)
+
+
+# Temperature
+tk.Label(temperatureFrame, text="Temperature", font="none 12 bold").grid(row=1, column=1, columnspan=5)
+temperatureFrame.grid(row=2, column=3, padx=10)
+
+
+# Position
+tk.Label(positionFrame, text="Position", font="none 12 bold").grid(row=1, column=1, columnspan=5)
+positionFrame.grid(row=2, column=4, padx=10)
+
+
+# Data pane: Random data and plots
+for frame in dataFrames:
+    x = list(range(10))
+    y = [randint(-5, 8) for i in range(10)]
+    fig = Figure(figsize=(3,2.5), dpi=80)
+    fig.patch.set_facecolor("#DBDBDB")
+    #fig.patch.set_alpha(randint(0,1))
+    plot1 = fig.add_subplot(111)
+    plot1.plot(x, y)
+    canvas = FigureCanvasTkAgg(fig, master=frame)
+    canvas.draw()
+    canvas.get_tk_widget().grid(row=2, column=1, rowspan=3, columnspan=4)
 #toolbar = NavigationToolbar2Tk(canvas, dataFrame)
 #toolbar.update()
 #canvas.get_tk_widget().grid(row=4, column=1, columnspan=4)
-
-#dataFrame.grid_rowconfigure(3, minsize=200)
-dataFrame.grid_columnconfigure(5, minsize=200)
-
-tk.Button(dataFrame, text="Sound", command=soundStatus).grid(row=2, column=6)
-tk.Button(dataFrame, text="Accel", command=accelerationStatus).grid(row=1, column=7)
-tk.Button(dataFrame, text="Accel2", command=accelerationStatus).grid(row=3, column=7)
-
 
 
 # Testing the graph updating
 
 addDataButton = tk.Button(dataFrame, text="Add Data")#, command=forward)
-addDataButton.grid(row=2, column=4, columnspan=2)
+addDataButton.grid(row=3, column=8, columnspan=2)
 
 def addDataPress(event):
     x = max(x1) + 1
@@ -403,7 +431,7 @@ imgLabel.pack()
 # Place the frames
 controlFrame.place(relx=0.01, rely=0.01, anchor=tk.NW)
 dataFrame.place(relx=0.3, rely=0.01, anchor=tk.NW)
-videoFrame.place(x=400, y=270, anchor=tk.NW)
+videoFrame.place(x=400, y=300, anchor=tk.NW)
 
 
 
