@@ -10,8 +10,8 @@ import RPi.GPIO as GPIO
 import pigpio
 import DCMotor
 import DualHBridge
+import DataCollection
 
-print("Python version: " + str(sys.version))
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -317,7 +317,7 @@ def addAlert(name, thresholdUnits):
     
 addAlert("Vibration", "m/s2")
 addAlert("Sound", "dB")
-addAlert("Temperature", "F")
+addAlert("Temperature", "°C")
 
 
 alertControls.grid_columnconfigure(1, minsize=10)
@@ -352,41 +352,50 @@ soundLevelFrame = tk.Frame(dataFrame, width=350, height=350)#, bg="red")
 vibrationFrame = tk.Frame(dataFrame, width=350, height=350)#, bg="yellow")
 temperatureFrame = tk.Frame(dataFrame, width=350, height=350)#, bg="orange")
 positionFrame = tk.Frame(dataFrame, width=350, height=350)#, bg="green")
-dataFrames = {soundLevelFrame, vibrationFrame, temperatureFrame, positionFrame}
+dataFrames = [soundLevelFrame, vibrationFrame, temperatureFrame, positionFrame]
+units = ["dB", "m/s2", "C", "m"]
 
 
 # Sound Level
-tk.Label(soundLevelFrame, text="Sound Level", font="none 12 bold").grid(row=1, column=1, columnspan=5)
+soundLevel = DataCollection.DataCollection("Sound Level", "dB", soundLevelFrame)
+soundLevel.tkAddDataPane()
 soundLevelFrame.grid(row=2, column=1, padx=10)
 
 
 # Vibration
-tk.Label(vibrationFrame, text="Vibration", font="none 12 bold").grid(row=1, column=1, columnspan=5)
+vibration = DataCollection.DataCollection("Vibration", "m/s2", vibrationFrame)
+vibration.tkAddDataPane()
 vibrationFrame.grid(row=2, column=2, padx=10)
 
 
 # Temperature
-tk.Label(temperatureFrame, text="Temperature", font="none 12 bold").grid(row=1, column=1, columnspan=5)
+temperature = DataCollection.DataCollection("Temperature", "°C", temperatureFrame)
+temperature.tkAddDataPane()
 temperatureFrame.grid(row=2, column=3, padx=10)
 
 
 # Position
-tk.Label(positionFrame, text="Position", font="none 12 bold").grid(row=1, column=1, columnspan=5)
+position = DataCollection.DataCollection("Position", "m", positionFrame)
+position.tkAddDataPane()
 positionFrame.grid(row=2, column=4, padx=10)
 
 
 # Data pane: Random data and plots
-for frame in dataFrames:
-    x = list(range(10))
-    y = [randint(-5, 8) for i in range(10)]
-    fig = Figure(figsize=(3,2.5), dpi=80)
-    fig.patch.set_facecolor("#DBDBDB")
-    #fig.patch.set_alpha(randint(0,1))
-    plot1 = fig.add_subplot(111)
-    plot1.plot(x, y)
-    canvas = FigureCanvasTkAgg(fig, master=frame)
-    canvas.draw()
-    canvas.get_tk_widget().grid(row=2, column=1, rowspan=3, columnspan=4)
+#for i in range(1, len(dataFrames)):
+#    unit = units[i]
+#    frame = dataFrames[i]
+#    x = list(range(10))
+#    y = [randint(-5, 8) for i in range(10)]
+#    fig = Figure(figsize=(3,2.5), dpi=80)
+#    fig.patch.set_facecolor("#DBDBDB")
+#    #fig.patch.set_alpha(randint(0,1))
+#    plot1 = fig.add_subplot(111)
+#    plot1.plot(x, y)
+#    plot1.set_xlabel('time')
+#    plot1.set_ylabel('unit')
+#    canvas = FigureCanvasTkAgg(fig, master=frame)
+#    canvas.draw()
+#    canvas.get_tk_widget().grid(row=2, column=1, rowspan=3, columnspan=4)
 #toolbar = NavigationToolbar2Tk(canvas, dataFrame)
 #toolbar.update()
 #canvas.get_tk_widget().grid(row=4, column=1, columnspan=4)
