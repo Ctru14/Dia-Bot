@@ -4,6 +4,7 @@ from tkinter import *
 from PIL import ImageTk, Image
 import picamera
 import time
+import threading
 import math
 from random import *
 import RPi.GPIO as GPIO
@@ -17,9 +18,8 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 
-# Script to start camera preview
-
-#camera = picamera.PiCamera()
+# Initialize necessary variables
+camera = picamera.PiCamera()
 top = tk.Tk()
 top.title('Dia-Bot')
 led = 11
@@ -44,6 +44,7 @@ GPIO.setup(led, GPIO.OUT)
 pi = pigpio.pi()
 #motorA = DCMotor.DCMotor(pwmPinA, motorAIn1, motorAIn2, motorEn, gpioMode)
 motors = DualHBridge.DualHBridge(pwmPinA, motorAIn1, motorAIn2, pwmPinB, motorBIn1, motorBIn2, motorEn, gpioMode)
+programRunning = True
 
 
 # Closes relevant processes
@@ -357,28 +358,46 @@ units = ["dB", "m/s2", "C", "m"]
 
 
 # Sound Level
-soundLevel = DataCollection.DataCollection("Sound Level", "dB", soundLevelFrame)
+def readSoundLevel():
+    num = randint(-10, 10)
+    #print("Reading sound level! - " + str(num))
+    return num
+soundLevel = DataCollection.DataCollection("Sound Level", "dB", soundLevelFrame, readSoundLevel)
 soundLevel.tkAddDataPane()
 soundLevelFrame.grid(row=2, column=1, padx=10)
 
 
 # Vibration
-vibration = DataCollection.DataCollection("Vibration", "m/s2", vibrationFrame)
+def readVibration():
+    num = randint(-10, 10)
+    #print("Reading vibration! - " + str(num))
+    return num
+vibration = DataCollection.DataCollection("Vibration", "m/s2", vibrationFrame, readVibration)
 vibration.tkAddDataPane()
 vibrationFrame.grid(row=2, column=2, padx=10)
 
 
 # Temperature
-temperature = DataCollection.DataCollection("Temperature", "°C", temperatureFrame)
+def readTemperature():
+    num = randint(-10, 10)
+    #print("Reading temperature! - " + str(num))
+    return num
+temperature = DataCollection.DataCollection("Temperature", "°C", temperatureFrame, readTemperature)
 temperature.tkAddDataPane()
 temperatureFrame.grid(row=2, column=3, padx=10)
 
 
 # Position
-position = DataCollection.DataCollection("Position", "m", positionFrame)
+def readPosition():
+    num = randint(-10, 10)
+    #print("Reading position! - " + str(num))
+    return num
+position = DataCollection.DataCollection("Position", "m", positionFrame, readPosition)
 position.tkAddDataPane()
 positionFrame.grid(row=2, column=4, padx=10)
 
+
+dataClassList = [soundLevel, vibration, temperature, position]
 
 # Data pane: Random data and plots
 #for i in range(1, len(dataFrames)):
@@ -404,7 +423,7 @@ positionFrame.grid(row=2, column=4, padx=10)
 # Testing the graph updating
 
 addDataButton = tk.Button(dataFrame, text="Add Data")#, command=forward)
-addDataButton.grid(row=3, column=8, columnspan=2)
+#addDataButton.grid(row=3, column=8, columnspan=2)
 
 def addDataPress(event):
     x = max(x1) + 1
@@ -431,9 +450,17 @@ addDataButton.bind("<ButtonRelease>", addDataRelease)
 
 # ------------------ Video Pane -----------------------
 #tk.Button(videoFrame, text="Video", command=videoStatus).grid(row=1, column=1)
-img = ImageTk.PhotoImage(Image.open("vanderlandeTest.png"))
-imgLabel = Label(videoFrame, image=img)
-imgLabel.pack()
+#testImg = ImageTk.PhotoImage(Image.open("vanderlandeTest.png").resize((1000, 500)))
+#imgLabel = Label(videoFrame, image=testImg)
+#imgLabel.grid(row=1, column=1)
+
+
+def updateFrameImage():
+    fileName = "frame.png"
+    camera.capture(fileName)
+    img = ImageTk.PhotoImage(Image.open(fileName).resize((1000, 500)))
+    imgLabel = Label(videoFrame, image=img)
+    imgLabel.grid(row=1, column=1)
 
 
 
@@ -443,12 +470,45 @@ dataFrame.place(relx=0.3, rely=0.01, anchor=tk.NW)
 videoFrame.place(x=400, y=300, anchor=tk.NW)
 
 
+# Every data class needs it own graph, data set, and sensor function
+def updateData():
+    #global dataClassList
+    for dataClass in dataClassList:
+        dataClass.readData()
+    
+
+tk.Button(videoFrame, text="Update Image", command=updateFrameImage).grid(row=2, column=1)
+
+
+def dataLoop():
+    global programRunning
+    while programRunning:
+        startTime = time.time()
+        updateData()
+        if programRunning:
+            try:
+                top.event_generate("<<graphEvent>>")
+            except:
+                print("Error in event_generate! Unable to update graphs")
+        remainingSleep = 1 - (time.time() - startTime)
+        time.sleep(remainingSleep if remainingSleep > 0 else 0.5)
+
+
+def updateGraphsHandler(args):
+    for dataClass in dataClassList:
+        dataClass.updateGraph()
+
+top.bind("<<graphEvent>>", updateGraphsHandler)
 
 
 def main():
-    #x = threading.Thread(target=update_distance, args=(1,))
-    #x.start()
+    global programRunning
+    dataThread = threading.Thread(target=dataLoop)#, args=(1,))
+    dataThread.start()
     top.mainloop()
+    programRunning = False # Stop extra threads
+
 
 if __name__ == "__main__":
     main()
+

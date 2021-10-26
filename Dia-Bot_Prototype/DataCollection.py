@@ -25,10 +25,11 @@ pi = pigpio.pi()
 
 class DataCollection:
     
-    def __init__(self, name, units, tkTop, readGpioFunction = 0):
+    def __init__(self, name, units, tkTop, readDataFunction):
         self.name = name
         self.units = units
         self.tkTop = tkTop
+        self.readDataFunction = readDataFunction
         self.data = []
         # Create Random Graph
         self.t = list(range(10))
@@ -47,4 +48,24 @@ class DataCollection:
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.tkTop)
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row=2, column=1, rowspan=3, columnspan=4)
+        
+        
+    def readData(self):
+        self.t.append(self.t[-1]+1)
+        self.data.append(self.readDataFunction())
+        
+        
+    def updateGraph(self):
+        startTime = time.time_ns()
+        start = 0
+        end = self.t[-1]
+        if end > 20:
+            start = end-20
+        print("Update graph: indices (" + str(start) + ".." + str(end) + ")")
+        # self.plot1.cla() # Find way to update graphs without it taking too long!!
+        self.plot1.plot(self.t[start:end], self.data[start:end])
+        self.canvas.draw()
+        totalTimeNs = time.time_ns() - startTime
+        print("Update graph: " + str(int(totalTimeNs/1_000_000)) + " ms")
+        
     
