@@ -44,7 +44,13 @@ GPIO.setup(led, GPIO.OUT)
 pi = pigpio.pi()
 #motorA = DCMotor.DCMotor(pwmPinA, motorAIn1, motorAIn2, motorEn, gpioMode)
 motors = DualHBridge.DualHBridge(pwmPinA, motorAIn1, motorAIn2, pwmPinB, motorBIn1, motorBIn2, motorEn, gpioMode)
+
+# Threading control
+uiRefreshRate = 1 # Number of seconds between graph refresh
 programRunning = True
+collectData = False
+uiMutex = threading.Lock()
+startTime = time.time_ns()
 
 
 # Closes relevant processes
@@ -63,6 +69,20 @@ if not pi.connected:
     exit()
     
 
+# Debugging function - run a function and report how long it takes
+def elapsedTime(func, *args):
+    startTime = time.time_ns()
+    #try:
+    #    func(*args)
+    #except:
+    func()
+    elapsedTimeNs = time.time_ns() - startTime
+    print("ElapsedTime (" + str(func.__name__) + ") = " + str(elapsedTimeNs / 1_000_000) + " ms")
+
+def totalElapsedTime():
+    global startTime
+    return f"(total time = {(time.time_ns()-startTime)/1_000_000_000} s)"
+
 # Opens the camera preview on the screen
 #   Note: for VNC users to see the feed, the setting "Enable Direct Capture Mode" must be on
 #def start_camera():
@@ -80,12 +100,36 @@ def moveForwardPress(event):
 
 def moveForwardRelease(event):
     print("Release moving forward")
+    
+def moveForwardRightPress(event):
+    print("Moving forward-right! Press - Speed = " + str(speed.get()))
 
+def moveForwardRightRelease(event):
+    print("Release moving forward-right")
+
+def moveForwardLeftPress(event):
+    print("Moving forward-left! Press - Speed = " + str(speed.get()))
+
+def moveForwardLeftRelease(event):
+    print("Release moving forward-left")
+    
 def moveBackwardPress(event):
     print("Moving backward! Press - Speed = " + str(speed.get()))
 
 def moveBackwardRelease(event):
     print("Release moving backward")
+
+def moveBackwardRightPress(event):
+    print("Moving backward-right! Press - Speed = " + str(speed.get()))
+
+def moveBackwardRightRelease(event):
+    print("Release moving backward-right")
+
+def moveBackwardLeftPress(event):
+    print("Moving backward-left! Press - Speed = " + str(speed.get()))
+
+def moveBackwardLeftRelease(event):
+    print("Release moving backward-left")
 
 def moveLeftPress(event):
     print("Turn left! Press")
@@ -226,18 +270,42 @@ tk.Label(movementControls, text="Direction", anchor=CENTER, font="bold").grid(ro
 moveForwardButton = tk.Button(movementControls, text="^", anchor=CENTER, font="16")
 moveForwardButton.bind("<ButtonPress>", moveForwardPress)
 moveForwardButton.bind("<ButtonRelease>", moveForwardRelease)
+#top.bind("<KeyPress-w>", moveForwardPress)
+#top.bind("<KeyRelease-w>", moveForwardRelease)
 moveForwardButton.grid(row=3, column=5)
+
+moveForwardLeftButton = tk.Button(movementControls, text="FL", anchor=CENTER, font="16")
+moveForwardLeftButton.bind("<ButtonPress>", moveForwardLeftPress)
+moveForwardLeftButton.bind("<ButtonRelease>", moveForwardLeftRelease)
+moveForwardLeftButton.grid(row=3, column=4)
+
+moveForwardRightButton = tk.Button(movementControls, text="FR", anchor=CENTER, font="16")
+moveForwardRightButton.bind("<ButtonPress>", moveForwardRightPress)
+moveForwardRightButton.bind("<ButtonRelease>", moveForwardRightRelease)
+moveForwardRightButton.grid(row=3, column=6)
 
 moveBackwardButton = tk.Button(movementControls, text="v", anchor=CENTER, font="16")
 moveBackwardButton.bind("<ButtonPress>", moveBackwardPress)
 moveBackwardButton.bind("<ButtonRelease>", moveBackwardRelease)
-top.bind("<KeyPress-Down>", moveBackwardPress)
-top.bind("<KeyRelease-Down>", moveBackwardRelease)
+#top.bind("<KeyPress-s>", moveBackwardPress)
+#top.bind("<KeyRelease-s>", moveBackwardRelease)
 moveBackwardButton.grid(row=5, column=5)
+
+moveBackwardLeftButton = tk.Button(movementControls, text="BL", anchor=CENTER, font="16")
+moveBackwardLeftButton.bind("<ButtonPress>", moveBackwardLeftPress)
+moveBackwardLeftButton.bind("<ButtonRelease>", moveBackwardLeftRelease)
+moveBackwardLeftButton.grid(row=5, column=4)
+
+moveBackwardRightButton = tk.Button(movementControls, text="BR", anchor=CENTER, font="16")
+moveBackwardRightButton.bind("<ButtonPress>", moveBackwardRightPress)
+moveBackwardRightButton.bind("<ButtonRelease>", moveBackwardRightRelease)
+moveBackwardRightButton.grid(row=5, column=6)
 
 moveLeftButton = tk.Button(movementControls, text="<", anchor=CENTER, font="16")
 moveLeftButton.bind("<ButtonPress>", moveLeftPress)
 moveLeftButton.bind("<ButtonRelease>", moveLeftRelease)
+#top.bind("<KeyPress-a>", moveLeftPress)
+#top.bind("<KeyRelease-a>", moveLeftRelease)
 moveLeftButton.grid(row=4, column=4)
 
 moveRightButton = tk.Button(movementControls, text=">", anchor=CENTER, font="16")
@@ -343,10 +411,14 @@ label = tk.Label(controlFrame, textvariable=text).grid(row=11, column=1, columns
 tk.Button(controlFrame, text="Off", command=stopGpio).grid(row=14, column=3)
 
 
+def toggleData():
+    global collectData
+    collectData = not collectData
+    print("Setting colletData to " + str(collectData))
 
 # ------------------ Data Pane -----------------------
-
 tk.Label(dataFrame, text="Data", font="none 18 bold").grid(row=1, column=1, columnspan=50)
+tk.Button(dataFrame, text="Toggle Data", command=toggleData).grid(row=1, column=2)
 
 # Individual Frames
 soundLevelFrame = tk.Frame(dataFrame, width=350, height=350)#, bg="red")
@@ -362,7 +434,7 @@ def readSoundLevel():
     num = randint(-10, 10)
     #print("Reading sound level! - " + str(num))
     return num
-soundLevel = DataCollection.DataCollection("Sound Level", "dB", soundLevelFrame, readSoundLevel)
+soundLevel = DataCollection.DataCollection("Sound Level", "dB", soundLevelFrame, readSoundLevel, uiMutex, startTime)
 soundLevel.tkAddDataPane()
 soundLevelFrame.grid(row=2, column=1, padx=10)
 
@@ -372,7 +444,7 @@ def readVibration():
     num = randint(-10, 10)
     #print("Reading vibration! - " + str(num))
     return num
-vibration = DataCollection.DataCollection("Vibration", "m/s2", vibrationFrame, readVibration)
+vibration = DataCollection.DataCollection("Vibration", "m/s2", vibrationFrame, readVibration, uiMutex, startTime)
 vibration.tkAddDataPane()
 vibrationFrame.grid(row=2, column=2, padx=10)
 
@@ -382,7 +454,7 @@ def readTemperature():
     num = randint(-10, 10)
     #print("Reading temperature! - " + str(num))
     return num
-temperature = DataCollection.DataCollection("Temperature", "°C", temperatureFrame, readTemperature)
+temperature = DataCollection.DataCollection("Temperature", "°C", temperatureFrame, readTemperature, uiMutex, startTime)
 temperature.tkAddDataPane()
 temperatureFrame.grid(row=2, column=3, padx=10)
 
@@ -392,32 +464,12 @@ def readPosition():
     num = randint(-10, 10)
     #print("Reading position! - " + str(num))
     return num
-position = DataCollection.DataCollection("Position", "m", positionFrame, readPosition)
+position = DataCollection.DataCollection("Position", "m", positionFrame, readPosition, uiMutex, startTime)
 position.tkAddDataPane()
 positionFrame.grid(row=2, column=4, padx=10)
 
 
 dataClassList = [soundLevel, vibration, temperature, position]
-
-# Data pane: Random data and plots
-#for i in range(1, len(dataFrames)):
-#    unit = units[i]
-#    frame = dataFrames[i]
-#    x = list(range(10))
-#    y = [randint(-5, 8) for i in range(10)]
-#    fig = Figure(figsize=(3,2.5), dpi=80)
-#    fig.patch.set_facecolor("#DBDBDB")
-#    #fig.patch.set_alpha(randint(0,1))
-#    plot1 = fig.add_subplot(111)
-#    plot1.plot(x, y)
-#    plot1.set_xlabel('time')
-#    plot1.set_ylabel('unit')
-#    canvas = FigureCanvasTkAgg(fig, master=frame)
-#    canvas.draw()
-#    canvas.get_tk_widget().grid(row=2, column=1, rowspan=3, columnspan=4)
-#toolbar = NavigationToolbar2Tk(canvas, dataFrame)
-#toolbar.update()
-#canvas.get_tk_widget().grid(row=4, column=1, columnspan=4)
 
 
 # Testing the graph updating
@@ -441,7 +493,7 @@ def addDataRelease(event):
     y1.append(y)
     plot1.plot(x1, y1)
     canvas.draw()
-    print("Adding data! Release - x = " + str(x) + ", y = " + str(y))
+    print(f"Adding data! Release - x = {x}, y = {y}")
     
 addDataButton.bind("<ButtonPress>", addDataPress)
 addDataButton.bind("<ButtonRelease>", addDataRelease)
@@ -450,9 +502,9 @@ addDataButton.bind("<ButtonRelease>", addDataRelease)
 
 # ------------------ Video Pane -----------------------
 #tk.Button(videoFrame, text="Video", command=videoStatus).grid(row=1, column=1)
-#testImg = ImageTk.PhotoImage(Image.open("vanderlandeTest.png").resize((1000, 500)))
-#imgLabel = Label(videoFrame, image=testImg)
-#imgLabel.grid(row=1, column=1)
+testImg = ImageTk.PhotoImage(Image.open("vanderlandeTest.png"))#.resize((1000, 500)))
+imgLabel = Label(videoFrame, image=testImg)
+imgLabel.grid(row=1, column=1)
 
 
 def updateFrameImage():
@@ -469,42 +521,84 @@ controlFrame.place(relx=0.01, rely=0.01, anchor=tk.NW)
 dataFrame.place(relx=0.3, rely=0.01, anchor=tk.NW)
 videoFrame.place(x=400, y=300, anchor=tk.NW)
 
+# ----- Threading functions -----
+
+# Wrapper to other functions which loops 
+def loopAtFrequency(freqHz, loopFunction, *args):
+    global programRunning
+    loopTime = 1/freqHz
+    while programRunning:
+        loopStartTime = time.time()
+        loopFunction(*args)
+        loopEndTime = time.time()
+        loopTimeTaken = loopEndTime - loopStartTime
+        timeRemaining = loopTime - (loopTimeTaken)
+        if timeRemaining > 0:
+            time.sleep(timeRemaining)
+        else:
+            print(f"Thread {loopFunction.__name__} took longer to execute ({loopTimeTaken} s) than its given time({loopTimeTaken} s)! Assigning 1s sleep")
+            time.sleep(1)
+
 
 # Every data class needs it own graph, data set, and sensor function
 def updateData():
-    #global dataClassList
-    for dataClass in dataClassList:
-        dataClass.readData()
-    
-
-tk.Button(videoFrame, text="Update Image", command=updateFrameImage).grid(row=2, column=1)
+    global collectData
+    if collectData:
+        for dataClass in dataClassList:
+            dataClass.readData()
 
 
-def dataLoop():
-    global programRunning
-    while programRunning:
-        startTime = time.time()
-        updateData()
-        if programRunning:
-            try:
-                top.event_generate("<<graphEvent>>")
-            except:
-                print("Error in event_generate! Unable to update graphs")
-        remainingSleep = 1 - (time.time() - startTime)
-        time.sleep(remainingSleep if remainingSleep > 0 else 0.5)
+#tk.Button(videoFrame, text="Update Image", command=updateFrameImage).grid(row=2, column=1)
 
+def updateGraphs():
+    global collectData
+    if collectData:
+        try:
+            top.event_generate("<<graphEvent>>")
+        except:
+            print("Error in event_generate! Unable to update graphs")
 
-def updateGraphsHandler(args):
+def updateGraphsWrapper(event):
+    elapsedTime(updateGraphsHandler)
+
+def updateGraphsHandler():
+    global startTime
+    global loopCount
     for dataClass in dataClassList:
         dataClass.updateGraph()
+    # Threading version
+    #threads = []
+    #for dataClass in dataClassList:
+    #    print(f"Start threads: {dataClass.name} Loop #{loopCount} {totalElapsedTime()}")
+    #    newThread = threading.Thread(target=dataClass.updateGraph, args=(loopCount,))
+    #    newThread.start()
+    #    threads.append(newThread)
+    #print(f"Started threads Loop #{loopCount} {totalElapsedTime()} ")
+    #print("Join threads.. " + str(threads))
+    #for t in threads:
+    #    t.join()
+    #print("Completed joining")    
+        
 
-top.bind("<<graphEvent>>", updateGraphsHandler)
+top.bind("<<graphEvent>>", updateGraphsWrapper)
 
+def printTime(*args):
+    print(totalElapsedTime())
 
 def main():
     global programRunning
-    dataThread = threading.Thread(target=dataLoop)#, args=(1,))
+    global startTime
+    
+    # Create additional threads
+    dataThread = threading.Thread(target=loopAtFrequency, args=(1, updateData))
+    graphThread = threading.Thread(target=loopAtFrequency, args=(1/5, updateGraphs))
+    
+    # Start threads
     dataThread.start()
+    graphThread.start()
+        
+    #totalTimeNs = time.time_ns() - startTime
+    #print("Start thread time: " + str((totalTimeNs/1_000_000)) + " ms")
     top.mainloop()
     programRunning = False # Stop extra threads
 
