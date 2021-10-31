@@ -32,32 +32,26 @@ motorBIn2 = 22
 motorEn = 18
 speed = IntVar()
 zoom = IntVar()
-#pwmPin2 = 19
 gpioMode = GPIO.BOARD
 GPIO.setwarnings(False)
 GPIO.setmode(gpioMode)
 GPIO.setup(led, GPIO.OUT)
-#GPIO.setup(pwmPin, GPIO.OUT)
-#GPIO.output(pwmPin, GPIO.LOW)
-#pwm = GPIO.PWM(pwmPin, 1000) # Frequency=1KHz
-#pwm.start(0)
 pi = pigpio.pi()
-#motorA = DCMotor.DCMotor(pwmPinA, motorAIn1, motorAIn2, motorEn, gpioMode)
 motors = DualHBridge.DualHBridge(pwmPinA, motorAIn1, motorAIn2, pwmPinB, motorBIn1, motorBIn2, motorEn, gpioMode)
 
 # Threading control
-uiRefreshRate = 1 # Number of seconds between graph refresh
+graphRefreshTime = 5 # Number of seconds between graph refresh
 programRunning = True
 collectData = False
 uiMutex = threading.Lock()
 startTime = time.time_ns()
 
 
-# Closes relevant processes
+# Closes relevant processes and stops GPIO
 def exit():
-    top.destroy
     #camera.stop_preview()
     #camera.close()
+    top.destroy
     pwm.stop()
     GPIO.output(pwm, GPIO.LOW)
     GPIO.cleanup()
@@ -79,6 +73,7 @@ def elapsedTime(func, *args):
     elapsedTimeNs = time.time_ns() - startTime
     print("ElapsedTime (" + str(func.__name__) + ") = " + str(elapsedTimeNs / 1_000_000) + " ms")
 
+# Returns a printout of the total time since execution began
 def totalElapsedTime():
     global startTime
     return f"(total time = {(time.time_ns()-startTime)/1_000_000_000} s)"
@@ -90,6 +85,10 @@ def totalElapsedTime():
 #    camera.preview_window=(90,100, 1280, 720)
 #    camera.resolution=(1280,720)
 #    camera.start_preview()
+
+
+
+# -------- Define UI button functions --------
     
 # Callback function for the zoom scroll bar
 def setSpeed(var):
@@ -142,10 +141,7 @@ def moveRightPress(event):
     
 def moveRightRelease(event):
     print("Release moving right")
-    
-
-
-    
+        
 def stopMovement():
     print("Emergency stop!")
     
@@ -242,7 +238,7 @@ movementControls = tk.Frame(controlFrame, width=400, height=280)#, bg='blue')
 cameraControls = tk.Frame(controlFrame, width=400, height=280)
 alertControls = tk.Frame(controlFrame, width=400, height=280)
 
-
+# Arrange frames
 controlFrame.grid(row=1, column=1, sticky="nesw")
 dataFrame.grid(row=1, column=2)
 videoFrame.grid(row=2, column=2)
@@ -363,13 +359,13 @@ for i in range(2,10):
 alertControls.grid(row=7, column=1, rowspan=1, columnspan=10)
 tk.Label(alertControls, text="Alerts", anchor=CENTER, font="none 14 bold").grid(row=1, column=1, columnspan=9)
 
-
 tk.Label(alertControls, text="Active", anchor=CENTER, font="none 11").grid(row=2, column=4, columnspan=2)
 tk.Label(alertControls, text="Threshold", anchor=CENTER, font="none 11").grid(row=2, column=7, columnspan=2)
 tk.Label(alertControls, text="Alerts", anchor=CENTER, font="none 11").grid(row=2, column=10, columnspan=2)
 
 nextRow = 3
 
+# Repeated function to add new alert categories to UI
 def addAlert(name, thresholdUnits):
     global nextRow
     #print("Adding alert row for " + name)
@@ -383,7 +379,7 @@ def addAlert(name, thresholdUnits):
         tk.Label(alertControls, text="None", anchor=CENTER, font="none 11", fg="black").grid(row=nextRow, column=10, columnspan=2)
     nextRow = nextRow + 1
     
-    
+# Call above function to add alerts to UI  
 addAlert("Vibration", "m/s2")
 addAlert("Sound", "dB")
 addAlert("Temperature", "°C")
@@ -398,16 +394,8 @@ for i in range(2, nextRow+1):
     
 # ----- Other -----
 
-controlFrame.grid_rowconfigure(10, minsize=60)
-text = tk.StringVar()
-#text.set("Testing the text box!")
-label = tk.Label(controlFrame, textvariable=text).grid(row=11, column=1, columnspan=5)
-
-#tk.Button(controlFrame, text="LED On", command=ledOn).grid(row=12, column=3, columnspan=2)
-#tk.Button(controlFrame, text="LED Off", command=ledOff).grid(row=12, column=5, columnspan=2)
-
-
-#tk.Button(controlFrame, text="Motor", command=motorTurnTest).grid(row=14, column=2)
+# Testing buttons
+tk.Button(controlFrame, text="Motor", command=motorTurnTest).grid(row=14, column=2)
 tk.Button(controlFrame, text="Off", command=stopGpio).grid(row=14, column=3)
 
 
@@ -469,13 +457,10 @@ position.tkAddDataPane()
 positionFrame.grid(row=2, column=4, padx=10)
 
 
+# Group of all the data classes
 dataClassList = [soundLevel, vibration, temperature, position]
 
 
-# Testing the graph updating
-
-addDataButton = tk.Button(dataFrame, text="Add Data")#, command=forward)
-#addDataButton.grid(row=3, column=8, columnspan=2)
 
 def addDataPress(event):
     x = max(x1) + 1
@@ -591,7 +576,7 @@ def main():
     
     # Create additional threads
     dataThread = threading.Thread(target=loopAtFrequency, args=(1, updateData))
-    graphThread = threading.Thread(target=loopAtFrequency, args=(1/5, updateGraphs))
+    graphThread = threading.Thread(target=loopAtFrequency, args=(1/graphRefreshTime, updateGraphs))
     
     # Start threads
     dataThread.start()
