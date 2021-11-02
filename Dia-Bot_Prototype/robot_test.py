@@ -30,6 +30,10 @@ pwmPinB = 19
 motorBIn1 = 21
 motorBIn2 = 22
 motorEn = 18
+adcMISO = 35
+adcCS0 = 36
+adcMOSI = 38
+adcSCLK = 40
 speed = IntVar()
 zoom = IntVar()
 gpioMode = GPIO.BOARD
@@ -95,7 +99,7 @@ def setSpeed(var):
     speed = var
     
 def moveForwardPress(event):
-    print("Moving forward! Press - Speed = " + str(speed.get()))
+    print(f"Moving forward! Press - Speed = {speed.get()}")
 
 def moveForwardRelease(event):
     print("Release moving forward")
@@ -246,7 +250,7 @@ videoFrame.grid(row=2, column=2)
 
 # ------------------ Controls Pane -----------------------
 # Controls top text
-controlsLabel = tk.Label(controlFrame, text="Controls", font="none 18 bold")
+controlsLabel = tk.Label(controlFrame, text="Controls", font="none 18 bold")#, bg="orange")
 controlsLabel.grid(row=1, column=1, columnspan=8)
 controlsLabel.config(anchor=CENTER)
 controlFrame.grid_rowconfigure(1, minsize=60)
@@ -402,7 +406,7 @@ tk.Button(controlFrame, text="Off", command=stopGpio).grid(row=14, column=3)
 def toggleData():
     global collectData
     collectData = not collectData
-    print("Setting colletData to " + str(collectData))
+    print(f"Setting colletData to {collectData}")
 
 # ------------------ Data Pane -----------------------
 tk.Label(dataFrame, text="Data", font="none 18 bold").grid(row=1, column=1, columnspan=50)
@@ -459,29 +463,6 @@ positionFrame.grid(row=2, column=4, padx=10)
 
 # Group of all the data classes
 dataClassList = [soundLevel, vibration, temperature, position]
-
-
-
-def addDataPress(event):
-    x = max(x1) + 1
-    y = randint(-5, 8)
-    x1.append(x)
-    y1.append(y)
-    plot1.plot(x1, y1)
-    canvas.draw()
-    print("Adding data! Press - x = " + str(x) + ", y = " + str(y))
-    
-def addDataRelease(event):
-    x = max(x1) + 1
-    y = randint(-5, 8)
-    x1.append(x)
-    y1.append(y)
-    plot1.plot(x1, y1)
-    canvas.draw()
-    print(f"Adding data! Release - x = {x}, y = {y}")
-    
-addDataButton.bind("<ButtonPress>", addDataPress)
-addDataButton.bind("<ButtonRelease>", addDataRelease)
 
 
 

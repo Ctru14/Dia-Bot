@@ -75,7 +75,7 @@ class DataCollection:
         # Update canvas on UI
         #self.globalUImutex.acquire()
         self.canvas.draw()
-        print(f"Graph done: {self.name} Loop #{loopCount} (total time = {(time.time_ns()-self.globalStartTime)/1_000_000_000} s)")
+        print(f"Graph done: {self.name} (total time = {(time.time_ns()-self.globalStartTime)/1_000_000_000} s)")
         #self.globalUImutex.release()
         
     
