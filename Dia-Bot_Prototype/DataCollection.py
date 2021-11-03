@@ -6,22 +6,11 @@ import time
 import threading
 import math
 from random import *
-import RPi.GPIO as GPIO
-import pigpio
-import picamera
-import DCMotor
-import DualHBridge
 
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
-
-# GPIO Startup
-gpioMode = GPIO.BOARD
-GPIO.setwarnings(False)
-GPIO.setmode(gpioMode)
-pi = pigpio.pi()
 
 
 class DataCollection:
