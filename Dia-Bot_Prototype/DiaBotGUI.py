@@ -5,13 +5,18 @@ from PIL import ImageTk, Image
 import time
 import threading
 import math
+import enum
 from random import *
-import DataCollection
 
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
+
+# Dia-Bot specific imports
+from DataCollection import *
+from Alerts import *
+
 
 piConnected = True
 try:
@@ -338,30 +343,24 @@ for i in range(2,10):
 alertControls.grid(row=7, column=1, rowspan=1, columnspan=10)
 tk.Label(alertControls, text="Alerts", anchor=CENTER, font="none 14 bold").grid(row=1, column=1, columnspan=9)
 
-tk.Label(alertControls, text="Active", anchor=CENTER, font="none 11").grid(row=2, column=4, columnspan=2)
+
+tk.Label(alertControls, text="Type", anchor=CENTER, font="none 11").grid(row=2, column=4, columnspan=2)
 tk.Label(alertControls, text="Threshold", anchor=CENTER, font="none 11").grid(row=2, column=7, columnspan=2)
 tk.Label(alertControls, text="Alerts", anchor=CENTER, font="none 11").grid(row=2, column=10, columnspan=2)
 
 nextRow = 3
 
-# Repeated function to add new alert categories to UI
-def addAlert(name, thresholdUnits):
-    global nextRow
-    #print("Adding alert row for " + name)
-    tk.Label(alertControls, text=name, anchor="w", justify=LEFT, font="none 11").grid(row=nextRow, column=1, columnspan=3)
-    tk.Checkbutton(alertControls, text="Enabled", anchor=CENTER, font="none 11").grid(row=nextRow, column=4, columnspan=2)
-    tk.Entry(alertControls, justify=CENTER, width=5, font="none 11").grid(row=nextRow, column=6, columnspan=2)
-    tk.Label(alertControls, text=thresholdUnits, anchor="w", justify=LEFT, font="none 11").grid(row=nextRow, column=8, columnspan=2)
-    if randint(0,1) == 1:
-        tk.Label(alertControls, text="Error", anchor=CENTER, font="none 11 bold", fg="red").grid(row=nextRow, column=10, columnspan=2)
-    else:
-        tk.Label(alertControls, text="None", anchor=CENTER, font="none 11", fg="black").grid(row=nextRow, column=10, columnspan=2)
-    nextRow = nextRow + 1
     
-# Call above function to add alerts to UI  
-addAlert("Vibration", "m/s2")
-addAlert("Sound", "dB")
-addAlert("Temperature", "�C")
+# Create each alert instance and add frames to the UI  
+vibrationAlert = Alerts(alertControls, "Vibration", "m/s2", Alerts.AlertType.Above)
+vibrationAlert.getAlertFrame().grid(row=nextRow, column=1, columnspan = 10)
+nextRow = nextRow + 1
+soundAlert = Alerts(alertControls, "Sound", "dB", Alerts.AlertType.Above)
+soundAlert.getAlertFrame().grid(row=nextRow, column=1, columnspan = 10)
+nextRow = nextRow + 1
+temperatureAlert = Alerts(alertControls, "Temperature", "°C", Alerts.AlertType.Between)
+temperatureAlert.getAlertFrame().grid(row=nextRow, column=1, columnspan = 10)
+nextRow = nextRow + 1
 
 
 alertControls.grid_columnconfigure(1, minsize=10)
