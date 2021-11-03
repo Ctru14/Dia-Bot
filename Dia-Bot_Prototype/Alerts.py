@@ -11,7 +11,7 @@ import enum
 import DataCollection
 
 
-class Alerts:
+class Alert:
     # --- Static class variables ---
     class AlertType(enum.Enum):
         Above = 1
@@ -41,7 +41,7 @@ class Alerts:
     def getAlertFrame(self):
         #print(f"Creating and returning alert row for {self.name})
         tk.Checkbutton(self.frame, text=self.name, anchor="w", justify=LEFT, font="none 11").grid(row=1, column=1, columnspan=3)
-        tk.OptionMenu(self.frame, self.alertTypeName, *Alerts.alertTypes, command=self.alertTypeChanged).grid(row=1, column=4, columnspan=2)
+        tk.OptionMenu(self.frame, self.alertTypeName, *Alert.alertTypes, command=self.alertTypeChanged).grid(row=1, column=4, columnspan=2)
         tk.Entry(self.frame, justify=CENTER, width=5, font="none 11").grid(row=1, column=6, columnspan=2)
         tk.Label(self.frame, text=self.thresholdUnits, anchor="w", justify=LEFT, font="none 11").grid(row=1, column=8, columnspan=2)
         if randint(0,1) == 1:

@@ -14,9 +14,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 
 # Dia-Bot specific imports
-from DataCollection import *
-from Alerts import *
-
+import DataCollection
+import Alerts
 
 piConnected = True
 try:
@@ -352,13 +351,13 @@ nextRow = 3
 
     
 # Create each alert instance and add frames to the UI  
-vibrationAlert = Alerts(alertControls, "Vibration", "m/s2", Alerts.AlertType.Above)
+vibrationAlert = Alerts.Alert(alertControls, "Vibration", "m/s2", Alerts.Alert.AlertType.Above)
 vibrationAlert.getAlertFrame().grid(row=nextRow, column=1, columnspan = 10)
 nextRow = nextRow + 1
-soundAlert = Alerts(alertControls, "Sound", "dB", Alerts.AlertType.Above)
+soundAlert = Alerts.Alert(alertControls, "Sound", "dB", Alerts.Alert.AlertType.Above)
 soundAlert.getAlertFrame().grid(row=nextRow, column=1, columnspan = 10)
 nextRow = nextRow + 1
-temperatureAlert = Alerts(alertControls, "Temperature", "°C", Alerts.AlertType.Between)
+temperatureAlert = Alerts.Alert(alertControls, "Temperature", "°C", Alerts.Alert.AlertType.Between)
 temperatureAlert.getAlertFrame().grid(row=nextRow, column=1, columnspan = 10)
 nextRow = nextRow + 1
 
