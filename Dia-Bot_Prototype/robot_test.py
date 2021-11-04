@@ -562,6 +562,12 @@ def main():
     # Start threads
     dataThread.start()
     graphThread.start()
+    
+    #camera = PiInterface.camera
+    camera.preview_fullscreen=False
+    camera.preview_window=(500, 400, 1000, 600)
+    camera.resolution=(1280,720)
+    camera.start_preview()
         
     #totalTimeNs = time.time_ns() - startTime
     #print("Start thread time: " + str((totalTimeNs/1_000_000)) + " ms")

@@ -16,6 +16,7 @@ from matplotlib.figure import Figure
 # Dia-Bot specific imports
 import DataCollection
 import Alerts
+import PiInterface
 
 piConnected = True
 try:
@@ -25,7 +26,7 @@ except:
     print("Error importing PiInterface!")
 
 # Initialize necessary variables
-#camera = picamera.PiCamera()
+camera = PiInterface.camera
 top = tk.Tk()
 top.title('Dia-Bot')
 speed = IntVar()
@@ -63,11 +64,12 @@ def totalElapsedTime():
 
 # Opens the camera preview on the screen
 #   Note: for VNC users to see the feed, the setting "Enable Direct Capture Mode" must be on
-#def start_camera():
-#    camera.preview_fullscreen=False
-#    camera.preview_window=(90,100, 1280, 720)
-#    camera.resolution=(1280,720)
-#    camera.start_preview()
+def start_camera():
+    camera.preview_fullscreen=False
+    camera.preview_window=(640,500, 1080, 720)
+    camera.resolution=(1280,720)
+    camera.rotation = 180
+    camera.start_preview()
 
 
 
@@ -361,6 +363,15 @@ temperatureAlert = Alerts.Alert(alertControls, "Temperature", "°C", Alerts.Aler
 temperatureAlert.getAlertFrame().grid(row=nextRow, column=1, columnspan = 10)
 nextRow = nextRow + 1
 
+alerts = [vibrationAlert, soundAlert, temperatureAlert]
+
+# Press this button to confirm and lock in Alert changes
+def updateAlerts():
+    for alert in alerts:
+        alert.confirmUpdates()
+confirmButton = tk.Button(alertControls, text="Confirm", command=updateAlerts)#, state=DISABLED) #TODO: enable/disable the button for updates
+confirmButton.grid(row=nextRow, column=8, columnspan=2)
+
 
 alertControls.grid_columnconfigure(1, minsize=10)
 for i in range(2,10):
@@ -535,6 +546,8 @@ def main():
     # Start threads
     dataThread.start()
     graphThread.start()
+    
+    #start_camera()
         
     #totalTimeNs = time.time_ns() - startTime
     #print("Start thread time: " + str((totalTimeNs/1_000_000)) + " ms")

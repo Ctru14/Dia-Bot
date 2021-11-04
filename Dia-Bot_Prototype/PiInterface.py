@@ -30,6 +30,7 @@ GPIO.setmode(gpioMode)
 GPIO.setup(led, GPIO.OUT)
 pi = pigpio.pi()
 motors = DualHBridge.DualHBridge(pwmPinA, motorAIn1, motorAIn2, pwmPinB, motorBIn1, motorBIn2, motorEn, gpioMode)
+camera = picamera.PiCamera()
 
 
 # Closes relevant processes and stops GPIO
