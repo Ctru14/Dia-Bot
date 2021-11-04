@@ -38,3 +38,135 @@ def exit():
     GPIO.output(pwm, GPIO.LOW)
     GPIO.cleanup()
     quit()
+
+
+class PiInterface:
+
+    def stopGpio():
+        GPIO.setmode(gpioMode)
+        GPIO.output(motorEn, GPIO.LOW)
+        GPIO.output(pwmPinA, GPIO.LOW)
+        #pwm.stop()
+        GPIO.cleanup()
+
+    def moveForwardPress(event):
+        print(f"Moving forward! Press - Speed = {PiInterface.speed}")
+    
+    def moveForwardRelease(event):
+        print(f"Release moving forward")
+        
+    def moveForwardRightPress(event):
+        print(f"Moving forward-right! Press - Speed = {PiInterface.speed}")
+    
+    def moveForwardRightRelease(event):
+        print(f"Release moving forward-right")
+    
+    def moveForwardLeftPress(event):
+        print(f"Moving forward-left! Press - Speed = {PiInterface.speed}")
+    
+    def moveForwardLeftRelease(event):
+        print(f"Release moving forward-left")
+        
+    def moveBackwardPress(event):
+        print(f"Moving backward! Press - Speed = {PiInterface.speed}")
+    
+    def moveBackwardRelease(event):
+        print(f"Release moving backward")
+    
+    def moveBackwardRightPress(event):
+        print(f"Moving backward-right! Press - Speed = {PiInterface.speed}")
+    
+    def moveBackwardRightRelease(event):
+        print(f"Release moving backward-right")
+    
+    def moveBackwardLeftPress(event):
+        print(f"Moving backward-left! Press - Speed = {PiInterface.speed}")
+    
+    def moveBackwardLeftRelease(event):
+        print(f"Release moving backward-left")
+    
+    def moveLeftPress(event):
+        print(f"Turn left! Press")
+        
+    def moveLeftRelease(event):
+        print(f"Release moving left")
+        
+    def moveRightPress(event):
+        print(f"Turn right! Press")
+        
+    def moveRightRelease(event):
+        print(f"Release moving right")
+            
+    def stopMovement():
+        print(f"Emergency stop!")
+        
+    def lock():
+        print(f"Locking suspension")
+        
+    def ledOn():
+        print(f"Turning on LED")
+        GPIO.output(led, True)
+        
+    def ledOff():
+        print(f"Turning off LED")
+        GPIO.output(led, False)
+        
+    # Testing purposes only - to be deprecated
+    def motorTurnTest():
+        print(f"Testing DC motor")
+        print(f"What goes up...")
+        for dc in range(0, 101, 2):
+            #motor.setVelo(dc)
+            motors.go(dc)
+            time.sleep(0.05)
+        time.sleep(1)
+        print(f"...must come down")
+        for dc in range(100, -1, -2):
+            #motor.setVelo(dc)
+            motors.go(dc)
+            time.sleep(0.05)
+        time.sleep(1)
+        print(f"Aaaand backwards")
+        for dc in range(0, -101, -2):
+            #motor.setVelo(dc)
+            motors.go(dc)
+            time.sleep(0.05)
+        print(f"And back")
+        for dc in range(-100, 1, 2):
+            #motor.setVelo(dc)
+            motors.go(dc)
+            time.sleep(0.05)
+        print(f"Motor turn done")
+        
+    
+    def cameraUp():
+        print(f"Camera tilt up!")
+    
+    
+    def cameraDown():
+        print(f"Camera tilt down!")
+    
+    
+    def cameraLeft():
+        print(f"Camera tilt left!")
+        
+        
+    def cameraRight():
+        print(f"Camera tilt right!")
+    
+    
+    def takePhoto():
+        print(f"Taking photo!")
+    
+    
+    def soundStatus():
+        print(f"Sound data status")
+        
+        
+    def accelerationStatus():
+        print(f"Acceleration data status")
+        
+        
+    def videoStatus():
+        print(f"Video status")
+    

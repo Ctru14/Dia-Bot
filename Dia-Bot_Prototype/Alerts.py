@@ -24,6 +24,7 @@ class Alert:
         # Initialize data variables
         self.name = name
         self.thresholdUnits = thresholdUnits
+        self.alertEnabled = BooleanVar()
         self.alertType = alertType
         self.alertTypeName = StringVar()
         self.alertTypeName.set(self.alertType.name)
@@ -44,7 +45,7 @@ class Alert:
     # Builds and returns the alert frame in self.frame 
     def getAlertFrame(self):
         #print(f"Creating and returning alert row for {self.name})
-        self.enableButton = tk.Checkbutton(self.frame, text=self.name, anchor="w", justify=LEFT, font="none 11")
+        self.enableButton = tk.Checkbutton(self.frame, text=self.name, variable=self.alertEnabled, anchor="w", justify=LEFT, font="none 11")
         self.enableButton.grid(row=1, column=1, columnspan=3)
         
         # Alert type s
