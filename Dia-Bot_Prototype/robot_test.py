@@ -567,11 +567,14 @@ def main():
     camera.preview_fullscreen=False
     camera.preview_window=(500, 400, 1000, 600)
     camera.resolution=(1280,720)
+    camera.rotation = 180
     camera.start_preview()
         
     #totalTimeNs = time.time_ns() - startTime
     #print("Start thread time: " + str((totalTimeNs/1_000_000)) + " ms")
     top.mainloop()
+    camera.stop_preview()
+    camera.close()
     programRunning = False # Stop extra threads
 
 

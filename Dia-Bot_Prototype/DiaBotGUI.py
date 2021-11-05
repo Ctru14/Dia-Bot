@@ -20,14 +20,14 @@ import Alerts
 
 piConnected = True
 try:
-    import PiInterface 
-    from PiInterface import PiInterface
+    import PiInterface
+    import picamera
 except:
     piConnected = False
     print("Error importing PiInterface!")
 
 # Initialize necessary variables
-#camera = PiInterface.camera
+cameraOn = False
 top = tk.Tk()
 top.title('Dia-Bot')
 speed = IntVar()
@@ -43,6 +43,7 @@ startTime = time.time_ns()
 
 # Closes relevant processes and stops GPIO
 def exit():
+    camera.close()
     top.destroy
     quit()
     
@@ -62,15 +63,6 @@ def elapsedTime(func, *args):
 def totalElapsedTime():
     global startTime
     return f"(total time = {(time.time_ns()-startTime)/1_000_000_000} s)"
-
-# Opens the camera preview on the screen
-#   Note: for VNC users to see the feed, the setting "Enable Direct Capture Mode" must be on
-def start_camera():
-    camera.preview_fullscreen=False
-    camera.preview_window=(640,500, 1080, 720)
-    camera.resolution=(1280,720)
-    camera.rotation = 180
-    camera.start_preview()
 
 
 # -------------------------- GUI SETUP CODE --------------------------
@@ -405,6 +397,7 @@ def printTime(*args):
 def main():
     global programRunning
     global startTime
+    global cameraOn
     
     # Create additional threads
     dataThread = threading.Thread(target=loopAtFrequency, args=(1, updateData))
@@ -414,11 +407,24 @@ def main():
     dataThread.start()
     graphThread.start()
     
-    #start_camera()
+    # Start camera preview
+    try:
+        PiInterface.start_camera()
+        cameraOn = True
+    except:
+        print("Error starting camera!")
+        cameraOn = False
         
     #totalTimeNs = time.time_ns() - startTime
     #print("Start thread time: " + str((totalTimeNs/1_000_000)) + " ms")
+    
+    # Begin TK mainloop
     top.mainloop()
+    
+    # After UI closed: cleanup!
+    if cameraOn:
+        PiInterface.stop_camera()
+        
     programRunning = False # Stop extra threads
 
 
