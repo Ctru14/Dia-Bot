@@ -3,11 +3,11 @@ import time
 import threading
 import math
 from random import *
-import picamera
-import RPi.GPIO as GPIO
-import pigpio
-import DCMotor
-import DualHBridge
+#import picamera
+#import RPi.GPIO as GPIO
+#import pigpio
+#import DCMotor
+#import DualHBridge
 import DataCollection
 
 
@@ -24,13 +24,13 @@ adcMISO = 35
 adcCS0 = 36
 adcMOSI = 38
 adcSCLK = 40
-gpioMode = GPIO.BOARD
-GPIO.setwarnings(False)
-GPIO.setmode(gpioMode)
-GPIO.setup(led, GPIO.OUT)
-pi = pigpio.pi()
-motors = DualHBridge.DualHBridge(pwmPinA, motorAIn1, motorAIn2, pwmPinB, motorBIn1, motorBIn2, motorEn, gpioMode)
-camera = picamera.PiCamera()
+#gpioMode = GPIO.BOARD
+#GPIO.setwarnings(False)
+#GPIO.setmode(gpioMode)
+#GPIO.setup(led, GPIO.OUT)
+#pi = pigpio.pi()
+#motors = DualHBridge.DualHBridge(pwmPinA, motorAIn1, motorAIn2, pwmPinB, motorBIn1, motorBIn2, motorEn, gpioMode)
+#camera = picamera.PiCamera()
 
 
 # Closes relevant processes and stops GPIO

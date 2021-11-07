@@ -20,7 +20,7 @@ class Alert:
 
     alertTypes = (AlertType.Above.name, AlertType.Between.name, AlertType.Below.name)
 
-    def __init__(self, alertControlsFrame, name, thresholdUnits, alertType, width=400, height=50):
+    def __init__(self, alertControlsFrame, name, thresholdUnits, alertType, dataProcessing=0, width=400, height=50):
         # Initialize data variables
         self.name = name
         self.thresholdUnits = thresholdUnits
@@ -28,6 +28,7 @@ class Alert:
         self.alertType = alertType
         self.alertTypeName = StringVar()
         self.alertTypeName.set(self.alertType.name)
+        self.dataProcessing = dataProcessing # TODO: Add data processing functionality into alerts!
 
         # Threshold levels
         self.belowValue = nan
@@ -40,7 +41,7 @@ class Alert:
         self.thresholdString2 = StringVar()
 
         # Create TKinter frame
-        self.frame = tk.Frame(alertControlsFrame, width=400, height=50)
+        self.frame = tk.Frame(alertControlsFrame, width=width, height=height)
 
     # Builds and returns the alert frame in self.frame 
     def getAlertFrame(self):

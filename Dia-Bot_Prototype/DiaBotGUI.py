@@ -17,11 +17,9 @@ from matplotlib.figure import Figure
 import DataCollection
 import Alerts
 
-
 piConnected = True
 try:
     import PiInterface
-    import picamera
 except:
     piConnected = False
     print("Error importing PiInterface!")
@@ -34,9 +32,9 @@ speed = IntVar()
 zoom = IntVar()
 
 # Threading control
-graphRefreshTime = 5 # Number of seconds between graph refresh
+visualsRefreshTime = 5 # Number of seconds between graph refresh
 programRunning = True
-collectData = False
+collectData = True
 uiMutex = threading.Lock()
 startTime = time.time_ns()
 
@@ -265,43 +263,32 @@ units = ["dB", "m/s2", "C", "m"]
 
 
 # Sound Level
-def readSoundLevel():
-    num = randint(-10, 10)
-    #print("Reading sound level! - " + str(num))
-    return num
-soundLevel = DataCollection.DataCollection("Sound Level", "dB", soundLevelFrame, readSoundLevel, uiMutex, startTime)
+soundLevelSamplingRate = 100
+soundLevel = DataCollection.SoundLevel("Sound Level", "dB", soundLevelFrame, uiMutex, True, soundLevelSamplingRate, startTime)
 soundLevel.tkAddDataPane()
 soundLevelFrame.grid(row=2, column=1, padx=10)
 
 
 # Vibration
-def readVibration():
-    num = randint(-10, 10)
-    #print("Reading vibration! - " + str(num))
-    return num
-vibration = DataCollection.DataCollection("Vibration", "m/s2", vibrationFrame, readVibration, uiMutex, startTime)
+vibrationSamplingRate = 100
+vibration = DataCollection.Vibration("Vibration", "m/s2", vibrationFrame, uiMutex, True, vibrationSamplingRate, startTime)
 vibration.tkAddDataPane()
 vibrationFrame.grid(row=2, column=2, padx=10)
 
 
-# Temperature
-def readTemperature():
-    num = randint(-10, 10)
-    #print("Reading temperature! - " + str(num))
-    return num
-temperature = DataCollection.DataCollection("Temperature", "�C", temperatureFrame, readTemperature, uiMutex, startTime)
-temperature.tkAddDataPane()
-temperatureFrame.grid(row=2, column=3, padx=10)
-
-
 # Position
-def readPosition():
-    num = randint(-10, 10)
-    #print("Reading position! - " + str(num))
-    return num
-position = DataCollection.DataCollection("Position", "m", positionFrame, readPosition, uiMutex, startTime)
+positionSamplingRate = 10
+position = DataCollection.Position("Position", "m", positionFrame, uiMutex, True, positionSamplingRate, startTime)
 position.tkAddDataPane()
-positionFrame.grid(row=2, column=4, padx=10)
+positionFrame.grid(row=2, column=3, padx=10)
+
+# Temperature
+temperatureSamplingRate = 1/5
+temperature = DataCollection.Temperature("Temperature", "°C", temperatureFrame, uiMutex, False, temperatureSamplingRate, startTime)
+temperature.tkAddDataPane()
+temperatureFrame.grid(row=2, column=4, padx=10)
+
+
 
 
 # Group of all the data classes
@@ -345,36 +332,28 @@ def loopAtFrequency(freqHz, loopFunction, *args):
         if timeRemaining > 0:
             time.sleep(timeRemaining)
         else:
-            print(f"Thread {loopFunction.__name__} took longer to execute ({loopTimeTaken} s) than its given time({loopTimeTaken} s)! Assigning 1s sleep")
-            time.sleep(1)
-
-
-# Every data class needs it own graph, data set, and sensor function
-def updateData():
-    global collectData
-    if collectData:
-        for dataClass in dataClassList:
-            dataClass.readData()
+            print(f"Thread {loopFunction.__name__} took longer to execute ({loopTimeTaken} s) than its given time({loopTime} s)! Assigning {loopTime}s sleep")
+            time.sleep(loopTime)
 
 
 #tk.Button(videoFrame, text="Update Image", command=updateFrameImage).grid(row=2, column=1)
 
-def updateGraphs():
+def updateVisuals():
     global collectData
     if collectData:
         try:
-            top.event_generate("<<graphEvent>>")
+            top.event_generate("<<visualsEvent>>")
         except:
-            print("Error in event_generate! Unable to update graphs")
+            print("Error in event_generate! Unable to update visuals")
 
-def updateGraphsWrapper(event):
-    elapsedTime(updateGraphsHandler)
+def updateVisualsWrapper(event):
+    elapsedTime(updateVisualsHandler)
 
-def updateGraphsHandler():
+def updateVisualsHandler():
     global startTime
     global loopCount
     for dataClass in dataClassList:
-        dataClass.updateGraph()
+        dataClass.updateVisuals()
     # Threading version
     #threads = []
     #for dataClass in dataClassList:
@@ -389,7 +368,7 @@ def updateGraphsHandler():
     #print("Completed joining")    
         
 
-top.bind("<<graphEvent>>", updateGraphsWrapper)
+top.bind("<<visualsEvent>>", updateVisualsWrapper)
 
 def printTime(*args):
     print(totalElapsedTime())
@@ -400,12 +379,18 @@ def main():
     global cameraOn
     
     # Create additional threads
-    dataThread = threading.Thread(target=loopAtFrequency, args=(1, updateData))
-    graphThread = threading.Thread(target=loopAtFrequency, args=(1/graphRefreshTime, updateGraphs))
+    #dataThread = threading.Thread(target=loopAtFrequency, args=(1, updateData)) # Split into each data type
+    graphThread = threading.Thread(target=loopAtFrequency, args=(1/visualsRefreshTime, updateVisuals))
+    soundThread = threading.Thread(target=loopAtFrequency, args=(soundLevelSamplingRate, soundLevel.readAndAddData))
+    vibrationThread = threading.Thread(target=loopAtFrequency, args=(vibrationSamplingRate, vibration.readAndAddData))
+    temperatureThread = threading.Thread(target=loopAtFrequency, args=(temperatureSamplingRate, temperature.readAndAddData))
+    positionThread = threading.Thread(target=loopAtFrequency, args=(positionSamplingRate, position.readAndAddData))
     
+    threads = [graphThread, soundThread, vibrationThread, temperatureThread, positionThread]
+
     # Start threads
-    dataThread.start()
-    graphThread.start()
+    for thread in threads:
+        thread.start()
     
     # Start camera preview
     try:
@@ -422,11 +407,11 @@ def main():
     top.mainloop()
     
     # After UI closed: cleanup!
+    programRunning = False # Stop extra threads
+
     if cameraOn:
         PiInterface.stop_camera()
         
-    programRunning = False # Stop extra threads
-
 
 if __name__ == "__main__":
     main()
