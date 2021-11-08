@@ -4,6 +4,7 @@ from tkinter import *
 from PIL import ImageTk, Image
 import time
 import threading
+import multiprocessing
 import math
 from random import *
 
@@ -23,6 +24,7 @@ class DataCollection:
         self.samplingRate = samplingRate
         self.samplingTime = 1/samplingRate
         self.dataMutex = threading.Lock()
+        #self.dataMutex = multiprocessing.Lock()
         self.globalUImutex = globalUImutex
         self.globalStartTime = globalStartTime
         self.t = []
@@ -56,7 +58,9 @@ class DataCollection:
         self.addData(t, data)
         
         
-    def updateVisuals(self):
+    def updateVisual(self):
+        print(f"Update {self.name} visual")
+
         # Find start and end indices for graphing
         start = 0
         end = len(self.t)
@@ -65,14 +69,14 @@ class DataCollection:
         self.plot1.cla() # Find way to update graphs without it taking too long!!
         print(f"Update {self.name} graph: indices ({start}..{end})  Latest: ({self.t[-1]}, {self.data[-1]})")
         # Update plot
-        self.dataMutex.acquire()
+        #self.dataMutex.acquire()
         self.plot1.plot(self.t[start:end], self.data[start:end])
-        self.dataMutex.release()
+        #self.dataMutex.release()
         # Update canvas on UI
-        self.globalUImutex.acquire()
+        #self.globalUImutex.acquire()
         self.canvas.draw()
         print(f"Graph done: {self.name} (total time = {(time.time_ns()-self.globalStartTime)/1_000_000_000} s)\n")
-        self.globalUImutex.release()
+        #self.globalUImutex.release()
         
 
     # ----- Data Processing functions -----
@@ -174,6 +178,6 @@ class Temperature(DataCollection):
             self.tempDisplayText.set(self.getDisplayText())
             self.tempViewButtonText.set("View Celsius")
 
-    def updateVisuals(self):
+    def updateVisual(self):
         self.tempDisplayText.set(self.getDisplayText())
         #self.tempViewButtonText.set("View Farenheit")
