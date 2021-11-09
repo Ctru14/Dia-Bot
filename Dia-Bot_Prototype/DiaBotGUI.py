@@ -16,14 +16,16 @@ from matplotlib.figure import Figure
 
 # Dia-Bot specific imports
 import DataCollection
+import DataProcessing
 import Alerts
+from Threads import DiaThread
 
 piConnected = True
 try:
     import PiInterface
-except:
+except Exception as e:
     piConnected = False
-    print("Error importing PiInterface!")
+    print(f"Error importing PiInterface: {e}")
 
 # Debugging function - run a function and report how long it takes
 def elapsedTime(func, *args):
@@ -50,8 +52,8 @@ class DiaBotGUI():
         self.visualsRefreshTime = 5 # Number of seconds between graph refresh
         self.programRunning = True
         self.collectData = True
-        self.uiMutex = threading.Lock()
-        #self.uiMutex = multiprocessing.Lock()
+        #self.uiMutex = threading.Lock()
+        self.uiMutex = multiprocessing.Lock()
         self.startTime = time.time_ns()
 
 
@@ -300,32 +302,36 @@ class DiaBotGUI():
         
         # Sound Level
         self.soundLevelSamplingRate = 100
-        self.soundLevel = DataCollection.SoundLevel("Sound Level", "dB", self.soundLevelFrame, self.uiMutex, True, self.soundLevelSamplingRate, self.startTime)
-        self.soundLevel.tkAddDataPane()
+        self.soundLevelCollection = DataCollection.SoundLevelCollection("Sound Level", "dB", self.soundLevelSamplingRate, self.startTime)
+        self.soundLevelProcessing = DataProcessing.SoundLevelProcessing(self.soundLevelCollection, self.soundLevelFrame, self.uiMutex, True)
+        self.soundLevelProcessing.tkAddDataPane()
         self.soundLevelFrame.grid(row=2, column=1, padx=10)
         
         
         # Vibration
         self.vibrationSamplingRate = 100
-        self.vibration = DataCollection.Vibration("Vibration", "m/s2", self.vibrationFrame, self.uiMutex, True, self.vibrationSamplingRate, self.startTime)
-        self.vibration.tkAddDataPane()
+        self.vibrationCollection = DataCollection.VibrationCollection("Vibration", "m/s2", self.vibrationSamplingRate, self.startTime)
+        self.vibrationProcessing = DataProcessing.VibrationProcessing(self.soundLevelCollection, self.vibrationFrame, self.uiMutex, True)
+        self.vibrationProcessing.tkAddDataPane()
         self.vibrationFrame.grid(row=2, column=2, padx=10)
         
         
         # Position
         self.positionSamplingRate = 10
-        self.position = DataCollection.Position("Position", "m", self.positionFrame, self.uiMutex, True, self.positionSamplingRate, self.startTime)
-        self.position.tkAddDataPane()
+        self.positionCollection = DataCollection.PositionCollection("Position", "m", self.positionSamplingRate, self.startTime)
+        self.positionProcessing = DataProcessing.PositionProcessing(self.positionCollection, self.positionFrame, self.uiMutex, True)
+        self.positionProcessing.tkAddDataPane()
         self.positionFrame.grid(row=2, column=3, padx=10)
         
         # Temperature
         self.temperatureSamplingRate = 1/5
-        self.temperature = DataCollection.Temperature("Temperature", "°C", self.temperatureFrame, self.uiMutex, False, self.temperatureSamplingRate, self.startTime)
-        self.temperature.tkAddDataPane()
+        self.temperatureCollection = DataCollection.TemperatureCollection("Temperature", "°C", self.temperatureSamplingRate, self.startTime)
+        self.temperatureProcessing = DataProcessing.TemperatureProcessing(self.temperatureCollection, self.temperatureFrame, self.uiMutex, False)
+        self.temperatureProcessing.tkAddDataPane()
         self.temperatureFrame.grid(row=2, column=4, padx=10)
         
         # Group of all the data classes
-        self.dataClassList = [self.soundLevel, self.vibration, self.temperature, self.position]
+        self.dataProcessingClassList = [self.soundLevelProcessing, self.vibrationProcessing, self.temperatureProcessing, self.positionProcessing]
 
 
 
@@ -355,73 +361,52 @@ class DiaBotGUI():
 
     # ----- Threading functions -----
     
-    # Wrapper to other functions which loops 
-    def loopAtFrequency(self, freqHz, loopFunction, *args):
-        print(f"Starting thread {loopFunction.__name__} at {freqHz} Hz")
-        loopTime = 1/freqHz
-        while self.programRunning:
-            loopStartTime = time.time()
-            loopFunction(*args)
-            loopEndTime = time.time()
-            loopTimeTaken = loopEndTime - loopStartTime
-            timeRemaining = loopTime - (loopTimeTaken)
-            if timeRemaining > 0:
-                time.sleep(timeRemaining)
-            else:
-                print(f"Thread {loopFunction.__name__} took longer to execute ({loopTimeTaken} s) than its given time({loopTime} s)! Assigning {loopTime}s sleep")
-                time.sleep(loopTime)
-        print(f"Ending thread! {loopFunction.__name__}")
-    
-    
+       
     #tk.Button(videoFrame, text="Update Image", command=updateFrameImage).grid(row=2, column=1)
     
-    def updateVisuals(self):
-        #global collectData
+    def updateVisuals(self, *args):
         if self.collectData and self.programRunning:
             try:
                 self.top.event_generate("<<visualsEvent>>")
-            except:
-                print("Error in event_generate! Unable to update visuals")
+            except Exception as e:
+                print(f"Unable to update visuals! Error in event_generate: {e}")
     
     def updateVisualsWrapper(self, event):
         elapsedTime(self.updateVisualsHandler)
     
     def updateVisualsHandler(self):
-        for dataClass in self.dataClassList:
-            dataClass.updateVisual()          
+        for dataProcessingClass in self.dataProcessingClassList:
+            dataProcessingClass.updateVisual()
         
     def printTime(self):
         print(self.totalElapsedTime())
+
 
     def startProgram(self):
         # Create GUI
         self.setupGuiFrames()
 
-        # Create additional threads
-        self.soundThread = threading.Thread(target=self.loopAtFrequency, args=(self.soundLevelSamplingRate, self.soundLevel.readAndAddData))
-        self.vibrationThread = threading.Thread(target=self.loopAtFrequency, args=(self.vibrationSamplingRate, self.vibration.readAndAddData))
-        self.temperatureThread = threading.Thread(target=self.loopAtFrequency, args=(self.temperatureSamplingRate, self.temperature.readAndAddData))
-        self.positionThread = threading.Thread(target=self.loopAtFrequency, args=(self.positionSamplingRate, self.position.readAndAddData))
-        self.graphThread = threading.Thread(target=self.loopAtFrequency, args=(1/self.visualsRefreshTime, self.updateVisuals))
-        
-        #self.soundThread = multiprocessing.Process(target=self.loopAtFrequency, args=(self.soundLevelSamplingRate, self.soundLevel.readAndAddData))
-        #self.vibrationThread = multiprocessing.Process(target=self.loopAtFrequency, args=(self.vibrationSamplingRate, self.vibration.readAndAddData))
-        #self.temperatureThread = multiprocessing.Process(target=self.loopAtFrequency, args=(self.temperatureSamplingRate, self.temperature.readAndAddData))
-        #self.positionThread = multiprocessing.Process(target=self.loopAtFrequency, args=(self.positionSamplingRate, self.position.readAndAddData))
-        #self.graphThread = multiprocessing.Process(target=self.loopAtFrequency, args=(1/self.visualsRefreshTime, self.updateVisuals))
-        
-        self.threads = [self.soundThread, self.vibrationThread, self.temperatureThread, self.positionThread, self.graphThread]
-    
-        # Start threads
-        for thread in self.threads:
-            thread.start()
-            
+        # Create and add threads
+        useProcesses = False
+
+        soundThread = DiaThread(useProcesses, self.startTime, self.soundLevelSamplingRate, self.soundLevelCollection.readAndAddData)
+        vibrationThread = DiaThread(useProcesses, self.startTime, self.vibrationSamplingRate, self.vibrationCollection.readAndAddData)
+        temperatureThread = DiaThread(useProcesses, self.startTime, self.temperatureSamplingRate, self.temperatureCollection.readAndAddData)
+        positionThread = DiaThread(useProcesses, self.startTime, self.positionSamplingRate, self.positionCollection.readAndAddData)
+        graphThread = DiaThread(False, self.startTime, 1/self.visualsRefreshTime, self.updateVisuals)
+
+        threads = [graphThread, soundThread, vibrationThread, positionThread, temperatureThread]
+
+        for t in threads:
+            t.startThread()
+        self.programRunning = True # Used in updateVisuals()
+
         # Start camera preview
         try:
             PiInterface.start_camera()
             self.cameraOn = True
-        except:
-            print("Error starting camera!")
+        except Exception as e:
+            print(f"Error starting camera: {e}")
             self.cameraOn = False
             
         #totalTimeNs = time.time_ns() - startTime
@@ -432,8 +417,8 @@ class DiaBotGUI():
         
         # After UI closed: cleanup!
         self.programRunning = False # Stop extra threads
-        for thread in self.threads:
-            thread.join()
+        for t in threads:
+            t.endThread()
 
         if self.cameraOn:
             PiInterface.stop_camera()
