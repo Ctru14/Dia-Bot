@@ -3,14 +3,23 @@ Diagnostic Robot for Georgia Tech Interdisciplinary Capstone Design Fall 2021
 
 Documentation for Dia-bot
 
-Files
-* robot_test.py
-    * 
+To Run the Program
+Testing with GUI: python3 DiaBotGUI.py
+
+
+Files Code
+* Alerts.py
 * DataCollection.py
-    * 
+* DataProcessing.py
 * DCMotor.py
-    * 
+* DiaBotGUI.py
 * DualHBridge.py
+* PiInterface.py
+* robot_test.py
+* Threads.py
+Pictures
+* frame.png
+* vanderlandeTest.png
 
 
 Pin Connections
