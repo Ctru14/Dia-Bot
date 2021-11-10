@@ -64,7 +64,7 @@ Classes Used: DataCollection
 
 ## DataCollection.py
 
-Contains the DataCollection class which has 4 subclasses: SoundLevelCollection, VibrationCollection, PositionCollection, and TemperatureCollection
+Description: Contains the DataCollection class which has 4 subclasses: SoundLevelCollection, VibrationCollection, PositionCollection, and TemperatureCollection
 
 ### DataCollection Class
 
@@ -89,7 +89,9 @@ readAndAddData(*args)
 * reads the data value
 * calls readData(t, data)
 
-### SoundLevelCollection subclass of DataCollection
+### SoundLevelCollection Class
+
+Description: subclass of DataCollection
 
 SoundLevelCollection(name, units, samplingRate, globalStartTime)
 * Initializess the SoundLevelCollection instance using the super's function
@@ -97,21 +99,27 @@ SoundLevelCollection(name, units, samplingRate, globalStartTime)
 readData()  _@toBeFilledIn_
 
 
-### VibrationCollection subclass of DataCollection
+### VibrationCollection Class
+
+Description: subclass of DataCollection
 
 VibrationCollection(name, units, samplingRate, globalStartTime)
 * Initializess the VibrationCollection instance using the super's function
 
 readData()  _@toBeFilledIn_
 
-### PositionCollection subclass of DataCollection
+### PositionCollection Class
+
+Description: subclass of DataCollection
 
 PositionCollection(name, units, samplingRate, globalStartTime)
 * Initializess the PositionCollection instance using the super's function
 
 readData()  _@toBeFilledIn_
 
-### TemperatureCollection subclass of DataCollection
+### TemperatureCollection Class
+
+Description: subclass of DataCollection
 
 TemperatureCollection(name, units, samplingRate, globalStartTime)
 * Initializess the TemperatureCollection instance using the super's function
@@ -119,6 +127,21 @@ TemperatureCollection(name, units, samplingRate, globalStartTime)
 readData()  _@toBeFilledIn_
 
 ## DataProcessing.py
+
+Imports: sys, tkinter, time, PIL, threading, multiprocesssing, math, random, matplotlib
+
+Classes Used: DataCollection
+
+### Data processing
+
+variables:
+* tkTop
+* dataCollection
+* dataMutex
+* globalUImutex
+* 
+
+
 ## DCMotor.py
 ## DiaBotGUI.py
 ## DualHBridge.py
@@ -169,4 +192,8 @@ Functions
 
 
 ## Threads.py
+
+
+# UI Page Layout
+
 
