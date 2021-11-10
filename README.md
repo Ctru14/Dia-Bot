@@ -77,7 +77,7 @@ variables:
 * data (list of data)
 
 DataCollection( name, units, samplingRate, globalStartTime)
-* Initializess the DataCollection instance with the a name, units of data to be collected, sampling rate and data collection start time
+* Initializes the DataCollection instance with the a name, units of data to be collected, sampling rate and data collection start time
 * Creates two Lists data for a collection of the data and t for time stamp that correlates to the data value
 
 addData(t, data) - helper function
@@ -94,7 +94,7 @@ readAndAddData(*args)
 Description: subclass of DataCollection
 
 SoundLevelCollection(name, units, samplingRate, globalStartTime)
-* Initializess the SoundLevelCollection instance using the super's function
+* Initializes the SoundLevelCollection instance using the super's function
 
 readData()  _@toBeFilledIn_
 
@@ -104,7 +104,7 @@ readData()  _@toBeFilledIn_
 Description: subclass of DataCollection
 
 VibrationCollection(name, units, samplingRate, globalStartTime)
-* Initializess the VibrationCollection instance using the super's function
+* Initializes the VibrationCollection instance using the super's function
 
 readData()  _@toBeFilledIn_
 
@@ -113,7 +113,7 @@ readData()  _@toBeFilledIn_
 Description: subclass of DataCollection
 
 PositionCollection(name, units, samplingRate, globalStartTime)
-* Initializess the PositionCollection instance using the super's function
+* Initializes the PositionCollection instance using the super's function
 
 readData()  _@toBeFilledIn_
 
@@ -122,7 +122,7 @@ readData()  _@toBeFilledIn_
 Description: subclass of DataCollection
 
 TemperatureCollection(name, units, samplingRate, globalStartTime)
-* Initializess the TemperatureCollection instance using the super's function
+* Initializes the TemperatureCollection instance using the super's function
 
 readData()  _@toBeFilledIn_
 
