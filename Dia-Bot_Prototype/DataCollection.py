@@ -7,7 +7,7 @@ from random import *
 
 class DataCollection:
     
-    def __init__(self, name, units, samplingRate, globalStartTime):
+    def __init__(self, name, units, samplingRate, globalStartTime, queue):
         self.name = name
         self.units = units
         self.samplingRate = samplingRate
@@ -17,6 +17,7 @@ class DataCollection:
         self.globalStartTime = globalStartTime
         self.t = []
         self.data = []
+        self.queue = queue
         
     def addData(self, t, data):
         self.dataMutex.acquire()
@@ -28,13 +29,18 @@ class DataCollection:
         t = (time.time_ns()-self.globalStartTime)/1_000_000_000
         data = self.readData()
         self.addData(t, data)
+
+    def readAndSendData(self, *args):
+        t = (time.time_ns()-self.globalStartTime)/1_000_000_000
+        data = self.readData()
+        self.queue.put((t, data))
         
 
 
 class SoundLevelCollection(DataCollection):
 
-    def __init__(self, name, units, samplingRate, globalStartTime):
-        return super().__init__(name, units, samplingRate, globalStartTime)
+    def __init__(self, name, units, samplingRate, globalStartTime, queue):
+        return super().__init__(name, units, samplingRate, globalStartTime, queue)
 
     def readData(self):
         num = randint(-10, 10)
@@ -45,8 +51,8 @@ class SoundLevelCollection(DataCollection):
 
 class VibrationCollection(DataCollection):
 
-    def __init__(self, name, units, samplingRate, globalStartTime):
-        return super().__init__(name, units, samplingRate, globalStartTime)
+    def __init__(self, name, units, samplingRate, globalStartTime, queue):
+        return super().__init__(name, units, samplingRate, globalStartTime, queue)
 
     def readData(self):
         num = randint(-10, 10)
@@ -57,8 +63,8 @@ class VibrationCollection(DataCollection):
 
 class PositionCollection(DataCollection):
 
-    def __init__(self, name, units, samplingRate, globalStartTime):
-        return super().__init__(name, units, samplingRate, globalStartTime)
+    def __init__(self, name, units, samplingRate, globalStartTime, queue):
+        return super().__init__(name, units, samplingRate, globalStartTime, queue)
 
     def readData(self):
         num = randint(-10, 10)
@@ -69,10 +75,10 @@ class PositionCollection(DataCollection):
 
 class TemperatureCollection(DataCollection):
 
-    def __init__(self, name, units, samplingRate, globalStartTime):
+    def __init__(self, name, units, samplingRate, globalStartTime, queue):
         self.currentTempCelsius = 0
         self.currentTempFarenheit = 32
-        return super().__init__(name, units, samplingRate, globalStartTime)
+        return super().__init__(name, units, samplingRate, globalStartTime, queue)
 
     def readData(self):
         num = randint(-10, 10)
@@ -80,3 +86,11 @@ class TemperatureCollection(DataCollection):
         self.currentTempFarenheit = num * 9 / 5 + 32
         #print("Reading temperature! - " + str(num))
         return num
+
+    def readAndSendData(self, *args):
+        t = (time.time_ns()-self.globalStartTime)/1_000_000_000
+        temp = self.readData()
+        self.currentTempCelsius = temp
+        self.currentTempFarenheit = temp * 9 / 5 + 32
+        self.queue.put((t, self.currentTempCelsius, self.currentTempFarenheit))
+        

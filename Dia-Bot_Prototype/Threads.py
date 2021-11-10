@@ -11,6 +11,7 @@ class DiaThread():
         self.threadsList = []
         self.globalStartTime = globalStartTime
         self.threadRunning = False
+        self.threadEnded = False
         self.name = loopFunction.__name__
         print(f"Create and add new loop thread: {loopFunction.__name__}")
         if useProcess:
@@ -37,6 +38,7 @@ class DiaThread():
             else:
                 print(f"Thread {self.name} took longer to execute ({loopTimeTaken} s) than its given time({loopTime} s)! Assigning {loopTime}s sleep")
                 time.sleep(loopTime)
+        self.threadEnded = True
         print(f"Loop ended! {self.name}")
         
     def startThread(self):
@@ -46,4 +48,8 @@ class DiaThread():
     def endThread(self):
         print(f"Ending thread! {self.name}")
         self.threadRunning = False
-        self.thread.join()
+        #self.thread.join()
+        while not self.threadEnded:
+            print(f"Waiting for thread {self.name} to end...")
+            time.sleep(1)
+        print("Thread {self.name} ended!")
