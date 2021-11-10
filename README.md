@@ -1,13 +1,23 @@
 # Dia-Bot
 Diagnostic Robot for Georgia Tech Interdisciplinary Capstone Design Fall 2021
 
-Documentation for Dia-bot
+Mechanical Team: Hunter Present, Andrew Galant, Douglas Walker, & Jason Poitter
+Electrical & Software Team: Connor Truono & Catherine Kasper
 
-To Run the Program
+# Documentation for Dia-bot Software
+Other Mechanical and comprehensive electrical documentation can be found at [Operation Omega Team Website hosted by ece ssenior design] (eceseniordesign2021fall.ece.gatech.edu/sd21f09/ "Operation Omega Dia-Bot Team Website").
+
+**To Run the Program**
 Testing with GUI: python3 DiaBotGUI.py
 
 
-Files Code
+**Controls:**
+Suppress print statements
+Suppress debugging functions
+Tag what the function interfaces with
+
+
+**Files Code**
 * Alerts.py
 * DataCollection.py
 * DataProcessing.py
@@ -21,8 +31,7 @@ Pictures
 * frame.png
 * vanderlandeTest.png
 
-
-Pin Connections
+**Pin Connections**
 Item	Component Pin	Pi Pin
 LED	Long Lead	11
 DualHBridge	PWM (in)	12
@@ -34,13 +43,8 @@ DualHBridge	Motor B (in 2)	22
 DualHBridge	Motor Enable	18
 Camera	N/a pi camera	N/a
 
-Controls:
-Suppress print statements
-Suppress debugging functions
-Tag what the function interfaces with
 
-
-robot_test.py
+**robot_test.py**
 Variables 
 * top Tk
 * led
