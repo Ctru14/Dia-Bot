@@ -1,10 +1,10 @@
-# Dia-Bot
+# Dia-Bot Project Overview
 Diagnostic Robot for Georgia Tech Interdisciplinary Capstone Design Fall 2021
 
 Mechanical Team: Hunter Present, Andrew Galant, Douglas Walker, & Jason Poitter
 Electrical & Software Team: Connor Truono & Catherine Kasper
 
-# Documentation for Dia-bot Software
+# Dia-bot Software Documentation
 Other Mechanical and comprehensive electrical documentation can be found at [Operation Omega Team Website hosted by ece ssenior design] (eceseniordesign2021fall.ece.gatech.edu/sd21f09/ "Operation Omega Dia-Bot Team Website").
 
 **To Run the Program**
