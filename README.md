@@ -7,6 +7,7 @@ Electrical & Software Team: Connor Truono & Catherine Kasper
 # Dia-bot Software Documentation
 Other Mechanical and comprehensive electrical documentation can be found at [Operation Omega Team Website hosted by ece ssenior design] (eceseniordesign2021fall.ece.gatech.edu/sd21f09/ "Operation Omega Dia-Bot Team Website").
 
+## Overview
 **To Run the Program**
 Testing with GUI: python3 DiaBotGUI.py
 
@@ -32,19 +33,27 @@ Pictures
 * vanderlandeTest.png
 
 **Pin Connections**
-Item	Component Pin	Pi Pin
-LED	Long Lead	11
-DualHBridge	PWM (in)	12
-DualHBridge	Motor A (in 1)	15
-DualHBridge	Motor A (in 2)	16
-DualHBridge	PWM (in)	19
-DualHBridge	Motor B (in 1)	21
-DualHBridge	Motor B (in 2)	22
-DualHBridge	Motor Enable	18
-Camera	N/a pi camera	N/a
+| Item | Component Pin | Pi Pin |
+| ------------- |:-------------:| :-----:|
+| LED | Long Lead | 11 |
+| DualHBridge | PWM (in) | 12 |
+| DualHBridge | Motor A (in 1) | 15 |
+| DualHBridge | Motor A (in 2) | 16 |
+| DualHBridge | PWM (in) | 19 |
+| DualHBridge | Motor B (in 1) | 21 |
+| DualHBridge | Motor B (in 2) | 22 |
+| DualHBridge | Motor Enable | 18 |
+| Camera | N/a | camera port |
 
+## Alerts.py
+## DataCollection.py
+## DataProcessing.py
+## DCMotor.py
+## DiaBotGUI.py
+## DualHBridge.py
+## PiInterface.py
 
-**robot_test.py**
+## robot_test.py
 Variables 
 * top Tk
 * led
@@ -85,4 +94,6 @@ Functions
 * lock() #toBeFilledIn
 * ledOn()
 
+
+## Threads.py
 
