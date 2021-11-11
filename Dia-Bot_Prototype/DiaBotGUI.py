@@ -433,21 +433,28 @@ class DiaBotGUI():
         self.top.mainloop()
         
         # After UI closed: cleanup!
-        self.programRunning = False # Stop extra threads
-        for t in threads:
-            t.endThread()
-            ended = False
-            while not ended:
-                while shutdownQueue.empty():
-                    print(f"Awaiting shutdownQueue message for {t.name}...")
-                    time.sleep(1)
-                msg = shutdownQueue.get()
-                print(f"Message received for {t.name}: {msg}")
-                if msg == "THREAD_ENDED":
-                    ended = True
-      
-        print("All threads ended! Joining...")
 
+        # Send signals to end all threads
+        threadRunningCount = 0
+        self.programRunning = False
+        for t in threads:
+            threadRunningCount = threadRunningCount + 1
+            t.endThread()
+
+        # Collect signals for ending threads
+        ended = False 
+        while not ended:
+            # Receive new thread messages
+            if not shutdownQueue.empty():
+                msg, name = shutdownQueue.get()
+                if msg == "THREAD_ENDED":
+                    threadRunningCount = threadRunningCount - 1
+                    print(f"Shutdown message received from {name} - waiting on {threadRunningCount} more!")
+            if threadRunningCount == 0:
+                ended = True
+            time.sleep(1)
+                  
+        print("All threads ended! Joining...")
         for t in threads:
             print(f"Joining {t.name}...")
             t.join(1)

@@ -17,6 +17,7 @@ class DiaThread():
         self.loopFreq = freqHz
         self.loopTIme = 1/freqHz
         self.name = name
+        self.useProcess = useProcess
         print(f"Create and add new loop thread: {loopFunction.__name__}")
         if useProcess:
             self.thread = multiprocessing.Process(target=self.loopAtFrequency, args=(freqHz, self.endThreadQueue, loopFunction, args))
@@ -42,14 +43,16 @@ class DiaThread():
             else:
                 print(f"Thread {self.name} took longer to execute ({loopTimeTaken} s) than its given time({loopTime} s)! Assigning {loopTime}s sleep")
                 time.sleep(loopTime)
-            if not endThreadQueue.empty():
-                msg = endThreadQueue.get()
-                print(f"EndThreadQueue msg: {msg}")
-                if msg == "END_THREAD":
-                    self.threadRunning = False
-                    break
+            # For processes, check the shutdown queue for a stop message 
+            # (threads keep self.threadRunning in the same context, so queues are unnecessary) 
+            if self.useProcess:
+                if not endThreadQueue.empty():
+                    msg = endThreadQueue.get()
+                    print(f"EndThreadQueue msg: {msg}")
+                    if msg == "END_THREAD":
+                        self.threadRunning = False
         self.threadEnded = True
-        self.shutdownQueue.put("THREAD_ENDED")
+        self.shutdownQueue.put(("THREAD_ENDED", self.name))
         print(f"Loop ended! {self.name}")
         
     def startThread(self):
@@ -77,4 +80,7 @@ class DiaThread():
         return self.thread.is_alive()
 
     def terminate(self):
-        return self.thread.terminate()
+        if self.useProcess:
+            return self.thread.terminate()
+        else:
+            print(f"Error - Only processes can use terminate() - {self.name} uses threading")

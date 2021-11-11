@@ -14,6 +14,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 
 import DataCollection
+import Threads
 
 class DataProcessing:
     
@@ -43,10 +44,7 @@ class DataProcessing:
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row=2, column=1, rowspan=3, columnspan=4)
 
-    
-    def updateVisual(self):
-        print(f"Update {self.dataCollection.name} visual")
-        self.readNewData()
+    def createVisual(self):
         # Find start and end indices for graphing
         start = 0
         end = len(self.t)
@@ -61,6 +59,11 @@ class DataProcessing:
         print(f"Update {self.dataCollection.name} graph: indices ({start}..{end})  Latest: ({self.t[-1]}, {self.data[-1]})")
         self.plot1.plot(self.t[start:end], self.data[start:end])
         self.dataMutex.release()
+    
+    def updateVisual(self):
+        print(f"Update {self.dataCollection.name} visual")
+        self.readNewData()
+        self.createVisual()
         # Update canvas on UI
         #self.globalUImutex.acquire()
         self.canvas.draw()
@@ -73,6 +76,10 @@ class DataProcessing:
             self.t.append(t)
             self.data.append(data)
             #print(f"New data! {t}, {data}")
+
+    def dataProcessingProcess(self):
+        self.readNewData()
+        self.updateVisual()
                
 
     # ----- Data Processing functions -----

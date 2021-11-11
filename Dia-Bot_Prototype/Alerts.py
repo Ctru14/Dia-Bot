@@ -29,6 +29,7 @@ class Alert:
         self.alertTypeName = StringVar()
         self.alertTypeName.set(self.alertType.name)
         self.dataProcessing = dataProcessing # TODO: Add data processing functionality into alerts!
+        self.errors = []
 
         # Threshold levels
         self.belowValue = nan
@@ -62,12 +63,13 @@ class Alert:
             
         # Units
         tk.Label(self.frame, text=self.thresholdUnits, anchor="w", justify=LEFT, font="none 11").grid(row=1, column=9, columnspan=2)
-        
+
         # Alert notification
-        if randint(0,1) == 1:
-            tk.Label(self.frame, text="Error", anchor=CENTER, font="none 11 bold", fg="red").grid(row=1, column=11, columnspan=2)
-        else:
-            tk.Label(self.frame, text="None", anchor=CENTER, font="none 11", fg="black").grid(row=1, column=11, columnspan=2)
+        tk.Label(self.frame, text="None", anchor=CENTER, font="none 11", fg="black").grid(row=1, column=11, columnspan=2)
+#        if randint(0,1) == 1:
+#            tk.Label(self.frame, text="Error", anchor=CENTER, font="none 11 bold", fg="red").grid(row=1, column=11, columnspan=2)
+#        else:
+#            tk.Label(self.frame, text="None", anchor=CENTER, font="none 11", fg="black").grid(row=1, column=11, columnspan=2)
         return self.frame
     
     # Callback function for changing the alert type
@@ -106,3 +108,9 @@ class Alert:
             except:
                 print(f"Error: cannot convert string {self.thresholdString2.get()} to a number")
    
+    ## Setting up and testing multiprocessing!
+    #def checkForAlerts(self):
+    #    # Randomly get an alert
+    #    if randint(0, 2) == 0:
+    #        # Fake an alert!
+    #
