@@ -404,12 +404,13 @@ class DiaBotGUI():
 
         # Create and add threads
         useProcesses = True
+        shutdownQueue = multiprocessing.Queue()
 
-        soundThread = DiaThread(useProcesses, self.startTime, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData)
-        vibrationThread = DiaThread(useProcesses, self.startTime, self.vibrationSamplingRate, self.vibrationCollection.readAndSendData)
-        temperatureThread = DiaThread(useProcesses, self.startTime, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
-        positionThread = DiaThread(useProcesses, self.startTime, self.positionSamplingRate, self.positionCollection.readAndSendData)
-        graphThread = DiaThread(False, self.startTime, 1/self.visualsRefreshTime, self.updateVisuals)
+        soundThread = DiaThread("soundThread", useProcesses, self.startTime, shutdownQueue, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData)
+        vibrationThread = DiaThread("vibrationThread", useProcesses, self.startTime, shutdownQueue,  self.vibrationSamplingRate, self.vibrationCollection.readAndSendData)
+        temperatureThread = DiaThread("temperatureThread", useProcesses, self.startTime, shutdownQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
+        positionThread = DiaThread("positionThread", useProcesses, self.startTime, shutdownQueue, self.positionSamplingRate, self.positionCollection.readAndSendData)
+        graphThread = DiaThread("graphThread", False, self.startTime, shutdownQueue, 1/self.visualsRefreshTime, self.updateVisuals)
 
         threads = [graphThread, soundThread, vibrationThread, positionThread, temperatureThread]
 
@@ -435,6 +436,24 @@ class DiaBotGUI():
         self.programRunning = False # Stop extra threads
         for t in threads:
             t.endThread()
+            ended = False
+            while not ended:
+                while shutdownQueue.empty():
+                    print(f"Awaiting shutdownQueue message for {t.name}...")
+                    time.sleep(1)
+                msg = shutdownQueue.get()
+                print(f"Message received for {t.name}: {msg}")
+                if msg == "THREAD_ENDED":
+                    ended = True
+      
+        print("All threads ended! Joining...")
+
+        for t in threads:
+            print(f"Joining {t.name}...")
+            t.join(1)
+            if t.is_alive():
+                print(f"Thread {t.name} did not join...terminating")
+                t.terminate()
 
         if self.cameraOn:
             PiInterface.stop_camera()
