@@ -95,7 +95,7 @@ class DiaBotGUI():
         self.videoFrame.grid(row=2, column=2)
 
         # Place frames
-        self.top.bind("<<visualsEvent>>", self.updateVisualsWrapper)
+        self.bindEvents()
         self.placeFrames()
 
 
@@ -255,14 +255,14 @@ class DiaBotGUI():
         
                     
         # Create each alert instance and add frames to the UI  
-        self.vibrationAlert = Alerts.Alert(self.alertControls, "Vibration", "m/s2", Alerts.Alert.AlertType.Above)
-        self.soundAlert = Alerts.Alert(self.alertControls, "Sound", "dB", Alerts.Alert.AlertType.Above)
-        self.temperatureAlert = Alerts.Alert(self.alertControls, "Temperature", "°C", Alerts.Alert.AlertType.Between)
+        self.vibrationAlertTracker = Alerts.AlertTracker(self.alertControls, "Vibration", "m/s2", Alerts.AlertTracker.AlertType.Above)
+        self.soundAlertTracker = Alerts.AlertTracker(self.alertControls, "Sound", "dB", Alerts.AlertTracker.AlertType.Above)
+        self.temperatureAlertTracker = Alerts.AlertTracker(self.alertControls, "Temperature", "°C", Alerts.AlertTracker.AlertType.Between)
         
         
-        self.alerts = [self.vibrationAlert, self.soundAlert, self.temperatureAlert]
+        self.alertTrackers = [self.vibrationAlertTracker, self.soundAlertTracker, self.temperatureAlertTracker]
         nextAlertRow = 3
-        for alert in self.alerts:
+        for alert in self.alertTrackers:
             alert.getAlertFrame().grid(row=nextAlertRow, column=1, columnspan = 10)
             nextAlertRow = nextAlertRow + 1
         
@@ -371,16 +371,22 @@ class DiaBotGUI():
         self.videoFrame.place(x=400, y=300, anchor=tk.NW)
 
 
-    # ----- Threading functions -----
-    
+    # ---------- Threading functions ----------
+   
+    def bindEvents(self):
+        self.top.bind("<<visualsEvent>>", self.updateVisualsWrapper)
+        self.top.bind("<<alertsEvent>>", self.updateAlertsHandler)
+
        
     #tk.Button(videoFrame, text="Update Image", command=updateFrameImage).grid(row=2, column=1)
     
+    # --- Update Visuals Handlers ---
+
     # Sends update visuals event to TK
-    def updateVisuals(self, *args):
+    def generateEvent(self, eventString, *args):
         if self.collectData and self.programRunning:
             try:
-                self.top.event_generate("<<visualsEvent>>")
+                self.top.event_generate(eventString)
             except Exception as e:
                 print(f"Unable to update visuals! Error in event_generate: {e}")
     
@@ -389,9 +395,16 @@ class DiaBotGUI():
         elapsedTime(self.updateVisualsHandler)
     
     def updateVisualsHandler(self):
+        # Graphs
         for dataProcessingClass in self.dataProcessingClassList:
             #dataProcessingClass.readNewData()
             dataProcessingClass.updateVisual()
+   
+    # --- Update Alerts Handlers
+    def updateAlertsHandler(self, event):
+        for tracker in self.alertTrackers:
+            tracker.checkForAlerts()
+
         
     def printTime(self):
         print(self.totalElapsedTime())
@@ -410,9 +423,10 @@ class DiaBotGUI():
         vibrationThread = DiaThread("vibrationThread", useProcesses, self.startTime, shutdownQueue,  self.vibrationSamplingRate, self.vibrationCollection.readAndSendData)
         temperatureThread = DiaThread("temperatureThread", useProcesses, self.startTime, shutdownQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
         positionThread = DiaThread("positionThread", useProcesses, self.startTime, shutdownQueue, self.positionSamplingRate, self.positionCollection.readAndSendData)
-        graphThread = DiaThread("graphThread", False, self.startTime, shutdownQueue, 1/self.visualsRefreshTime, self.updateVisuals)
+        graphThread = DiaThread("graphThread", False, self.startTime, shutdownQueue, 1/self.visualsRefreshTime, self.generateEvent, "<<visualsEvent>>")
+        alertThread = DiaThread("alertThread", False, self.startTime, shutdownQueue, 1/2, self.generateEvent, "<<alertsEvent>>")
 
-        threads = [graphThread, soundThread, vibrationThread, positionThread, temperatureThread]
+        threads = [graphThread, alertThread, soundThread, vibrationThread, positionThread, temperatureThread]
 
         for t in threads:
             t.startThread()
@@ -464,6 +478,8 @@ class DiaBotGUI():
 
         if self.cameraOn:
             PiInterface.stop_camera()
+
+        print("Thank you for using Dia-Bot")
         
 
 def main():
