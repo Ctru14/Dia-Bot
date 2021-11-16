@@ -37,10 +37,10 @@ class DataCollection(DataFields):
 
     # Retrieves all new data from the queue and appends it to the array
     def getAndAddData(self, *args):
-        print(f"Attempting to retrieve from {self.name} queue {self.dataQueue}")
+        #print(f"Attempting to retrieve from {self.name} queue {self.dataQueue}")
         while not self.dataQueue.empty():
             t, data = self.dataQueue.get()
-            print(f"Getting ({t}, {data}) from {self.name} data queue: {self.dataQueue}")
+            #print(f"Getting ({t}, {data}) from {self.name} data queue: {self.dataQueue}")
             self.addData(t, data)
 
     # Reads data from given function 
@@ -48,7 +48,7 @@ class DataCollection(DataFields):
         t = (time.time_ns()-self.globalStartTime)/1_000_000_000
         data = self.readData()
         self.dataQueue.put((t, data))
-        print(f"Adding ({t}, {data}) to {self.name} data queue: {self.dataQueue}")
+        #print(f"Adding ({t}, {data}) to {self.name} data queue: {self.dataQueue}")
         
 
 
@@ -90,22 +90,21 @@ class PositionCollection(DataCollection):
 
 class TemperatureCollection(DataCollection):
 
-    def __init__(self, name, units, samplingRate, globalStartTime, dataQueue):
-        self.currentTempCelsius = 0
-        self.currentTempFarenheit = 32
-        return super().__init__(name, units, samplingRate, globalStartTime, dataQueue)
+    def __init__(self, name, units, samplingRate, globalStartTime, dataQueue, visualQueue): # TODO: REMOVE VISUAL QUEUE
+        super().__init__(name, units, samplingRate, globalStartTime, dataQueue)
+        self.visualQueue = visualQueue # TODO: REMOVE ONCE EXTRA PROCESS IS RUNNING
 
     def readData(self):
         num = randint(-10, 10)
-        self.currentTempCelsius = num
-        self.currentTempFarenheit = num * 9 / 5 + 32
         #print("Reading temperature! - " + str(num))
         return num
 
+    # Reads data from given function 
     def readAndSendData(self, *args):
         t = (time.time_ns()-self.globalStartTime)/1_000_000_000
-        temp = self.readData()
-        self.currentTempCelsius = temp
-        self.currentTempFarenheit = temp * 9 / 5 + 32
-        self.dataQueue.put((t, self.currentTempCelsius, self.currentTempFarenheit))
+        data = self.readData()
+        self.dataQueue.put((t, data))
+        self.visualQueue.put((t, data)) # TODO: REMOVE VQ REFERENCES
+        #print(f"Putting temperature data in its visual queue! {data}")
+
         

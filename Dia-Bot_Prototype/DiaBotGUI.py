@@ -69,42 +69,42 @@ class DiaBotGUI():
 
         # Data collection (Must be created in constructor to guaranteee use in Alerts)
         self.soundLevelSamplingRate = 100
-        self.soundLevelFields, self.soundLevelDataQueue, self.soundLevelGraphQueue, self.soundLevelProcessingQueue, self.soundLevelCollection = self.createDataFields(
+        self.soundLevelFields, self.soundLevelDataQueue, self.soundLevelVisualQueue, self.soundLevelProcessingQueue, self.soundLevelCollection = DiaBotGUI.createDataFields(
             DataCollection.SoundLevelCollection, "Sound Level", "dB", self.soundLevelSamplingRate, self.startTime)
          # TODO: DEPRECATE THIS!
-        soundLevelDataQueue, soundLevelCollection, self.soundLevelProcessing = self.createDataHandlers(
+        soundLevelDataQueue, soundLevelCollection, self.soundLevelProcessing = DiaBotGUI.createDataHandlers(
                                 DataCollection.SoundLevelCollection, DataProcessing.SoundLevelProcessing,
-                               "Sound Level", "dB", self.soundLevelSamplingRate, self.startTime, self.uiMutex, True, self.soundLevelDataQueue)
+                               "Sound Level", "dB", self.soundLevelSamplingRate, self.startTime, self.uiMutex, True, self.soundLevelDataQueue, self.soundLevelVisualQueue)
         
         self.vibrationSamplingRate = 100
-        self.vibrationFields, self.vibrationDataQueue, self.vibrationGraphQueue, self.vibrationProcessingQueue, self.vibrationCollection = self.createDataFields(
+        self.vibrationFields, self.vibrationDataQueue, self.vibrationVisualQueue, self.vibrationProcessingQueue, self.vibrationCollection = DiaBotGUI.createDataFields(
             DataCollection.VibrationCollection, "Vibration", "m/s2", self.vibrationSamplingRate, self.startTime)
          # TODO: DEPRECATE THIS!
-        vibrationDataQueue, vibrationCollection, self.vibrationProcessing = self.createDataHandlers(
+        vibrationDataQueue, vibrationCollection, self.vibrationProcessing = DiaBotGUI.createDataHandlers(
                                 DataCollection.VibrationCollection, DataProcessing.VibrationProcessing,
-                               "Vibration", "m/s2", self.vibrationSamplingRate, self.startTime, self.uiMutex, True, self.vibrationDataQueue)
+                               "Vibration", "m/s2", self.vibrationSamplingRate, self.startTime, self.uiMutex, True, self.vibrationDataQueue, self.vibrationVisualQueue)
         
         self.positionSamplingRate = 10
-        self.positionFields, self.positionDataQueue, self.positionGraphQueue, self.positionProcessingQueue, self.positionCollection = self.createDataFields(
+        self.positionFields, self.positionDataQueue, self.positionVisualQueue, self.positionProcessingQueue, self.positionCollection = DiaBotGUI.createDataFields(
             DataCollection.PositionCollection, "Position", "m", self.positionSamplingRate, self.startTime)
          # TODO: DEPRECATE THIS!
-        positionDataQueue, positionCollection, self.positionProcessing = self.createDataHandlers(
+        positionDataQueue, positionCollection, self.positionProcessing = DiaBotGUI.createDataHandlers(
                                 DataCollection.PositionCollection, DataProcessing.PositionProcessing,
-                               "Position", "m", self.positionSamplingRate, self.startTime, self.uiMutex, True, self.positionDataQueue)
+                               "Position", "m", self.positionSamplingRate, self.startTime, self.uiMutex, True, self.positionDataQueue, self.positionVisualQueue)
         
         self.temperatureSamplingRate = 1/5
-        self.temperatureFields, self.temperatureDataQueue, self.temperatureGraphQueue, self.temperatureProcessingQueue, self.temperatureCollection = self.createDataFields(
+        self.temperatureFields, self.temperatureDataQueue, self.temperatureVisualQueue, self.temperatureProcessingQueue, self.temperatureCollection = DiaBotGUI.createDataFields(
             DataCollection.TemperatureCollection, "Temperature", "°C", self.temperatureSamplingRate, self.startTime)
          # TODO: DEPRECATE THIS!
-        temperatureDataQueue, temperatureCollection, self.temperatureProcessing = self.createDataHandlers(
+        temperatureDataQueue, temperatureCollection, self.temperatureProcessing = DiaBotGUI.createDataHandlers(
                                 DataCollection.TemperatureCollection, DataProcessing.TemperatureProcessing,
-                               "Temperature", "°C", self.temperatureSamplingRate, self.startTime, self.uiMutex, True, self.temperatureDataQueue)
+                               "Temperature", "°C", self.temperatureSamplingRate, self.startTime, self.uiMutex, True, self.temperatureDataQueue, self.temperatureVisualQueue)
         
         
         
         # Group of all the data classes
-        self.dataFieldsClassList = [self.soundLevelFields, self.vibrationFields, self.temperatureFields, self.positionFields]
-        self.dataProcessingClassList = [self.soundLevelProcessing, self.vibrationProcessing, self.temperatureProcessing, self.positionProcessing]
+        self.dataFieldsClassList = [self.soundLevelFields, self.vibrationFields, self.positionFields, self.temperatureFields]
+        self.dataProcessingClassList = [self.soundLevelProcessing, self.vibrationProcessing, self.positionProcessing, self.temperatureProcessing]
 
 
 
@@ -325,9 +325,47 @@ class DiaBotGUI():
         #global collectData
         self.collectData = not self.collectData
         print(f"Setting colletData to {self.collectData}")
-    
 
     # ------------------ Data Pane -----------------------
+    
+    # Create class for Temperature text/button display
+    class TemperatureDisplay:
+
+        def __init__(self, visualQueue):#, tempLabel, switchTempViewButton):
+            self.viewFarenheit = False
+            self.currentTempCelsius = 0
+            self.currentTempFarenheit = 0
+            self.tempDisplayText = StringVar()
+            self.tempDisplayText.set(self.getDisplayText())
+            self.tempViewButtonText = StringVar()
+            self.tempViewButtonText.set("View Farenheit")
+            self.visualQueue = visualQueue
+
+        def addViewComponents(self, tempLabel, switchTempViewButton):
+            self.tempLabel = tempLabel
+            self.switchTempViewButton = switchTempViewButton
+            
+        def getDisplayText(self):
+            if self.viewFarenheit:
+                return f"{self.currentTempFarenheit} °F"
+            else:
+                return f"{self.currentTempCelsius} °C"
+        
+        def switchTempView(self):
+            print(f"Switching view! Temp = {self.tempDisplayText.get()}, Button = {self.tempViewButtonText.get()}")
+            if self.viewFarenheit:
+                # Currently Farenheit --> Switch to Celsius
+                self.viewFarenheit = False
+                self.tempDisplayText.set(self.getDisplayText())
+                self.tempViewButtonText.set("View Farenheit")
+            else:
+                # Currently Celsius --> Switch to Farenheit
+                self.viewFarenheit = True
+                self.tempDisplayText.set(self.getDisplayText())
+                self.tempViewButtonText.set("View Celsius")
+
+
+    # Main method to setup data pane with each data category
     def setupDataPane(self):
         tk.Label(self.dataFrame, text="Data", font="none 18 bold").grid(row=1, column=1, columnspan=50)
         tk.Button(self.dataFrame, text="Toggle Data", command=self.toggleData).grid(row=1, column=2)
@@ -342,36 +380,50 @@ class DiaBotGUI():
         
         
         # Sound Level
-        self.createNewDataPane(self.soundLevelProcessing, self.soundLevelFrame, row=2, col=1)
+        soundLevelPlotVars = DiaBotGUI.createNewDataPane(DataProcessing.SoundLevelProcessing, self.soundLevelFields.name, self.soundLevelFrame, 2, 1, self.soundLevelFields.units)
         
         # Vibration
-        self.createNewDataPane(self.vibrationProcessing, self.vibrationFrame, row=2, col=2)
+        vibrationPlotVars = DiaBotGUI.createNewDataPane(DataProcessing.VibrationProcessing, self.vibrationFields.name, self.vibrationFrame, 2, 2, self.vibrationFields.units)
                 
         # Position
-        self.createNewDataPane(self.positionProcessing, self.positionFrame, row=2, col=3)
+        positionPlotVars = DiaBotGUI.createNewDataPane(DataProcessing.PositionProcessing, self.positionFields.name, self.positionFrame, 2, 3, self.positionFields.units)
 
         # Temperature
-        self.createNewDataPane(self.temperatureProcessing, self.temperatureFrame, row=2, col=4)
+        self.tempViewClass = DiaBotGUI.TemperatureDisplay(self.temperatureVisualQueue)
+        self.tempLabel, self.switchTempViewButton = DiaBotGUI.createNewDataPane(DataProcessing.TemperatureProcessing, self.temperatureFields.name, self.temperatureFrame, 2, 4, 
+                                                                                self.tempViewClass.tempDisplayText, self.tempViewClass.tempViewButtonText, self.tempViewClass.switchTempView)
+        self.tempViewClass.addViewComponents(self.tempLabel, self.switchTempViewButton)
+
+        self.dataViewVarsList = [soundLevelPlotVars, vibrationPlotVars, positionPlotVars, self.tempViewClass]
 
 
     # Creates new data collection and processing classes, returns those along with their Processing queue 
-    def createDataHandlers(self, CollectionType, ProcessingType, name, units, samplingRate, startTime, uiMutex, isPlotted, q):
+    # TO BE DEPRECATED
+    def createDataHandlers(CollectionType, ProcessingType, name, units, samplingRate, startTime, uiMutex, isPlotted, q, visualQ):
         #q = multiprocessing.Queue()
-        collection = CollectionType(name, units, samplingRate, startTime, q)
-        processing = ProcessingType(name, units, samplingRate, startTime, isPlotted, q)
+        if CollectionType == DataCollection.TemperatureCollection:
+            collection = CollectionType(name, units, samplingRate, startTime, q, visualQ)
+        else:
+            collection = CollectionType(name, units, samplingRate, startTime, q)
+        processing = ProcessingType(name, units, samplingRate, startTime, isPlotted, q, 0, 0)
         return (q, collection, processing)
 
-    def createDataFields(self, CollectionType, name, units, samplingRate, startTime):
+    def createDataFields(CollectionType, name, units, samplingRate, startTime): # TODO: REMOVE VISUALQ
         fields = DataCollection.DataFields(name, units, samplingRate, startTime)
         dataQueue = multiprocessing.Queue()
-        graphQueue = multiprocessing.Queue()
+        visualQueue = multiprocessing.Queue()
         processingQueue = multiprocessing.Queue()
-        collection = CollectionType(name, units, samplingRate, startTime, dataQueue)
-        return (fields, dataQueue, graphQueue, processingQueue, collection)
+        #collection = CollectionType(name, units, samplingRate, startTime, dataQueue)
+        if CollectionType == DataCollection.TemperatureCollection:
+            collection = CollectionType(name, units, samplingRate, startTime, dataQueue, visualQueue)
+        else:
+            collection = CollectionType(name, units, samplingRate, startTime, dataQueue)
+        return (fields, dataQueue, visualQueue, processingQueue, collection)
 
-    def createNewDataPane(self, processing, frame, row, col):
-        processing.tkAddDataPane(frame)
+    def createNewDataPane(ProcessingType, name, frame, row, col, *args):
+        plotVars = ProcessingType.tkAddDataPane(name, frame, *args)
         frame.grid(row=row, column=col, padx=10)
+        return plotVars
 
 
 
@@ -424,9 +476,14 @@ class DiaBotGUI():
     
     def updateVisualsHandler(self):
         # Graphs
-        for dataProcessingClass in self.dataProcessingClassList:
-            #dataProcessingClass.readNewData()
-            dataProcessingClass.updateVisual()
+        for i in range(len(self.dataViewVarsList)):
+            if i < 3: # TODO: Splice data collection and remove this case
+                self.dataProcessingClassList[i].updateVisual(self.dataViewVarsList[i])
+            else:
+                DataProcessing.TemperatureProcessing.updateVisual(self.dataViewVarsList[i])
+        #for dataProcessingClass in self.dataProcessingClassList:
+        #    #dataProcessingClass.readNewData()
+        #    dataProcessingClass.updateVisual()
    
     # --- Update Alerts Handlers ---
     def updateAlertsHandler(self, event):
@@ -434,7 +491,7 @@ class DiaBotGUI():
             tracker.checkForAlerts()
 
     # -------- Function to initialize data processing processes --------
-    def beginDataProcessing(self, name, units, samplingRate, shutdownQueue, graphQueue, processingQueue):
+    def beginDataProcessing(self, name, units, samplingRate, shutdownQueue, visualQueue, processingQueue):
         threadsStartedCount = 0
         processing = DataProcessing.DataProcessing()
         collectionThread = DiaThread(f"{name}CollectionThread", False, self.startTime, shutdownQueue, samplingRate)

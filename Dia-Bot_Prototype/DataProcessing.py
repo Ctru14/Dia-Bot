@@ -18,33 +18,36 @@ import Threads
 
 class DataProcessing(DataCollection):
     
-    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue):
+    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
         super().__init__(name, units, samplingRate, globalStartTime, dataQueue)
-        #self.dataCollection = dataCollection
+        self.visualQueue = visualQueue
+        self.processingQueue = processingQueue
         #self.dataMutex = threading.Lock()
         #self.dataMutex = multiprocessing.Lock()
-        #self.globalUImutex = globalUImutex
-        #self.dataQueue = dataQueue
-        #self.t = []
-        #self.data = []
-        if isPlotted:
-            self.fig = Figure(figsize=(3,2.5), dpi=80)
-            self.fig.patch.set_facecolor("#DBDBDB")
-            self.plot1 = self.fig.add_subplot(111)
-            self.plot1.plot(self.t, self.data)
-            self.plot1.set_ylabel(self.units)
+        #if isPlotted:
+        #    self.fig = Figure(figsize=(3,2.5), dpi=80)
+        #    self.fig.patch.set_facecolor("#DBDBDB")
+        #    self.plot1 = self.fig.add_subplot(111)
+        #    self.plot1.plot(self.t, self.data)
+        #    self.plot1.set_ylabel(self.units)
                
         
     # Create and add the Tkinter pane for data visualization - may be overwritten for those without graphs
-    def tkAddDataPane(self, tkTop):
+    def tkAddDataPane(name, tkTop, *args):
+        units = args[0]
         # Top label
-        tk.Label(tkTop, text=self.name, font="none 12 bold").grid(row=1, column=1, columnspan=5)
+        tk.Label(tkTop, text=name, font="none 12 bold").grid(row=1, column=1, columnspan=5)
         # Add random graph
-        self.canvas = FigureCanvasTkAgg(self.fig, master=tkTop)
-        self.canvas.draw()
-        self.canvas.get_tk_widget().grid(row=2, column=1, rowspan=3, columnspan=4)
+        fig = Figure(figsize=(3,2.5), dpi=80)
+        fig.patch.set_facecolor("#DBDBDB")
+        plot1 = fig.add_subplot(111)
+        plot1.set_ylabel(units)
+        canvas = FigureCanvasTkAgg(fig, master=tkTop)
+        canvas.draw()
+        canvas.get_tk_widget().grid(row=2, column=1, rowspan=3, columnspan=4)
+        return (fig, plot1, canvas)
 
-    def createVisual(self):
+    def createVisual(self, plot1):
         # Find start and end indices for graphing
         start = 0
         end = len(self.t)
@@ -53,21 +56,25 @@ class DataProcessing(DataCollection):
             return
         # Graph the last 5 seconds
         start = int(max(0, end-2*self.samplingRate))
-        self.plot1.cla() # Find way to update graphs without it taking too long!!
+        plot1.cla() # Find way to update graphs without it taking too long!!
         # Update plot
         #self.dataMutex.acquire()
         print(f"Update {self.name} graph: indices ({start}..{end})  Latest: ({self.t[-1]}, {self.data[-1]})")
-        self.plot1.plot(self.t[start:end], self.data[start:end])
+        plot1.plot(self.t[start:end], self.data[start:end])
         #self.dataMutex.release()
         #self.dataMutex.release()
     
-    def updateVisual(self):
+    # Called by UI thread - after proper changes, this will receive and post a new plot from the visual queue
+    def updateVisual(self, dataViewVars):
         print(f"Update {self.name} visual")
+        fig = dataViewVars[0]
+        plot1 = dataViewVars[1]
+        canvas = dataViewVars[2]
         self.getAndAddData()
-        self.createVisual()
+        self.createVisual(plot1)
         # Update canvas on UI
         #self.globalUImutex.acquire()
-        self.canvas.draw()
+        canvas.draw()
         print(f"Graph done: {self.name} (total time = {(time.time_ns()-self.globalStartTime)/1_000_000_000} s)\n")
         #self.globalUImutex.release()
         
@@ -97,78 +104,51 @@ class DataProcessing(DataCollection):
 
 class SoundLevelProcessing(DataProcessing):
 
-    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue):
-        return super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue)
+    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
+        return super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue)
 
 
 
 class VibrationProcessing(DataProcessing):
 
-    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue):
-        return super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue)
+    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
+        return super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue)
 
 
 
 class PositionProcessing(DataProcessing):
 
-    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue):
-        return super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue)
+    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
+        return super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue)
 
 
 
 class TemperatureProcessing(DataProcessing):
 
-    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue):
-        super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue)
-        self.viewFarenheit = False
-        self.currentTempCelsius = 0
-        self.currentTempFarenheit = 0
-        self.tempDisplayText = StringVar()
-        self.tempDisplayText.set(self.getDisplayText())
-        self.tempViewButtonText = StringVar()
-        self.tempViewButtonText.set("View Farenheit")
+    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
+        super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue)
 
-
-    def getDisplayText(self):
-        if self.viewFarenheit:
-            return f"{self.currentTempFarenheit} °F"
-        else:
-            return f"{self.currentTempCelsius} °C"
 
     # Overwrite data visuals method: no graph needed
-    def tkAddDataPane(self, tkTop):
+    def tkAddDataPane(name, tkTop, tempDisplayText, tempViewButtonText, switchTempViewCommand):
         # Top label
-        tk.Label(tkTop, text=self.name, font="none 12 bold").grid(row=1, column=1, columnspan=5)
+        tk.Label(tkTop, text=name, font="none 12 bold").grid(row=1, column=1, columnspan=5)
         # Add temperature text and display button
-        self.tempLabel = tk.Label(tkTop, textvariable=self.tempDisplayText, font="none 14")
-        self.tempLabel.grid(row=3, column=1, columnspan=5)
-        self.switchTempViewButton = tk.Button(tkTop, textvariable=self.tempViewButtonText, command=self.switchTempView)
-        self.switchTempViewButton.grid(row=4, column=1, columnspan=5)
+        tempLabel = tk.Label(tkTop, textvariable=tempDisplayText, font="none 14")
+        tempLabel.grid(row=3, column=1, columnspan=5)
+        switchTempViewButton = tk.Button(tkTop, textvariable=tempViewButtonText, command=switchTempViewCommand)
+        switchTempViewButton.grid(row=4, column=1, columnspan=5)
+        return (tempLabel, switchTempViewButton)
 
-    def switchTempView(self):
-        print(f"Switching view! Temp = {self.tempDisplayText.get()}, Button = {self.tempViewButtonText.get()}")
-        if self.viewFarenheit:
-            # Currently Farenheit --> Switch to Celsius
-            self.viewFarenheit = False
-            self.tempDisplayText.set(self.getDisplayText())
-            self.tempViewButtonText.set("View Farenheit")
-        else:
-            # Currently Celsius --> Switch to Farenheit
-            self.viewFarenheit = True
-            self.tempDisplayText.set(self.getDisplayText())
-            self.tempViewButtonText.set("View Celsius")
+    # Called by UI thread to update temperature printout
+    def updateVisual(tempView):
+        TemperatureProcessing.readNewData(tempView)
+        print(f"Update TEMPERATURE visual: {tempView.getDisplayText()}")
+        tempView.tempDisplayText.set(tempView.getDisplayText())
 
-    def updateVisual(self):
-        self.readNewData()
-        print(f"Update temperature visual: {self.getDisplayText()}")
-        self.tempDisplayText.set(self.getDisplayText())
-        #self.tempViewButtonText.set("View Farenheit")
-
-    def readNewData(self):
-        while not self.dataQueue.empty():
-            t, dataC, dataF = self.dataQueue.get()
-            self.t.append(t)
-            self.data.append(dataC)
-            self.currentTempCelsius = dataC
-            self.currentTempFarenheit = dataF
-            print(f"New temperature data! {t}, C={dataC}, F={dataF}")
+    def readNewData(tempView):
+        while not tempView.visualQueue.empty():
+            t, dataC = tempView.visualQueue.get()
+            tempView.currentTempCelsius = dataC
+            tempView.currentTempFarenheit = dataC * 9 / 5 + 32
+            print(f"New temperature data! {t}, C={tempView.currentTempCelsius}, F={tempView.currentTempFarenheit}")

@@ -26,7 +26,7 @@ class DiaThread():
 
     # Wrapper to other functions which loops 
     def loopAtFrequency(self, freqHz, endThreadQueue, loopFunction, *args):
-        print(f"Starting thread {self.name} with args {args} (len {len(args)}) at {freqHz} Hz")
+        print(f"Starting thread {self.name} with args {args} (len {len(args)}) at {freqHz} Hz - {self.thread}")
         loopTime = 1/freqHz
         loopRuns = 0
         while self.threadRunning:
