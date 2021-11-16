@@ -1,4 +1,5 @@
 import sys
+import os
 import tkinter as tk
 from tkinter import *
 from PIL import ImageTk, Image
@@ -44,6 +45,7 @@ class DiaBotGUI():
     def __init__(self, *args, **kwargs):
         # Initialize necessary variables
         self.cameraOn = False
+        self.pid = os.getpid()
         self.top = tk.Tk()
         self.top.title('Dia-Bot')
         self.speed = IntVar()
@@ -376,7 +378,7 @@ class DiaBotGUI():
         self.temperatureFrame = tk.Frame(self.dataFrame, width=350, height=350)#, bg="orange")
         self.positionFrame = tk.Frame(self.dataFrame, width=350, height=350)#, bg="green")
         self.dataFrames = [self.soundLevelFrame, self.vibrationFrame, self.temperatureFrame, self.positionFrame]
-        self.units = ["dB", "m/s2", "C", "m"]
+        self.units = ["dB", "m/s2", "°C", "m"]
         
         
         # Sound Level
@@ -491,10 +493,62 @@ class DiaBotGUI():
             tracker.checkForAlerts()
 
     # -------- Function to initialize data processing processes --------
-    def beginDataProcessing(self, name, units, samplingRate, shutdownQueue, visualQueue, processingQueue):
-        threadsStartedCount = 0
-        processing = DataProcessing.DataProcessing()
-        collectionThread = DiaThread(f"{name}CollectionThread", False, self.startTime, shutdownQueue, samplingRate)
+    #   ----- This will be run in the context of the new process! -----
+    def beginDataProcessing(ProcessingType, name, units, samplingRate, startTime, isPlotted, externalShutdownInitQueue, dataQueue, visualQueue, processingQueue):
+        pid = os.getpid()
+        threadRunningCount = 0
+        endMessageReceived = False
+        internalShutdownRespQueue = multiprocessing.Queue()
+
+        # Initialize DataProcessing class in new process context
+        processing = ProcessingType(name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue)
+
+        # Add child threads for data collection, visuals, and processing
+        collectionThread = DiaThread(f"{name}CollectionThread", False, startTime, internalShutdownRespQueue, samplingRate, processing.getAndAddData)
+        # TODO: visualThread = 
+        # TODO: processingThread = 
+
+        # Start worker threads
+        threads = [collectionThread]
+        for t in threads:
+            t.startThread()
+            threadRunningCount += 1
+            print(f"Starting thread {t.name} in {pid}:{name}")
+
+        # Wait for shutdown message - check every 3 seconds
+        while not endMessageReceived:
+            while externalShutdownInitQueue.empty():
+                time.sleep(3)
+            msg = externalShutdownInitQueue.get()
+            if msg == "END_PROCESS":
+                endMessageReceived = True
+
+        # End threads
+        for t in threads:
+            t.endThread()
+        # Collect Thread ending messages
+        while threadRunningCount > 0:
+            # Check for thread ending messages every second
+            if not internalShutdownRespQueue.empty():
+                msg, name = internalShutdownRespQueue.get()
+                if msg == "THREAD_ENDED":
+                    threadRunningCount -= 1
+                    print(f"Shutdown message received within {pid}:{name} - waiting on {threadRunningCount} more!")
+                else:
+                    print(f"UNEXPECTED MESSAGE IN SHUTDOWN RESPONSE QUEUE: {msg}")
+            else:
+                time.sleep(1)
+
+        # Threads ended - join me, and together, we will rule the galaxy...
+        print(f"All threads ended in {name}:{pid} - joining...")
+        for t in threads:
+            print(f"Joining {t.name}...")
+            t.join(1)
+            if t.is_alive():
+                print(f"Thread {t.name} did not join...terminating")
+                t.terminate()
+        print(f"Process {pid}:{name} completed.")
+
 
 
         
@@ -509,27 +563,33 @@ class DiaBotGUI():
 
         # Create and add threads
         useProcesses = True
-        shutdownQueue = multiprocessing.Queue()
+        shutdownRespQueue = multiprocessing.Queue()
 
         # ----- Create other processes and threads -----
         # GUI updating threads
-        graphThread = DiaThread("graphThread", False, self.startTime, shutdownQueue, 1/self.visualsRefreshTime, self.generateEvent, "<<visualsEvent>>")
-        alertThread = DiaThread("alertThread", False, self.startTime, shutdownQueue, 1/2, self.generateEvent, "<<alertsEvent>>")
+        graphThread = DiaThread("graphThread", False, self.startTime, shutdownRespQueue, 1/self.visualsRefreshTime, self.generateEvent, "<<visualsEvent>>")
+        alertThread = DiaThread("alertThread", False, self.startTime, shutdownRespQueue, 1/2, self.generateEvent, "<<alertsEvent>>")
 
         # Data collection threads (separate processes)
-        soundThread = DiaThread("soundThread", useProcesses, self.startTime, shutdownQueue, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData)
-        vibrationThread = DiaThread("vibrationThread", useProcesses, self.startTime, shutdownQueue,  self.vibrationSamplingRate, self.vibrationCollection.readAndSendData)
-        temperatureThread = DiaThread("temperatureThread", useProcesses, self.startTime, shutdownQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
-        positionThread = DiaThread("positionThread", useProcesses, self.startTime, shutdownQueue, self.positionSamplingRate, self.positionCollection.readAndSendData)
+        soundThread = DiaThread("soundThread", useProcesses, self.startTime, shutdownRespQueue, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData)
+        vibrationThread = DiaThread("vibrationThread", useProcesses, self.startTime, shutdownRespQueue,  self.vibrationSamplingRate, self.vibrationCollection.readAndSendData)
+        temperatureThread = DiaThread("temperatureThread", useProcesses, self.startTime, shutdownRespQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
+        positionThread = DiaThread("positionThread", useProcesses, self.startTime, shutdownRespQueue, self.positionSamplingRate, self.positionCollection.readAndSendData)
         
         # TODO: FINISH SECTION (with beginDataProcessing above) - Parent processes for data processing
-        vibrationProcess = DiaProcess("vibrationProcess", self.startTime, shutdownQueue)
+        #vibrationProcess = DiaProcess("vibrationProcess", self.startTime, shutdownRespQueue)
+        tempShutdownInitQueue = multiprocessing.Queue()
+        temperatureProcess = multiprocessing.Process(target=DiaBotGUI.beginDataProcessing, 
+                                                     args=(DataProcessing.TemperatureProcessing, "Temperature", "°C", self.temperatureSamplingRate, self.startTime, False, 
+                                                           tempShutdownInitQueue, self.temperatureDataQueue, self.temperatureVisualQueue, self.temperatureProcessingQueue))
 
         threads = [graphThread, alertThread, soundThread, vibrationThread, positionThread, temperatureThread]
 
         for t in threads:
             t.startThread()
         self.programRunning = True # Used in updateVisuals()
+
+        temperatureProcess.start() # TODO: Change to use all processes
 
         # Start camera preview
         try:
@@ -543,9 +603,14 @@ class DiaBotGUI():
         #print("Start thread time: " + str((totalTimeNs/1_000_000)) + " ms")
         
         # ----- Blocking call: Begin TK mainloop -----
+        print("-------- BEGINING TK MAINLOOP --------")
         self.top.mainloop()
+        print("-------- TK MAINLOOP ENDED: ENDING WORKER THREADS --------")
         
         # After UI closed: cleanup!
+        
+        # TODO: Shutdown extra processes properly
+        tempShutdownInitQueue.put("END_PROCESS")
 
         # Send signals to end all threads
         threadRunningCount = 0
@@ -558,8 +623,8 @@ class DiaBotGUI():
         ended = False 
         while not ended:
             # Receive new thread messages
-            if not shutdownQueue.empty():
-                msg, name = shutdownQueue.get()
+            if not shutdownRespQueue.empty():
+                msg, name = shutdownRespQueue.get()
                 if msg == "THREAD_ENDED":
                     threadRunningCount = threadRunningCount - 1
                     print(f"Shutdown message received from {name} - waiting on {threadRunningCount} more!")
@@ -567,7 +632,7 @@ class DiaBotGUI():
                 ended = True
             time.sleep(1)
                   
-        print("All threads ended! Joining...")
+        print(f"All threads ended in {self.pid}:parent process! Joining...")
         for t in threads:
             print(f"Joining {t.name}...")
             t.join(1)
