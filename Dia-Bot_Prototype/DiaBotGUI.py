@@ -19,6 +19,7 @@ import DataCollection
 import DataProcessing
 import Alerts
 from Threads import DiaThread
+from Threads import DiaProcess
 
 piConnected = True
 try:
@@ -56,6 +57,56 @@ class DiaBotGUI():
         self.uiMutex = multiprocessing.Lock()
         self.startTime = time.time_ns()
 
+        # Define GUI frames
+        #   Primary sections
+        self.controlFrame = tk.Frame(self.top, width=400, height=900)#, bg='orange')
+        self.dataFrame = tk.Frame(self.top, width=1120, height=270)#, bg='blue')
+        self.videoFrame = tk.Frame(self.top, width=1120, height=630)#, bg='red')
+        #   Individual Control Frames
+        self.movementControls = tk.Frame(self.controlFrame, width=400, height=280)#, bg='blue')
+        self.cameraControls = tk.Frame(self.controlFrame, width=400, height=280)
+        self.alertControls = tk.Frame(self.controlFrame, width=400, height=280)
+
+        # Data collection (Must be created in constructor to guaranteee use in Alerts)
+        self.soundLevelSamplingRate = 100
+        self.soundLevelFields, self.soundLevelDataQueue, self.soundLevelGraphQueue, self.soundLevelProcessingQueue, self.soundLevelCollection = self.createDataFields(
+            DataCollection.SoundLevelCollection, "Sound Level", "dB", self.soundLevelSamplingRate, self.startTime)
+         # TODO: DEPRECATE THIS!
+        soundLevelDataQueue, soundLevelCollection, self.soundLevelProcessing = self.createDataHandlers(
+                                DataCollection.SoundLevelCollection, DataProcessing.SoundLevelProcessing,
+                               "Sound Level", "dB", self.soundLevelSamplingRate, self.startTime, self.uiMutex, True, self.soundLevelDataQueue)
+        
+        self.vibrationSamplingRate = 100
+        self.vibrationFields, self.vibrationDataQueue, self.vibrationGraphQueue, self.vibrationProcessingQueue, self.vibrationCollection = self.createDataFields(
+            DataCollection.VibrationCollection, "Vibration", "m/s2", self.vibrationSamplingRate, self.startTime)
+         # TODO: DEPRECATE THIS!
+        vibrationDataQueue, vibrationCollection, self.vibrationProcessing = self.createDataHandlers(
+                                DataCollection.VibrationCollection, DataProcessing.VibrationProcessing,
+                               "Vibration", "m/s2", self.vibrationSamplingRate, self.startTime, self.uiMutex, True, self.vibrationDataQueue)
+        
+        self.positionSamplingRate = 10
+        self.positionFields, self.positionDataQueue, self.positionGraphQueue, self.positionProcessingQueue, self.positionCollection = self.createDataFields(
+            DataCollection.PositionCollection, "Position", "m", self.positionSamplingRate, self.startTime)
+         # TODO: DEPRECATE THIS!
+        positionDataQueue, positionCollection, self.positionProcessing = self.createDataHandlers(
+                                DataCollection.PositionCollection, DataProcessing.PositionProcessing,
+                               "Position", "m", self.positionSamplingRate, self.startTime, self.uiMutex, True, self.positionDataQueue)
+        
+        self.temperatureSamplingRate = 1/5
+        self.temperatureFields, self.temperatureDataQueue, self.temperatureGraphQueue, self.temperatureProcessingQueue, self.temperatureCollection = self.createDataFields(
+            DataCollection.TemperatureCollection, "Temperature", "°C", self.temperatureSamplingRate, self.startTime)
+         # TODO: DEPRECATE THIS!
+        temperatureDataQueue, temperatureCollection, self.temperatureProcessing = self.createDataHandlers(
+                                DataCollection.TemperatureCollection, DataProcessing.TemperatureProcessing,
+                               "Temperature", "°C", self.temperatureSamplingRate, self.startTime, self.uiMutex, True, self.temperatureDataQueue)
+        
+        
+        
+        # Group of all the data classes
+        self.dataFieldsClassList = [self.soundLevelFields, self.vibrationFields, self.temperatureFields, self.positionFields]
+        self.dataProcessingClassList = [self.soundLevelProcessing, self.vibrationProcessing, self.temperatureProcessing, self.positionProcessing]
+
+
 
     # Closes relevant processes and stops GPIO
     def exit(self):
@@ -73,16 +124,6 @@ class DiaBotGUI():
     def setupGuiFrames(self):
         self.top.resizable(width=False, height=False)
         self.top.geometry("1600x900")
-
-        # Primary sections
-        self.controlFrame = tk.Frame(self.top, width=400, height=900)#, bg='orange')
-        self.dataFrame = tk.Frame(self.top, width=1120, height=270)#, bg='blue')
-        self.videoFrame = tk.Frame(self.top, width=1120, height=630)#, bg='red')
-        
-        # Individual Control Frames
-        self.movementControls = tk.Frame(self.controlFrame, width=400, height=280)#, bg='blue')
-        self.cameraControls = tk.Frame(self.controlFrame, width=400, height=280)
-        self.alertControls = tk.Frame(self.controlFrame, width=400, height=280)
 
         # Build the frames
         self.setupControlsPane()
@@ -107,7 +148,7 @@ class DiaBotGUI():
         PiInterface.speed=self.speed.get()
     
     def updateAlerts(self):
-        for alert in self.alerts:
+        for alert in self.alertTrackers:
             alert.confirmUpdates()
 
     # --- Controls pane setup function ---
@@ -301,49 +342,36 @@ class DiaBotGUI():
         
         
         # Sound Level
-        self.soundLevelSamplingRate = 100
-        self.soundLevelQueue, self.soundLevelCollection, self.soundLevelProcessing = self.createNewDataPane(
-                                DataCollection.SoundLevelCollection, DataProcessing.SoundLevelProcessing,
-                               "Sound Level", "dB", self.soundLevelSamplingRate, self.startTime, self.soundLevelFrame, self.uiMutex, True,
-                               row=2, col=1)
+        self.createNewDataPane(self.soundLevelProcessing, self.soundLevelFrame, row=2, col=1)
         
-        
-        ## Vibration
-        self.vibrationSamplingRate = 100
-        self.vibrationQueue, self.vibrationCollection, self.vibrationProcessing = self.createNewDataPane(
-                                DataCollection.VibrationCollection, DataProcessing.VibrationProcessing,
-                               "Vibration", "m/s2", self.vibrationSamplingRate, self.startTime, self.vibrationFrame, self.uiMutex, True,
-                               row=2, col=2)
-        
-        
+        # Vibration
+        self.createNewDataPane(self.vibrationProcessing, self.vibrationFrame, row=2, col=2)
+                
         # Position
-        self.positionSamplingRate = 10
-        self.positionQueue, self.positionCollection, self.positionProcessing = self.createNewDataPane(
-                                DataCollection.PositionCollection, DataProcessing.PositionProcessing,
-                               "Position", "m", self.positionSamplingRate, self.startTime, self.positionFrame, self.uiMutex, True,
-                               row=2, col=3)
-
+        self.createNewDataPane(self.positionProcessing, self.positionFrame, row=2, col=3)
 
         # Temperature
-        self.temperatureSamplingRate = 1/5
-        self.temperatureQueue, self.temperatureCollection, self.temperatureProcessing = self.createNewDataPane(
-                                DataCollection.TemperatureCollection, DataProcessing.TemperatureProcessing,
-                               "Temperature", "°C", self.temperatureSamplingRate, self.startTime, self.temperatureFrame, self.uiMutex, True,
-                               row=2, col=4)
-
-        
-        # Group of all the data classes
-        self.dataProcessingClassList = [self.soundLevelProcessing, self.vibrationProcessing, self.temperatureProcessing, self.positionProcessing]
+        self.createNewDataPane(self.temperatureProcessing, self.temperatureFrame, row=2, col=4)
 
 
     # Creates new data collection and processing classes, returns those along with their Processing queue 
-    def createNewDataPane(self, CollectionType, ProcessingType, name, units, samplingRate, startTime, frame, uiMutex, isPlotted, row, col):
-        q = multiprocessing.Queue()
+    def createDataHandlers(self, CollectionType, ProcessingType, name, units, samplingRate, startTime, uiMutex, isPlotted, q):
+        #q = multiprocessing.Queue()
         collection = CollectionType(name, units, samplingRate, startTime, q)
-        processing = ProcessingType(collection, frame, uiMutex, isPlotted, q)
-        processing.tkAddDataPane()
-        frame.grid(row=row, column=col, padx=10)
+        processing = ProcessingType(name, units, samplingRate, startTime, isPlotted, q)
         return (q, collection, processing)
+
+    def createDataFields(self, CollectionType, name, units, samplingRate, startTime):
+        fields = DataCollection.DataFields(name, units, samplingRate, startTime)
+        dataQueue = multiprocessing.Queue()
+        graphQueue = multiprocessing.Queue()
+        processingQueue = multiprocessing.Queue()
+        collection = CollectionType(name, units, samplingRate, startTime, dataQueue)
+        return (fields, dataQueue, graphQueue, processingQueue, collection)
+
+    def createNewDataPane(self, processing, frame, row, col):
+        processing.tkAddDataPane(frame)
+        frame.grid(row=row, column=col, padx=10)
 
 
 
@@ -400,10 +428,17 @@ class DiaBotGUI():
             #dataProcessingClass.readNewData()
             dataProcessingClass.updateVisual()
    
-    # --- Update Alerts Handlers
+    # --- Update Alerts Handlers ---
     def updateAlertsHandler(self, event):
         for tracker in self.alertTrackers:
             tracker.checkForAlerts()
+
+    # -------- Function to initialize data processing processes --------
+    def beginDataProcessing(self, name, units, samplingRate, shutdownQueue, graphQueue, processingQueue):
+        threadsStartedCount = 0
+        processing = DataProcessing.DataProcessing()
+        collectionThread = DiaThread(f"{name}CollectionThread", False, self.startTime, shutdownQueue, samplingRate)
+
 
         
     def printTime(self):
@@ -419,12 +454,19 @@ class DiaBotGUI():
         useProcesses = True
         shutdownQueue = multiprocessing.Queue()
 
+        # ----- Create other processes and threads -----
+        # GUI updating threads
+        graphThread = DiaThread("graphThread", False, self.startTime, shutdownQueue, 1/self.visualsRefreshTime, self.generateEvent, "<<visualsEvent>>")
+        alertThread = DiaThread("alertThread", False, self.startTime, shutdownQueue, 1/2, self.generateEvent, "<<alertsEvent>>")
+
+        # Data collection threads (separate processes)
         soundThread = DiaThread("soundThread", useProcesses, self.startTime, shutdownQueue, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData)
         vibrationThread = DiaThread("vibrationThread", useProcesses, self.startTime, shutdownQueue,  self.vibrationSamplingRate, self.vibrationCollection.readAndSendData)
         temperatureThread = DiaThread("temperatureThread", useProcesses, self.startTime, shutdownQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
         positionThread = DiaThread("positionThread", useProcesses, self.startTime, shutdownQueue, self.positionSamplingRate, self.positionCollection.readAndSendData)
-        graphThread = DiaThread("graphThread", False, self.startTime, shutdownQueue, 1/self.visualsRefreshTime, self.generateEvent, "<<visualsEvent>>")
-        alertThread = DiaThread("alertThread", False, self.startTime, shutdownQueue, 1/2, self.generateEvent, "<<alertsEvent>>")
+        
+        # TODO: FINISH SECTION (with beginDataProcessing above) - Parent processes for data processing
+        vibrationProcess = DiaProcess("vibrationProcess", self.startTime, shutdownQueue)
 
         threads = [graphThread, alertThread, soundThread, vibrationThread, positionThread, temperatureThread]
 

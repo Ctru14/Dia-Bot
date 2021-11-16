@@ -13,34 +13,34 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 
-import DataCollection
+from DataCollection import DataCollection
 import Threads
 
-class DataProcessing:
+class DataProcessing(DataCollection):
     
-    def __init__(self, dataCollection, tkTop, globalUImutex, isPlotted, queue):
-        self.tkTop = tkTop
-        self.dataCollection = dataCollection
+    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue):
+        super().__init__(name, units, samplingRate, globalStartTime, dataQueue)
+        #self.dataCollection = dataCollection
         #self.dataMutex = threading.Lock()
-        self.dataMutex = multiprocessing.Lock()
-        self.globalUImutex = globalUImutex
-        self.queue = queue
-        self.t = []
-        self.data = []
+        #self.dataMutex = multiprocessing.Lock()
+        #self.globalUImutex = globalUImutex
+        #self.dataQueue = dataQueue
+        #self.t = []
+        #self.data = []
         if isPlotted:
             self.fig = Figure(figsize=(3,2.5), dpi=80)
             self.fig.patch.set_facecolor("#DBDBDB")
             self.plot1 = self.fig.add_subplot(111)
             self.plot1.plot(self.t, self.data)
-            self.plot1.set_ylabel(self.dataCollection.units)
+            self.plot1.set_ylabel(self.units)
                
         
     # Create and add the Tkinter pane for data visualization - may be overwritten for those without graphs
-    def tkAddDataPane(self):
+    def tkAddDataPane(self, tkTop):
         # Top label
-        tk.Label(self.tkTop, text=self.dataCollection.name, font="none 12 bold").grid(row=1, column=1, columnspan=5)
+        tk.Label(tkTop, text=self.name, font="none 12 bold").grid(row=1, column=1, columnspan=5)
         # Add random graph
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self.tkTop)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=tkTop)
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row=2, column=1, rowspan=3, columnspan=4)
 
@@ -49,37 +49,34 @@ class DataProcessing:
         start = 0
         end = len(self.t)
         if end == 0:
-            print(f"Error in updateVisual ({self.dataCollection.name}) - data length is zero!")
+            print(f"Error in updateVisual ({self.name}) - data length is zero!")
             return
         # Graph the last 5 seconds
-        start = int(max(0, end-2*self.dataCollection.samplingRate))
+        start = int(max(0, end-2*self.samplingRate))
         self.plot1.cla() # Find way to update graphs without it taking too long!!
         # Update plot
-        self.dataMutex.acquire()
-        print(f"Update {self.dataCollection.name} graph: indices ({start}..{end})  Latest: ({self.t[-1]}, {self.data[-1]})")
+        #self.dataMutex.acquire()
+        print(f"Update {self.name} graph: indices ({start}..{end})  Latest: ({self.t[-1]}, {self.data[-1]})")
         self.plot1.plot(self.t[start:end], self.data[start:end])
-        self.dataMutex.release()
+        #self.dataMutex.release()
+        #self.dataMutex.release()
     
     def updateVisual(self):
-        print(f"Update {self.dataCollection.name} visual")
-        self.readNewData()
+        print(f"Update {self.name} visual")
+        self.getAndAddData()
         self.createVisual()
         # Update canvas on UI
         #self.globalUImutex.acquire()
         self.canvas.draw()
-        print(f"Graph done: {self.dataCollection.name} (total time = {(time.time_ns()-self.dataCollection.globalStartTime)/1_000_000_000} s)\n")
+        print(f"Graph done: {self.name} (total time = {(time.time_ns()-self.globalStartTime)/1_000_000_000} s)\n")
         #self.globalUImutex.release()
         
-    def readNewData(self):
-        while not self.queue.empty():
-            t, data = self.queue.get()
-            self.t.append(t)
-            self.data.append(data)
-            #print(f"New data! {t}, {data}")
-
-    def dataProcessingProcess(self):
-        self.readNewData()
-        self.updateVisual()
+    #def readNewData(self):
+    #    while not self.dataQueue.empty():
+    #        t, data = self.dataQueue.get()
+    #        self.t.append(t)
+    #        self.data.append(data)
+    #        #print(f"New data! {t}, {data}")
                
 
     # ----- Data Processing functions -----
@@ -100,30 +97,32 @@ class DataProcessing:
 
 class SoundLevelProcessing(DataProcessing):
 
-    def __init__(self, dataCollection, tkTop, globalUImutex, isPlotted, queue):
-        return super().__init__(dataCollection, tkTop, globalUImutex, isPlotted, queue)
+    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue):
+        return super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue)
 
 
 
 class VibrationProcessing(DataProcessing):
 
-    def __init__(self, dataCollection, tkTop, globalUImutex, isPlotted, queue):
-        return super().__init__(dataCollection, tkTop, globalUImutex, isPlotted, queue)
+    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue):
+        return super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue)
 
 
 
 class PositionProcessing(DataProcessing):
 
-    def __init__(self, dataCollection, tkTop, globalUImutex, isPlotted, queue):
-        return super().__init__(dataCollection, tkTop, globalUImutex, isPlotted, queue)
+    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue):
+        return super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue)
 
 
 
 class TemperatureProcessing(DataProcessing):
 
-    def __init__(self, dataCollection, tkTop, globalUImutex, isPlotted, queue):
-        super().__init__(dataCollection, tkTop, globalUImutex, isPlotted, queue)
+    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue):
+        super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue)
         self.viewFarenheit = False
+        self.currentTempCelsius = 0
+        self.currentTempFarenheit = 0
         self.tempDisplayText = StringVar()
         self.tempDisplayText.set(self.getDisplayText())
         self.tempViewButtonText = StringVar()
@@ -132,18 +131,18 @@ class TemperatureProcessing(DataProcessing):
 
     def getDisplayText(self):
         if self.viewFarenheit:
-            return f"{self.dataCollection.currentTempFarenheit} °F"
+            return f"{self.currentTempFarenheit} °F"
         else:
-            return f"{self.dataCollection.currentTempCelsius} °C"
+            return f"{self.currentTempCelsius} °C"
 
     # Overwrite data visuals method: no graph needed
-    def tkAddDataPane(self):
+    def tkAddDataPane(self, tkTop):
         # Top label
-        tk.Label(self.tkTop, text=self.dataCollection.name, font="none 12 bold").grid(row=1, column=1, columnspan=5)
+        tk.Label(tkTop, text=self.name, font="none 12 bold").grid(row=1, column=1, columnspan=5)
         # Add temperature text and display button
-        self.tempLabel = tk.Label(self.tkTop, textvariable=self.tempDisplayText, font="none 14")
+        self.tempLabel = tk.Label(tkTop, textvariable=self.tempDisplayText, font="none 14")
         self.tempLabel.grid(row=3, column=1, columnspan=5)
-        self.switchTempViewButton = tk.Button(self.tkTop, textvariable=self.tempViewButtonText, command=self.switchTempView)
+        self.switchTempViewButton = tk.Button(tkTop, textvariable=self.tempViewButtonText, command=self.switchTempView)
         self.switchTempViewButton.grid(row=4, column=1, columnspan=5)
 
     def switchTempView(self):
@@ -166,10 +165,10 @@ class TemperatureProcessing(DataProcessing):
         #self.tempViewButtonText.set("View Farenheit")
 
     def readNewData(self):
-        while not self.queue.empty():
-            t, dataC, dataF = self.queue.get()
+        while not self.dataQueue.empty():
+            t, dataC, dataF = self.dataQueue.get()
             self.t.append(t)
             self.data.append(dataC)
-            self.dataCollection.currentTempCelsius = dataC
-            self.dataCollection.currentTempFarenheit = dataF
+            self.currentTempCelsius = dataC
+            self.currentTempFarenheit = dataF
             print(f"New temperature data! {t}, C={dataC}, F={dataF}")
