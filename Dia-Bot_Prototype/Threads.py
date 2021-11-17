@@ -1,4 +1,5 @@
 import sys
+import os
 import time
 import math
 import threading
@@ -47,7 +48,7 @@ class DiaThread():
             if self.useProcess:
                 if not shutdownInitQueue.empty():
                     msg = shutdownInitQueue.get()
-                    print(f"shutdownInitQueue msg: {msg}")
+                    #print(f"shutdownInitQueue msg: {msg}")
                     if msg == "END_THREAD":
                         self.threadRunning = False
         self.threadEnded = True
@@ -58,6 +59,7 @@ class DiaThread():
         self.threadRunning = True
         self.thread.start()
 
+    # Sets flags, but NON-BLOCKING
     def endThread(self):
         print(f"Ending thread! {self.name}")
         self.threadRunning = False
@@ -85,44 +87,95 @@ class DiaThread():
         else:
             print(f"Error - Only processes can use terminate() - {self.name} uses threading")
 
+    def waitForThreadsEnd(threads, shutdownRespQueue, name, pid):
+        threadRunningCount = len(threads)
+        while threadRunningCount > 0:
+            # Check for thread ending messages every second
+            if not shutdownRespQueue.empty():
+                msg, name = shutdownRespQueue.get()
+                if msg == "THREAD_ENDED":
+                    threadRunningCount -= 1
+                    print(f"Shutdown message received within {pid}:{name} - waiting on {threadRunningCount} more!")
+                else:
+                    print(f"UNEXPECTED MESSAGE IN SHUTDOWN RESPONSE QUEUE: {msg}")
+            else:
+                time.sleep(1)
+
+    def joinAllThreads(threads):
+        for t in threads:
+            print(f"Joining {t.name}...")
+            t.join(1)
+            if t.is_alive():
+                print(f"Thread {t.name} did not join...terminating")
+                t.terminate()
+
+
 
 # Parent process starts a new process which spawns child threads
 class DiaProcess():
 
-    def __init__(self, name, globalStartTime, shutdownInitQueue, shutdownRespQueue):
+    def __init__(self, name, units, samplingRate, globalStartTime, shutdownInitQueue, shutdownRespQueue, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue):
         self.name = name
-        self.globalStartTime = globalStartTime
-        self.externalShutdownInitQueue = shutdownInitQueue # External
-        self.externalShutdownRespQueue = shutdownRespQueue # External
-        self.internalShutdownInitQueue = multiprocessing.Queue()
-        self.internalShutdownRespQueue = multiprocessing.Queue()
-        self.threadsRunning = False
-        self.threadsRunningCount = 0
-        #self.threadsEnded = False
-        self.childThreads = []
+        self.externalShutdownInitQueue = shutdownInitQueue # External - Receive shutdown message from main process
+        self.externalShutdownRespQueue = shutdownRespQueue # External - Confirm shutdown to main process
+        self.process = multiprocessing.Process(target=DiaProcess.beginDataProcessing, args=(name, units, samplingRate, globalStartTime, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, shutdownInitQueue))
 
-    # TODO: remove this method - all DiaThreads need to be added in the function that creates the thread
-    def addChildThread(self, threadName, freqHz, function, loopFunction, *args):
-        self.childThreads.append(DiaThread(threadName, False, self.globalStartTime, 0, freqHz, loopFunction, *args))
+    # Called from main process
+    def startProcess(self):
+        self.process.start()
 
-    def startThreads(self):
-        self.threadsRunning = True
-        for thread in self.childThreads:
-            thread.startThread()
-            self.threadsRunningCount = self.threadsRunningCount + 1
+    # Called from main process
+    def beginShutdown(self):
+        #print(f"Sending shutdown message to procuess {self.name}")
+        self.externalShutdownInitQueue.put("END_PROCESS")
 
-    def endThreads(self):
-        # Send shutdown message by setting flag
-        for thread in self.childThreads:
-            thread.endThread()
-        # Wait for threads to finish
-        while self.threadsRunning:
-            # Check thread ending queue
-            if not self.shutdownInitQueue.empty():
-                msg, name = shutdownInitQueue.get()
-                if msg == "THREAD_ENDED":
-                    self.threadRunningCount = self.threadRunningCount - 1
-                    print(f"Shutdown message received from {name} - waiting on {self.threadRunningCount} more!")
-            if self.threadRunningCount == 0:
-                self.threadsRunning = False
-            time.sleep(1)
+
+    # Called internally by process
+    def waitForShutdownMessage(externalShutdownInitQueue, loopTime):
+        endMessageReceived = False
+        while not endMessageReceived:
+            while externalShutdownInitQueue.empty():
+                time.sleep(loopTime)
+            msg = externalShutdownInitQueue.get()
+            if msg == "END_PROCESS":
+                endMessageReceived = True
+
+    
+    # -------- Function to initialize data processing processes --------
+    #   ----- This will be run in the context of the new process! -----
+    def beginDataProcessing(name, units, samplingRate, startTime, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, externalShutdownInitQueue):
+        pid = os.getpid()
+        threadRunningCount = 0
+        internalShutdownRespQueue = multiprocessing.Queue()
+
+        # Initialize DataProcessing class in new process context
+        processing = ProcessingType(name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue)
+
+        # Add child threads for data collection, visuals, and processing
+        collectionThread = DiaThread(f"{name}CollectionThread", False, startTime, internalShutdownRespQueue, samplingRate, processing.getAndAddData)
+        # TODO: visualThread = 
+        # TODO: processingThread = 
+
+        # Start worker threads
+        threads = [collectionThread]
+        for t in threads:
+            t.startThread()
+            threadRunningCount += 1
+            print(f"Starting thread {t.name} in {pid}:{name}")
+
+        # LOOP HERE DURING EXECUTION - Wait for shutdown message - check every 3 seconds
+        DiaProcess.waitForShutdownMessage(externalShutdownInitQueue, 3)
+
+        # End threads - Send signal, NON-BLOCKING
+        for t in threads:
+            t.endThread()
+        
+        # Collect Thread ending messages
+        DiaThread.waitForThreadsEnd(threads, internalShutdownRespQueue, name, pid)
+
+        # Threads ended - join me, and together, we will rule the galaxy...
+        print(f"All threads ended in {name}:{pid} - joining...")
+
+        DiaThread.joinAllThreads(threads)
+
+        print(f"Process {pid}:{name} completed.")
