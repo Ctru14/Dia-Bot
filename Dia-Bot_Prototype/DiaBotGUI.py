@@ -20,10 +20,11 @@ import DataCollection
 import DataProcessing
 import Alerts
 from Alerts import Alert
-from Alerts import AlertTracker
 from Alerts import AlertDataType
 from Alerts import AlertMetric
 from Alerts import AlertRange
+from Alerts import AlertTracker
+from Alerts import AlertsTop
 from Threads import DiaThread
 from Threads import DiaProcess
 
@@ -75,36 +76,37 @@ class DiaBotGUI():
         self.alertControls = tk.Frame(self.controlFrame, width=400, height=280)
 
         # Data collection (Must be created in constructor to guaranteee use in Alerts)
+        self.processingQueue = multiprocessing.Queue() # TODO: Replace individual processing queues with this one
         self.soundLevelSamplingRate = 100
-        self.soundLevelFields, self.soundLevelDataQueue, self.soundLevelVisualQueue, self.soundLevelProcessingQueue, self.soundLevelCollection = DiaBotGUI.createDataFields(
+        self.soundLevelFields, self.soundLevelDataQueue, self.soundLevelVisualQueue, self.soundLevelCollection = DiaBotGUI.createDataFields(
             DataCollection.SoundLevelCollection, "Sound Level", "dB", self.soundLevelSamplingRate, self.startTime)
          # TODO: DEPRECATE THIS!
         soundLevelDataQueue, soundLevelCollection, self.soundLevelProcessing = DiaBotGUI.createDataHandlers(
-                                DataCollection.SoundLevelCollection, DataProcessing.SoundLevelProcessing,
+                                DataCollection.SoundLevelCollection, DataProcessing.SoundLevelProcessing, AlertDataType.SoundLevel,
                                "Sound Level", "dB", self.soundLevelSamplingRate, self.startTime, self.uiMutex, True, self.soundLevelDataQueue, self.soundLevelVisualQueue)
         
         self.vibrationSamplingRate = 100
-        self.vibrationFields, self.vibrationDataQueue, self.vibrationVisualQueue, self.vibrationProcessingQueue, self.vibrationCollection = DiaBotGUI.createDataFields(
+        self.vibrationFields, self.vibrationDataQueue, self.vibrationVisualQueue, self.vibrationCollection = DiaBotGUI.createDataFields(
             DataCollection.VibrationCollection, "Vibration", "m/s2", self.vibrationSamplingRate, self.startTime)
          # TODO: DEPRECATE THIS!
         vibrationDataQueue, vibrationCollection, self.vibrationProcessing = DiaBotGUI.createDataHandlers(
-                                DataCollection.VibrationCollection, DataProcessing.VibrationProcessing,
+                                DataCollection.VibrationCollection, DataProcessing.VibrationProcessing, AlertDataType.Vibration,
                                "Vibration", "m/s2", self.vibrationSamplingRate, self.startTime, self.uiMutex, True, self.vibrationDataQueue, self.vibrationVisualQueue)
         
         self.positionSamplingRate = 10
-        self.positionFields, self.positionDataQueue, self.positionVisualQueue, self.positionProcessingQueue, self.positionCollection = DiaBotGUI.createDataFields(
+        self.positionFields, self.positionDataQueue, self.positionVisualQueue, self.positionCollection = DiaBotGUI.createDataFields(
             DataCollection.PositionCollection, "Position", "m", self.positionSamplingRate, self.startTime)
          # TODO: DEPRECATE THIS!
         positionDataQueue, positionCollection, self.positionProcessing = DiaBotGUI.createDataHandlers(
-                                DataCollection.PositionCollection, DataProcessing.PositionProcessing,
+                                DataCollection.PositionCollection, DataProcessing.PositionProcessing, AlertDataType.Position,
                                "Position", "m", self.positionSamplingRate, self.startTime, self.uiMutex, True, self.positionDataQueue, self.positionVisualQueue)
         
         self.temperatureSamplingRate = 1/5
-        self.temperatureFields, self.temperatureDataQueue, self.temperatureVisualQueue, self.temperatureProcessingQueue, self.temperatureCollection = DiaBotGUI.createDataFields(
+        self.temperatureFields, self.temperatureDataQueue, self.temperatureVisualQueue, self.temperatureCollection = DiaBotGUI.createDataFields(
             DataCollection.TemperatureCollection, "Temperature", "°C", self.temperatureSamplingRate, self.startTime)
          # TODO: DEPRECATE THIS!
         temperatureDataQueue, temperatureCollection, self.temperatureProcessing = DiaBotGUI.createDataHandlers(
-                                DataCollection.TemperatureCollection, DataProcessing.TemperatureProcessing,
+                                DataCollection.TemperatureCollection, DataProcessing.TemperatureProcessing, AlertDataType.Temperature,
                                "Temperature", "°C", self.temperatureSamplingRate, self.startTime, self.uiMutex, True, self.temperatureDataQueue, self.temperatureVisualQueue)
         
         
@@ -304,15 +306,17 @@ class DiaBotGUI():
                     
         # self, alertControlsFrame, name, thresholdUnits, alertDataType, alertRange, alertMetric, processingQueue, width=400, height=50)
         # Create each alert instance and add frames to the UI  
-        self.vibrationAlertTracker = AlertTracker(self.alertControls,   "Vibration", "m/s2", AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average,     self.vibrationProcessingQueue)
-        self.soundAlertTracker = AlertTracker(self.alertControls,       "Sound",       "dB", AlertDataType.SoundLevel,  AlertRange.Above,   AlertMetric.Frequency,   self.soundLevelProcessingQueue)
-        self.temperatureAlertTracker = AlertTracker(self.alertControls, "Temperature", "°C", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average,     self.temperatureProcessingQueue)
-        
+        self.alertsTop = AlertsTop(self.alertControls, self.processingQueue)
+
+        self.vibrationAlertTracker = AlertTracker(self.alertControls,   "Vibration", "m/s2", AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average)
+        self.soundAlertTracker = AlertTracker(self.alertControls,       "Sound",       "dB", AlertDataType.SoundLevel,  AlertRange.Above,   AlertMetric.Frequency)
+        self.temperatureAlertTracker = AlertTracker(self.alertControls, "Temperature", "°C", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average)
         
         self.alertTrackers = [self.vibrationAlertTracker, self.soundAlertTracker, self.temperatureAlertTracker]
         nextAlertRow = 3
-        for alert in self.alertTrackers:
-            alert.getAlertFrame().grid(row=nextAlertRow, column=1, columnspan = 10)
+        for tracker in self.alertTrackers:
+            self.alertsTop.addTracker(tracker)
+            tracker.getAlertFrame().grid(row=nextAlertRow, column=1, columnspan = 10)
             nextAlertRow = nextAlertRow + 1
         
         
@@ -407,26 +411,25 @@ class DiaBotGUI():
 
     # Creates new data collection and processing classes, returns those along with their Processing queue 
     # TO BE DEPRECATED
-    def createDataHandlers(CollectionType, ProcessingType, name, units, samplingRate, startTime, uiMutex, isPlotted, q, visualQ):
+    def createDataHandlers(CollectionType, ProcessingType, dataType, name, units, samplingRate, startTime, uiMutex, isPlotted, q, visualQ):
         #q = multiprocessing.Queue()
         if CollectionType == DataCollection.TemperatureCollection:
             collection = CollectionType(name, units, samplingRate, startTime, q, visualQ)
         else:
             collection = CollectionType(name, units, samplingRate, startTime, q)
-        processing = ProcessingType(name, units, samplingRate, startTime, isPlotted, q, 0, 0)
+        processing = ProcessingType(dataType, name, units, samplingRate, startTime, isPlotted, q, 0, 0)
         return (q, collection, processing)
 
-    def createDataFields(CollectionType, name, units, samplingRate, startTime): # TODO: REMOVE VISUALQ
+    def createDataFields(CollectionType, name, units, samplingRate, startTime): # TODO: REMOVE VISUALQ FROM COLLECTION
         fields = DataCollection.DataFields(name, units, samplingRate, startTime)
         dataQueue = multiprocessing.Queue()
         visualQueue = multiprocessing.Queue()
-        processingQueue = multiprocessing.Queue()
         #collection = CollectionType(name, units, samplingRate, startTime, dataQueue)
         if CollectionType == DataCollection.TemperatureCollection:
             collection = CollectionType(name, units, samplingRate, startTime, dataQueue, visualQueue)
         else:
             collection = CollectionType(name, units, samplingRate, startTime, dataQueue)
-        return (fields, dataQueue, visualQueue, processingQueue, collection)
+        return (fields, dataQueue, visualQueue, collection)
 
     def createNewDataPane(ProcessingType, name, frame, row, col, *args):
         plotVars = ProcessingType.tkAddDataPane(name, frame, *args)
@@ -495,8 +498,7 @@ class DiaBotGUI():
    
     # --- Update Alerts Handlers ---
     def updateAlertsHandler(self, event):
-        for tracker in self.alertTrackers:
-            tracker.checkForAlerts()
+        self.alertsTop.checkForAlerts()
             #print(f"Finished checking alerts in {tracker.name}")
         
     def printTime(self):
@@ -525,8 +527,8 @@ class DiaBotGUI():
         
         # TODO: FINISH SECTION WITH OTHER SENSOR - Parent processes for data processing
         tempShutdownInitQueue = multiprocessing.Queue()
-        temperatureProcess = DiaProcess("Temperature", "°C", self.temperatureSamplingRate, self.startTime, tempShutdownInitQueue, shutdownRespQueue, DataProcessing.TemperatureProcessing, 
-                                       False, self.temperatureDataQueue, self.temperatureVisualQueue, self.temperatureProcessingQueue)
+        temperatureProcess = DiaProcess(AlertDataType.Temperature, "Temperature", "°C", self.temperatureSamplingRate, self.startTime, tempShutdownInitQueue, shutdownRespQueue, DataProcessing.TemperatureProcessing, 
+                                       False, self.temperatureDataQueue, self.temperatureVisualQueue, self.processingQueue)
         
         threads = [graphThread, alertThread, soundThread, vibrationThread, positionThread, temperatureThread]
         

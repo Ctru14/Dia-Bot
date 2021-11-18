@@ -115,11 +115,11 @@ class DiaThread():
 # Parent process starts a new process which spawns child threads
 class DiaProcess():
 
-    def __init__(self, name, units, samplingRate, globalStartTime, shutdownInitQueue, shutdownRespQueue, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue):
+    def __init__(self, dataType, name, units, samplingRate, globalStartTime, shutdownInitQueue, shutdownRespQueue, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue):
         self.name = name
         self.externalShutdownInitQueue = shutdownInitQueue # External - Receive shutdown message from main process
         self.externalShutdownRespQueue = shutdownRespQueue # External - Confirm shutdown to main process
-        self.process = multiprocessing.Process(target=DiaProcess.beginDataProcessing, args=(name, units, samplingRate, globalStartTime, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, shutdownInitQueue))
+        self.process = multiprocessing.Process(target=DiaProcess.beginDataProcessing, args=(dataType, name, units, samplingRate, globalStartTime, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, shutdownInitQueue))
 
     # Called from main process
     def startProcess(self):
@@ -144,13 +144,13 @@ class DiaProcess():
     
     # -------- Function to initialize data processing processes --------
     #   ----- This will be run in the context of the new process! -----
-    def beginDataProcessing(name, units, samplingRate, startTime, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, externalShutdownInitQueue):
+    def beginDataProcessing(dataType, name, units, samplingRate, startTime, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, externalShutdownInitQueue):
         pid = os.getpid()
         threadRunningCount = 0
         internalShutdownRespQueue = multiprocessing.Queue()
 
         # Initialize DataProcessing class in new process context
-        processing = ProcessingType(name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue)
+        processing = ProcessingType(dataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue)
 
         # Add child threads for data collection, visuals, and processing
         collectionThread = DiaThread(f"{name}CollectionThread", False, startTime, internalShutdownRespQueue, samplingRate, processing.getAndAddData)

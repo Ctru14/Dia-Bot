@@ -12,23 +12,26 @@ import enum
 import DataCollection
 
 # Types of alerts - range, processing metric, data type
-class AlertDataType(enum.Enum):
-    SoundLevel = 1
-    Vibration = 2
-    Position = 3
-    Temperature = 4
 
-class AlertMetric(enum.Enum):
+# Starts from 0 to index into AlertsTop lists
+class AlertDataType(enum.IntEnum):
+    SoundLevel = 0
+    Vibration = 1
+    Position = 2
+    Temperature = 3
+
+# Starts from 1 to index into ProcessingQueue tuple (which has the data type as the first member) 
+class AlertMetric(enum.IntEnum):
     Average = 1
     Maximum = 2
     Minimum = 3
     Frequency = 4
     Magnitude = 5
 
-class AlertRange(enum.Enum):
-    Above = 1
-    Between = 2
-    Below = 3
+class AlertRange(enum.IntEnum):
+    Above = 0
+    Between = 1
+    Below = 2
 
 
 class Alert:
@@ -47,7 +50,7 @@ class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses th
     alertRanges = (AlertRange.Above.name, AlertRange.Between.name, AlertRange.Below.name)
     #alertMetrics = (metric.name for metric in AlertMetric)
 
-    def __init__(self, alertControlsFrame, name, thresholdUnits, alertDataType, alertRange, alertMetric, processingQueue, width=400, height=50):
+    def __init__(self, alertControlsFrame, name, thresholdUnits, alertDataType, alertRange, alertMetric, width=400, height=50):
         # Initialize data variables
         self.name = name
         self.thresholdUnits = thresholdUnits
@@ -59,7 +62,6 @@ class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses th
         self.alertRangeName = StringVar()
         self.alertRangeName.set(self.alertRange.name)
         self.alerts = []
-        self.processingQueue = processingQueue
         #self.notificationQueue = multiprocessing.Queue()
 
         # Threshold levels
@@ -136,8 +138,28 @@ class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses th
                self.betweenHiValue = thresholdHi
             except:
                 print(f"Error: cannot convert string {self.thresholdString2.get()} to a number")
-   
-    # Setting up and testing multiprocessing!
+       
+
+# Top-level class to contain AlertTrackers
+# Receives processing info from queue and sends it to each relevant tracker
+class AlertsTop:
+
+    def __init__(self, alertControlsFrame, processingQueue):
+        self.alertControlsFrame = alertControlsFrame
+        self.processingQueue = processingQueue
+        # Sort trackers in lists based on their data type
+        self.soundLevelTrackers = []
+        self.vibrationTrackers = []
+        self.positionTrackers = []
+        self.temperatureTrackers = []
+        self.trackers = [self.soundLevelTrackers, self.vibrationTrackers, self.positionTrackers, self.temperatureTrackers]
+
+    def addTracker(self, tracker):
+        # Add tracker to a list based on the data type
+        print(f"Tracker: {tracker.alertDataType}, int: {(int(tracker.alertDataType))}")
+        self.trackers[tracker.alertDataType].append(tracker)
+
+    # Check processing queue for new metrics and distribute to proper trackers
     def checkForAlerts(self):
         # TODO: MOVE DATA SOURCE TO PROCESSING PROCESS
         # Testing UI: Randomly add alerts to the queue
@@ -145,7 +167,7 @@ class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses th
         #    newAlert = Alert(self.alertDataType, time.time(), self.alertRange, self.alertMetric, 10)
         #    self.processingQueue.put(newAlert)
 
-        # Check notification queue for alerts
+        # Check processing queue for new data
         if not self.processingQueue.empty(): #  TODO: READ AND PARSE PROCESSING DATA TO FORM ALERT
             processed = self.processingQueue.get()
             print(f"Receiving processed data! {processed}")
@@ -157,4 +179,3 @@ class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses th
             #    self.notificationLabel.grid_forget()
             #    self.notificationLabel = tk.Label(self.frame, text="Error", anchor=CENTER, font="none 11 bold", fg="red")
             #    self.notificationLabel.grid(row=1, column=11, columnspan=2)
-    

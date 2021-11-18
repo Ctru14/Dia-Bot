@@ -15,12 +15,15 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 
 from DataCollection import DataCollection
+from Alerts import AlertDataType
+from Alerts import AlertMetric
 import Threads
 
 class DataProcessing(DataCollection):
     
-    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
+    def __init__(self, alertDataType, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
         super().__init__(name, units, samplingRate, globalStartTime, dataQueue)
+        self.alertDataType = alertDataType
         self.visualQueue = visualQueue
         self.processingQueue = processingQueue
         #self.dataMutex = threading.Lock()
@@ -118,43 +121,43 @@ class DataProcessing(DataCollection):
         # Calculate all processing values and put them into the queue
         idxHi = len(self.t)
         if idxHi > 0:
-            idxLo = max(0, int(idxHi - (5 * self.samplingRate)))
+            idxLo = max(0, int(idxHi - (10 * self.samplingRate)))
             avg = self.average(idxLo, idxHi)
             maximum = self.maximum(idxLo, idxHi)
             minimum = self.minimum(idxLo, idxHi)
             freq =self.frequency(idxLo, idxHi)
             mag = self.magnitude(idxLo, idxHi)
-            print(f"Sending update to processing queue: (Avg={avg}, Max={maximum}, Min={minimum}, Freq={freq}, Mag={mag})")
-            self.processingQueue.put((avg, maximum, minimum, freq, mag))
+            print(f"Sending {self.name}[{idxLo}:{idxHi}] update to processing queue: (Avg={avg}, Max={maximum}, Min={minimum}, Freq={freq}, Mag={mag})")
+            self.processingQueue.put((self.alertDataType, avg, maximum, minimum, freq, mag))
 
 
 
 
 class SoundLevelProcessing(DataProcessing):
 
-    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
-        return super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue)
+    def __init__(self, alertDataType, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
+        return super().__init__(alertDataType, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue)
 
 
 
 class VibrationProcessing(DataProcessing):
 
-    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
-        return super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue)
+    def __init__(self, alertDataType, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
+        return super().__init__(alertDataType, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue)
 
 
 
 class PositionProcessing(DataProcessing):
 
-    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
-        return super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue)
+    def __init__(self, alertDataType, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
+        return super().__init__(alertDataType, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue)
 
 
 
 class TemperatureProcessing(DataProcessing):
 
-    def __init__(self, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
-        super().__init__(name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue)
+    def __init__(self, alertDataType, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue):
+        super().__init__(alertDataType, name, units, samplingRate, globalStartTime, isPlotted, dataQueue, visualQueue, processingQueue)
 
 
     # Overwrite data visuals method: no graph needed
