@@ -498,7 +498,7 @@ class DiaBotGUI():
    
     # --- Update Alerts Handlers ---
     def updateAlertsHandler(self, event):
-        self.alertsTop.checkForAlerts()
+        self.alertsTop.readProcessedData()
             #print(f"Finished checking alerts in {tracker.name}")
         
     def printTime(self):
@@ -525,14 +525,20 @@ class DiaBotGUI():
         temperatureThread = DiaThread("temperatureThread", useProcesses, self.startTime, shutdownRespQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
         positionThread = DiaThread("positionThread", useProcesses, self.startTime, shutdownRespQueue, self.positionSamplingRate, self.positionCollection.readAndSendData)
         
+        threads = [graphThread, alertThread, soundThread, vibrationThread, positionThread, temperatureThread]
+
         # TODO: FINISH SECTION WITH OTHER SENSOR - Parent processes for data processing
+        #positionShutdownInitQueue = multiprocessing.Queue()
+        #positionProcess = DiaProcess(AlertDataType.Position, "Position", "m", self.positionSamplingRate, self.startTime, positionShutdownInitQueue, shutdownRespQueue, DataProcessing.PositionProcessing, 
+        #                               False, self.positionDataQueue, self.positionVisualQueue, self.processingQueue)
         tempShutdownInitQueue = multiprocessing.Queue()
         temperatureProcess = DiaProcess(AlertDataType.Temperature, "Temperature", "°C", self.temperatureSamplingRate, self.startTime, tempShutdownInitQueue, shutdownRespQueue, DataProcessing.TemperatureProcessing, 
                                        False, self.temperatureDataQueue, self.temperatureVisualQueue, self.processingQueue)
         
-        threads = [graphThread, alertThread, soundThread, vibrationThread, positionThread, temperatureThread]
-        
-        temperatureProcess.startProcess() # TODO: Change to use all processes
+        processes = [temperatureProcess]  # [positionProcess, temperatureProcess]
+
+        for process in processes:
+            process.startProcess()
 
         for t in threads:
             t.startThread()

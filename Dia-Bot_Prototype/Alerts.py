@@ -138,7 +138,31 @@ class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses th
                self.betweenHiValue = thresholdHi
             except:
                 print(f"Error: cannot convert string {self.thresholdString2.get()} to a number")
-       
+
+    def setErrorLabel(self):
+        #timeString = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(alert.alertTime)) # Add %Z to show time zone
+        self.notificationLabel.grid_forget()
+        self.notificationLabel = tk.Label(self.frame, text="Error", anchor=CENTER, font="none 11 bold", fg="red")
+        self.notificationLabel.grid(row=1, column=11, columnspan=2)
+
+    def checkForAlerts(self, t, value):
+        if self.alertEnabled.get():
+            # Checks tracker thresholds to compare this value
+            if self.alertRange == AlertRange.Above:
+                if value > self.aboveValue:
+                    self.alerts.append(Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value))
+                    print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.aboveValue}")
+                    self.setErrorLabel()
+            if self.alertRange == AlertRange.Below:
+                if value < self.belowValue:
+                    self.alerts.append(Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value))
+                    print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.belowValue}")
+                    self.setErrorLabel()
+            if self.alertRange == AlertRange.Between:
+                if value < self.betweenHiValue and value > self.betweenLoValue:
+                    self.alerts.append(Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value))
+                    print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.betweenLoValue} and {self.betweenHiValue}")
+                    self.setErrorLabel()
 
 # Top-level class to contain AlertTrackers
 # Receives processing info from queue and sends it to each relevant tracker
@@ -156,11 +180,11 @@ class AlertsTop:
 
     def addTracker(self, tracker):
         # Add tracker to a list based on the data type
-        print(f"Tracker: {tracker.alertDataType}, int: {(int(tracker.alertDataType))}")
+        #print(f"Tracker: {tracker.alertDataType}, int: {(int(tracker.alertDataType))}")
         self.trackers[tracker.alertDataType].append(tracker)
 
     # Check processing queue for new metrics and distribute to proper trackers
-    def checkForAlerts(self):
+    def readProcessedData(self):
         # TODO: MOVE DATA SOURCE TO PROCESSING PROCESS
         # Testing UI: Randomly add alerts to the queue
         #if randint(0, 10) == 2:
@@ -168,14 +192,12 @@ class AlertsTop:
         #    self.processingQueue.put(newAlert)
 
         # Check processing queue for new data
-        if not self.processingQueue.empty(): #  TODO: READ AND PARSE PROCESSING DATA TO FORM ALERT
+        while not self.processingQueue.empty(): #  TODO: READ AND PARSE PROCESSING DATA TO FORM ALERT
             processed = self.processingQueue.get()
-            print(f"Receiving processed data! {processed}")
-            #alert = self.processingQueue.get()
-            #if self.alertEnabled.get():
-            #    timeString = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(alert.alertTime)) # Add %Z to show time zone
-            #    self.alerts.append(alert)
-            #    print(f"Alert #{len(self.alerts)} in {self.name} at {timeString}: {alert.alertRange.name}, {alert.tripValue}{self.thresholdUnits}")
-            #    self.notificationLabel.grid_forget()
-            #    self.notificationLabel = tk.Label(self.frame, text="Error", anchor=CENTER, font="none 11 bold", fg="red")
-            #    self.notificationLabel.grid(row=1, column=11, columnspan=2)
+            dataType, average, maximum, minimum, freq, mag, alertTime = processed
+            #print(f"Receiving processed data! {processed}")
+            # Look for alert trackers for that data type
+            for tracker in self.trackers[int(dataType)]:
+                value = processed[int(tracker.alertMetric)]
+                #print(f"Give new {tracker.alertMetric} value to tracker: {value}")
+                tracker.checkForAlerts(alertTime, value)
