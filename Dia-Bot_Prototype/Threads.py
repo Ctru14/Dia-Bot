@@ -34,6 +34,7 @@ class DiaThread():
             loopRuns = loopRuns + 1
             #print(f"Running {loopFunction.__name__} for loop number {loopRuns}")
             loopStartTime = time.time()
+            #print(f"Calling loopFunction {loopFunction.__name__}: {args}")
             loopFunction(*args)
             loopEndTime = time.time()
             loopTimeTaken = loopEndTime - loopStartTime
@@ -153,11 +154,11 @@ class DiaProcess():
 
         # Add child threads for data collection, visuals, and processing
         collectionThread = DiaThread(f"{name}CollectionThread", False, startTime, internalShutdownRespQueue, samplingRate, processing.getAndAddData)
+        processingThread = DiaThread(f"{name}ProcessingThread", False, startTime, internalShutdownRespQueue, .4, processing.mainProcessing)
         # TODO: visualThread = 
-        # TODO: processingThread = 
 
         # Start worker threads
-        threads = [collectionThread]
+        threads = [collectionThread, processingThread]#, visualThread]
         for t in threads:
             t.startThread()
             threadRunningCount += 1

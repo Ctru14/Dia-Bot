@@ -11,35 +11,56 @@ import enum
 # Dia-Bot classes
 import DataCollection
 
+# Types of alerts - range, processing metric, data type
+class AlertDataType(enum.Enum):
+    SoundLevel = 1
+    Vibration = 2
+    Position = 3
+    Temperature = 4
+
+class AlertMetric(enum.Enum):
+    Average = 1
+    Maximum = 2
+    Minimum = 3
+    Frequency = 4
+    Magnitude = 5
+
+class AlertRange(enum.Enum):
+    Above = 1
+    Between = 2
+    Below = 3
+
 
 class Alert:
 
-    def __init__(self, alertType, alertTime, tripValue):
+    def __init__(self, alertDataType, alertTime, alertRange, alertMetric, tripValue):
+        self.alertDataType = alertDataType
         self.alertTime = alertTime
-        self.alertType = alertType
+        self.alertRange = alertRange
+        self.alertMetric = alertMetric
         self.tripValue = tripValue
 
 
-class AlertTracker:
+class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses through multiple processing metrics and divides them accordingly
     # --- Static class variables ---
-    class AlertType(enum.Enum):
-        Above = 1
-        Between = 2
-        Below = 3
+   
+    alertRanges = (AlertRange.Above.name, AlertRange.Between.name, AlertRange.Below.name)
+    #alertMetrics = (metric.name for metric in AlertMetric)
 
-    alertTypes = (AlertType.Above.name, AlertType.Between.name, AlertType.Below.name)
-
-    def __init__(self, alertControlsFrame, name, thresholdUnits, alertType, dataProcessing=0, width=400, height=50):
+    def __init__(self, alertControlsFrame, name, thresholdUnits, alertDataType, alertRange, alertMetric, processingQueue, width=400, height=50):
         # Initialize data variables
         self.name = name
         self.thresholdUnits = thresholdUnits
         self.alertEnabled = BooleanVar()
-        self.alertType = alertType
-        self.alertTypeName = StringVar()
-        self.alertTypeName.set(self.alertType.name)
-        self.dataProcessing = dataProcessing # TODO: Add data processing functionality into alerts!
-        self.errors = []
-        self.notificationQueue = multiprocessing.Queue()
+        self.alertDataType = alertDataType
+        self.alertRange = alertRange
+        self.alertMetric = alertMetric
+        #self.tripValue = tripValue
+        self.alertRangeName = StringVar()
+        self.alertRangeName.set(self.alertRange.name)
+        self.alerts = []
+        self.processingQueue = processingQueue
+        #self.notificationQueue = multiprocessing.Queue()
 
         # Threshold levels
         self.belowValue = nan
@@ -54,7 +75,7 @@ class AlertTracker:
         # Create TKinter frame
         self.frame = tk.Frame(alertControlsFrame, width=width, height=height)
         self.enableButton = tk.Checkbutton(self.frame, text=self.name, variable=self.alertEnabled, anchor="w", justify=LEFT, font="none 11")
-        self.typeMenu = tk.OptionMenu(self.frame, self.alertTypeName, *AlertTracker.alertTypes, command=self.alertTypeChanged)
+        self.typeMenu = tk.OptionMenu(self.frame, self.alertRangeName, *AlertTracker.alertRanges, command=self.alertRangeChanged)
         self.input1 = tk.Entry(self.frame, justify=CENTER, width=5, font="none 11", textvariable=self.thresholdString1)
         self.input2 = tk.Entry(self.frame, justify=CENTER, width=5, font="none 11", textvariable=self.thresholdString2)
         self.unitsLabel = tk.Label(self.frame, text=self.thresholdUnits, anchor="w", justify=LEFT, font="none 11")
@@ -70,7 +91,7 @@ class AlertTracker:
         
         # Input entry fields: Only show the second entry for 'Between' mode
         self.input1.grid(row=1, column=6, columnspan=2)
-        if (self.alertType == self.AlertType.Between):
+        if (self.alertRange == AlertRange.Between):
             self.input2.grid(row=1, column=8, columnspan=2)
             
         # Units
@@ -81,30 +102,30 @@ class AlertTracker:
         return self.frame
     
     # Callback function for changing the alert type
-    def alertTypeChanged(self, typeName):
-        self.alertTypeName.set(typeName)
-        self.alertType = self.AlertType[typeName]
-        if typeName == self.AlertType.Above.name:
-            print(f"Alert type changed to {self.alertType} ({typeName}): change above limit!")
+    def alertRangeChanged(self, typeName):
+        self.alertRangeName.set(typeName)
+        self.alertRange = AlertRange[typeName]
+        if typeName == AlertRange.Above.name:
+            print(f"Alert type changed to {self.alertRange} ({typeName}): change above limit!")
             self.input2.grid_forget()
-        elif typeName == self.AlertType.Below.name:
-            print(f"Alert type changed to {self.alertType} ({typeName}): change below limit!")
+        elif typeName == AlertRange.Below.name:
+            print(f"Alert type changed to {self.alertRange} ({typeName}): change below limit!")
             self.input2.grid_forget()
-        elif typeName == self.AlertType.Between.name:
-            print(f"Alert type changed to {self.alertType} ({typeName}): change between limits and add the entry box")
+        elif typeName == AlertRange.Between.name:
+            print(f"Alert type changed to {self.alertRange} ({typeName}): change between limits and add the entry box")
             self.input2.grid(row=1, column=8, columnspan=2)
             
     
     def confirmUpdates(self):
         try:
            threshold1 = float(self.thresholdString1.get())
-           if self.alertType == self.AlertType.Above:
+           if self.alertRange == AlertRange.Above:
                self.aboveValue = threshold1
-           elif self.alertType == self.AlertType.Below:
+           elif self.alertRange == AlertRange.Below:
                self.belowValue = threshold1
         except:
             print(f"Error: cannot convert string {self.thresholdString1.get()} to a number")
-        if self.alertType == self.AlertType.Between:
+        if self.alertRange == AlertRange.Between:
             try:
                threshold2 = float(self.thresholdString2.get())
                thresholdLo = min(threshold1, threshold2)
@@ -118,18 +139,22 @@ class AlertTracker:
    
     # Setting up and testing multiprocessing!
     def checkForAlerts(self):
+        # TODO: MOVE DATA SOURCE TO PROCESSING PROCESS
         # Testing UI: Randomly add alerts to the queue
-        if randint(0, 10) == 2:
-            newAlert = Alert(self.AlertType.Above, time.time(), 9)
-            self.notificationQueue.put(newAlert)
+        #if randint(0, 10) == 2:
+        #    newAlert = Alert(self.alertDataType, time.time(), self.alertRange, self.alertMetric, 10)
+        #    self.processingQueue.put(newAlert)
 
         # Check notification queue for alerts
-        if not self.notificationQueue.empty():
-            alert = self.notificationQueue.get()
-            timeString = time.strftime("%a, %d %b %Y %H:%M:%S (%Z)", time.localtime(alert.alertTime))
-            print(f"Alert in {self.name} at {timeString}: {alert.alertType.name}, {alert.tripValue}{self.thresholdUnits}")
-            self.notificationLabel.grid_forget()
-            self.notificationLabel = tk.Label(self.frame, text="Error", anchor=CENTER, font="none 11 bold", fg="red")
-            self.notificationLabel.grid(row=1, column=11, columnspan=2)
-
+        if not self.processingQueue.empty(): #  TODO: READ AND PARSE PROCESSING DATA TO FORM ALERT
+            processed = self.processingQueue.get()
+            print(f"Receiving processed data! {processed}")
+            #alert = self.processingQueue.get()
+            #if self.alertEnabled.get():
+            #    timeString = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(alert.alertTime)) # Add %Z to show time zone
+            #    self.alerts.append(alert)
+            #    print(f"Alert #{len(self.alerts)} in {self.name} at {timeString}: {alert.alertRange.name}, {alert.tripValue}{self.thresholdUnits}")
+            #    self.notificationLabel.grid_forget()
+            #    self.notificationLabel = tk.Label(self.frame, text="Error", anchor=CENTER, font="none 11 bold", fg="red")
+            #    self.notificationLabel.grid(row=1, column=11, columnspan=2)
     

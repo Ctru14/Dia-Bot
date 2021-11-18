@@ -19,6 +19,11 @@ from matplotlib.figure import Figure
 import DataCollection
 import DataProcessing
 import Alerts
+from Alerts import Alert
+from Alerts import AlertTracker
+from Alerts import AlertDataType
+from Alerts import AlertMetric
+from Alerts import AlertRange
 from Threads import DiaThread
 from Threads import DiaProcess
 
@@ -297,10 +302,11 @@ class DiaBotGUI():
         tk.Label(self.alertControls, text="Alerts", anchor=CENTER, font="none 11").grid(row=2, column=10, columnspan=2)
         
                     
+        # self, alertControlsFrame, name, thresholdUnits, alertDataType, alertRange, alertMetric, processingQueue, width=400, height=50)
         # Create each alert instance and add frames to the UI  
-        self.vibrationAlertTracker = Alerts.AlertTracker(self.alertControls, "Vibration", "m/s2", Alerts.AlertTracker.AlertType.Above)
-        self.soundAlertTracker = Alerts.AlertTracker(self.alertControls, "Sound", "dB", Alerts.AlertTracker.AlertType.Above)
-        self.temperatureAlertTracker = Alerts.AlertTracker(self.alertControls, "Temperature", "°C", Alerts.AlertTracker.AlertType.Between)
+        self.vibrationAlertTracker = AlertTracker(self.alertControls,   "Vibration", "m/s2", AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average,     self.vibrationProcessingQueue)
+        self.soundAlertTracker = AlertTracker(self.alertControls,       "Sound",       "dB", AlertDataType.SoundLevel,  AlertRange.Above,   AlertMetric.Frequency,   self.soundLevelProcessingQueue)
+        self.temperatureAlertTracker = AlertTracker(self.alertControls, "Temperature", "°C", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average,     self.temperatureProcessingQueue)
         
         
         self.alertTrackers = [self.vibrationAlertTracker, self.soundAlertTracker, self.temperatureAlertTracker]
@@ -491,6 +497,7 @@ class DiaBotGUI():
     def updateAlertsHandler(self, event):
         for tracker in self.alertTrackers:
             tracker.checkForAlerts()
+            #print(f"Finished checking alerts in {tracker.name}")
         
     def printTime(self):
         print(self.totalElapsedTime())

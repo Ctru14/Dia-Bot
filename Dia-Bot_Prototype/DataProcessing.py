@@ -6,6 +6,7 @@ import time
 import threading
 import multiprocessing
 import math
+import numpy as np
 from random import *
 
 import matplotlib
@@ -87,17 +88,44 @@ class DataProcessing(DataCollection):
                
 
     # ----- Data Processing functions -----
-    def peakMagnitude(self, timeLo, timeHi):
-        print(f"Calculating peak oscillation magnitude between {timeLo}s and {timeHi}s")
+    def average(self, idxLo, idxHi):
+        avg = np.mean(self.data[idxLo:idxHi])
+        #print(f"Calculating average between {idxLo} and {idxHi}: {avg}")
+        return avg
 
-    def averageMagnitude(self, timeLo, timeHi):
-        print(f"Calculating average oscillation magnitude between {timeLo}s and {timeHi}s")
+    def maximum(self, idxLo, idxHi):
+        max = np.max(self.data[idxLo:idxHi])
+        #print(f"Calculating maximum between {idxLo} and {idxHi}: {max}")
+        return max
 
-    def peakValue(self, timeLo, timeHi):
-        print(f"Finding peak magnitude of the data between {timeLo}s and {timeHi}s")
+    def minimum(self, idxLo, idxHi):
+        min = np.min(self.data[idxLo:idxHi])
+        #print(f"Finding minimum between {idxLo} and {idxHi}: {min}")
+        return min
 
-    def frequency(self, timeLo, timeHi):
-        print(f"Finding frequency between {timeLo}s and {timeHi}s")
+    def frequency(self, idxLo, idxHi):
+        fft = np.fft.fft(self.data[idxLo:idxHi])
+        #print(f"Finding frequency between {idxLo} and {idxHi}: {fft}")
+        return fft
+
+    def magnitude(self, idxLo, idxHi):
+        fft = np.fft.fft(self.data[idxLo:idxHi])
+        #print(f"Finding magnitude between {idxLo} and {idxHi}: {fft}")
+        return fft[0]
+
+   
+    def mainProcessing(self, *args):
+        # Calculate all processing values and put them into the queue
+        idxHi = len(self.t)
+        if idxHi > 0:
+            idxLo = max(0, int(idxHi - (5 * self.samplingRate)))
+            avg = self.average(idxLo, idxHi)
+            maximum = self.maximum(idxLo, idxHi)
+            minimum = self.minimum(idxLo, idxHi)
+            freq =self.frequency(idxLo, idxHi)
+            mag = self.magnitude(idxLo, idxHi)
+            print(f"Sending update to processing queue: (Avg={avg}, Max={maximum}, Min={minimum}, Freq={freq}, Mag={mag})")
+            self.processingQueue.put((avg, maximum, minimum, freq, mag))
 
 
 
