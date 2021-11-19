@@ -126,7 +126,7 @@ class DataProcessing(DataCollection):
             avg = self.average(idxLo, idxHi)
             maximum = self.maximum(idxLo, idxHi)
             minimum = self.minimum(idxLo, idxHi)
-            freq =self.frequency(idxLo, idxHi)
+            freq = self.frequency(idxLo, idxHi)
             mag = self.magnitude(idxLo, idxHi)
             #print(f"Sending {self.name}[{idxLo}:{idxHi}] update to processing queue: (Avg={avg}, Max={maximum}, Min={minimum}, Freq={freq}, Mag={mag})")
             self.processingQueue.put((self.alertDataType, avg, maximum, minimum, freq, mag, t))

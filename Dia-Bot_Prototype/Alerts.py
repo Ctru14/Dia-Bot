@@ -47,16 +47,16 @@ class Alert:
 alertDataTypes = (AlertDataType.SoundLevel.name, AlertDataType.Vibration.name, AlertDataType.Position.name, AlertDataType.Temperature.name)
 alertMetrics = (AlertMetric.Average.name, AlertMetric.Maximum.name, AlertMetric.Minimum.name, AlertMetric.Frequency.name, AlertMetric.Magnitude.name)
 alertRanges = (AlertRange.Above.name, AlertRange.Between.name, AlertRange.Below.name)
+dataTypeUnits = ("dB", "m/s2", "m", "°C")
 
-
-class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses through multiple processing metrics and divides them accordingly
+class AlertTracker:
    
-    def __init__(self, alertControlsFrame, name, thresholdUnits, alertDataType, alertRange, alertMetric, width=400, height=100):
+    def __init__(self, alertControlsFrame, name, alertDataType, alertRange, alertMetric, width=400, height=100):
         # Initialize data variables
         self.name = name
-        self.thresholdUnits = thresholdUnits
         self.alertEnabled = BooleanVar()
         self.alertDataType = alertDataType
+        self.thresholdUnits = dataTypeUnits[int(alertDataType)]
         self.alertRange = alertRange
         self.alertMetric = alertMetric
         self.alertRangeName = StringVar()
@@ -128,7 +128,7 @@ class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses th
             self.input2.grid_forget()
         elif typeName == AlertRange.Between.name:
             print(f"Alert type changed to {self.alertRange} ({typeName}): change between limits and add the entry box")
-            self.input2.grid(row=1, column=8, columnspan=2)
+            self.input2.grid(row=2, column=6, columnspan=2)
             
     
     def confirmUpdates(self):
@@ -187,8 +187,9 @@ class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses th
 # Receives processing info from queue and sends it to each relevant tracker
 class AlertsTop:
 
-    def __init__(self, alertControlsFrame, processingQueue):
+    def __init__(self, alertControlsFrame, alertTrackersFrame, processingQueue):
         self.alertControlsFrame = alertControlsFrame
+        self.alertTrackersFrame = alertTrackersFrame
         self.processingQueue = processingQueue
         # Sort trackers in lists based on their data type
         self.soundLevelTrackers = []
@@ -200,12 +201,15 @@ class AlertsTop:
         self.nameEntryVar = StringVar()
         self.newDataTypeVar = StringVar()
         self.newMetricVar = StringVar()
+        self.nextTrackerRow = 1
 
     def addTracker(self, tracker):
         # Add tracker to a list based on the data type
-        #print(f"Tracker: {tracker.alertDataType}, int: {(int(tracker.alertDataType))}")
         self.trackers[tracker.alertDataType].append(tracker)
+        print(f"Added {tracker.alertDataType.name} Tracker: {tracker.name}. There are now {len(self.trackers[tracker.alertDataType])}")
         # TODO: Update GUI with new tracker
+        tracker.getAlertFrame().grid(row=self.nextTrackerRow, column=1, columnspan=10)
+        self.nextTrackerRow += 1
 
     def buildNewTrackerFrame(self, alertControlsFrame, width=400, height=100):
         # Create TKinter frame
@@ -214,9 +218,9 @@ class AlertsTop:
         self.newTrackerLabel.grid(row=1, column=1, columnspan=4)
         self.nameEntry = tk.Entry(self.newTrackerFrame, justify=CENTER, width=15, font="none 11", textvariable=self.nameEntryVar)
         self.nameEntry.grid(row=1, column=5, columnspan=4)
-        self.dataTypeMenu = tk.OptionMenu(self.newTrackerFrame, self.newDataTypeVar, *alertDataTypes, command=self.alertDataTypeChanged) #TODO: ADD CHANGE HANDLERS
+        self.dataTypeMenu = tk.OptionMenu(self.newTrackerFrame, self.newDataTypeVar, *alertDataTypes, command=self.alertDataTypeChanged)
         self.dataTypeMenu.grid(row=2, column=3, columnspan=3)
-        self.metricMenu = tk.OptionMenu(self.newTrackerFrame, self.newMetricVar, *alertMetrics, command=self.alertMetricChanged)          #TODO: ADD CHANGE HANDLERS
+        self.metricMenu = tk.OptionMenu(self.newTrackerFrame, self.newMetricVar, *alertMetrics, command=self.alertMetricChanged)
         self.metricMenu.grid(row=2, column=6, columnspan=3)
         self.addButton = tk.Button(self.newTrackerFrame, text="+", command=self.buildAndAddTracker)
         self.addButton.grid(row=1, column=10, rowspan=2, columnspan=2)
@@ -233,7 +237,16 @@ class AlertsTop:
         self.newMetric = AlertMetric[metricName]
 
     def buildAndAddTracker(self):
-        print("New tracker!") # TODO: create a new tracker object and add it to the frame
+        newTracker = AlertTracker(self.alertTrackersFrame, self.nameEntryVar.get(), self.newDataType, AlertRange.Above, AlertMetric.Average)
+        self.addTracker(newTracker) # Add to existing list
+        # Clear new tracker frame of the previous name name
+        self.nameEntryVar.set("")
+        return newTracker
+
+    def updateAlerts(self):
+        for trackerList in self.trackers:
+            for tracker in trackerList:
+                tracker.confirmUpdates()
 
     # Check processing queue for new metrics and distribute to proper trackers
     def readProcessedData(self):
@@ -249,7 +262,9 @@ class AlertsTop:
             dataType, average, maximum, minimum, freq, mag, alertTime = processed
             #print(f"Receiving processed data! {processed}")
             # Look for alert trackers for that data type
+            i=0
             for tracker in self.trackers[int(dataType)]:
+                i += 1
                 value = processed[int(tracker.alertMetric)]
-                #print(f"Give new {tracker.alertMetric} value to tracker: {value}")
+                print(f"Give new {tracker.alertMetric.name} value to tracker #{i}: {value}")
                 tracker.checkForAlerts(alertTime, value)

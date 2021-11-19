@@ -156,9 +156,9 @@ class DiaBotGUI():
     def speedChanged(self, event):
         PiInterface.speed=self.speed.get()
     
-    def updateAlerts(self):
-        for alert in self.alertTrackers:
-            alert.confirmUpdates()
+    #def updateAlerts(self):
+    #    for alert in self.alertsTop.alertTrackers:
+    #        alert.confirmUpdates()
 
     # --- Controls pane setup function ---
     def setupControlsPane(self):
@@ -175,9 +175,9 @@ class DiaBotGUI():
     
         # ----- Other -----
         
-        # Testing buttons
-        tk.Button(self.controlFrame, text="Motor", command=PiInterface.motorTurnTest).grid(row=14, column=2)
-        tk.Button(self.controlFrame, text="Off", command=PiInterface.stopGpio).grid(row=14, column=3)
+        ## Testing buttons TODO: Test and remove these
+        #tk.Button(self.controlFrame, text="Motor", command=PiInterface.motorTurnTest).grid(row=14, column=2)
+        #tk.Button(self.controlFrame, text="Off", command=PiInterface.stopGpio).grid(row=14, column=3)
 
 
     # ----- Movement controls -----
@@ -298,44 +298,41 @@ class DiaBotGUI():
         self.alertControls.grid(row=7, column=1, rowspan=1, columnspan=10)
         tk.Label(self.alertControls, text="Alerts", anchor=CENTER, font="none 14 bold").grid(row=1, column=1, columnspan=9)
         
-        # TODO: Rearrange or remove these guiding table labels
-        tk.Label(self.alertControls, text="Type", anchor=CENTER, font="none 11").grid(row=2, column=4, columnspan=2)
-        tk.Label(self.alertControls, text="Threshold", anchor=CENTER, font="none 11").grid(row=2, column=7, columnspan=2)
-        tk.Label(self.alertControls, text="Alerts", anchor=CENTER, font="none 11").grid(row=2, column=10, columnspan=2)
+        ## TODO: Rearrange or remove these guiding table labels
+        #tk.Label(self.alertControls, text="Type", anchor=CENTER, font="none 11").grid(row=2, column=4, columnspan=2)
+        #tk.Label(self.alertControls, text="Threshold", anchor=CENTER, font="none 11").grid(row=2, column=7, columnspan=2)
+        #tk.Label(self.alertControls, text="Alerts", anchor=CENTER, font="none 11").grid(row=2, column=10, columnspan=2)
         
-        # TODO: Use a separate frame for alert trackers
         self.alertTrackersFrame = tk.Frame(self.alertControls, width=400)
 
         # Create each alert instance and add frames to the UI  
-        self.alertsTop = AlertsTop(self.alertControls, self.processingQueue)
+        self.alertsTop = AlertsTop(self.alertControls, self.alertTrackersFrame, self.processingQueue)
 
         # TODO: Move these trackers into the new frame
-        self.vibrationAlertTracker = AlertTracker(self.alertControls,   "Vibration", "m/s2", AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average)
-        self.soundAlertTracker = AlertTracker(self.alertControls,       "Sound",       "dB", AlertDataType.SoundLevel,  AlertRange.Above,   AlertMetric.Frequency)
-        self.temperatureAlertTracker = AlertTracker(self.alertControls, "Temperature", "°C", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average)
+        self.vibrationAlertTracker = AlertTracker(self.alertTrackersFrame,   "Vibration",   AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average)
+        self.temperatureAlertTracker = AlertTracker(self.alertTrackersFrame, "Temperature", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average)
+        #self.soundAlertTracker = AlertTracker(self.alertTrackersFrame,       "Sound",       AlertDataType.SoundLevel,  AlertRange.Above,   AlertMetric.Frequency)
         
-        self.alertTrackers = [self.vibrationAlertTracker, self.soundAlertTracker, self.temperatureAlertTracker]
-        nextAlertRow = 3
+        self.alertTrackers = [self.vibrationAlertTracker, self.temperatureAlertTracker]#, self.soundAlertTracker]
         for tracker in self.alertTrackers:
             self.alertsTop.addTracker(tracker)
-            tracker.getAlertFrame().grid(row=nextAlertRow, column=1, columnspan = 10)
-            nextAlertRow += 1
-        
+
+        self.alertTrackersFrame.grid(row=2, column=1, columnspan=12)
         
         # Press this button to confirm and lock in Alert changes
-        self.confirmButton = tk.Button(self.alertControls, text="Confirm", command=self.updateAlerts)#, state=DISABLED) #TODO: enable/disable the button for updates
-        self.confirmButton.grid(row=nextAlertRow, column=8, columnspan=2)
-        nextAlertRow += 1
+        self.confirmButton = tk.Button(self.alertControls, text="Confirm", command=self.alertsTop.updateAlerts)#, state=DISABLED) #TODO: enable/disable the button for updates
+        self.confirmButton.grid(row=3, column=8, columnspan=2)
+        #nextAlertRow += 1
         
         # Add frame to add new trackers
         self.newAlertsFrame = self.alertsTop.buildNewTrackerFrame(self.alertControls)
-        self.newAlertsFrame.grid(row=nextAlertRow, column=1, columnspan=11)
-        nextAlertRow += 1
+        self.newAlertsFrame.grid(row=4, column=1, columnspan=11)
+        #nextAlertRow += 1
         
         self.alertControls.grid_columnconfigure(1, minsize=10)
         for i in range(2,10):
             self.alertControls.grid_columnconfigure(i, minsize=20)
-        for i in range(2, nextAlertRow+1):
+        for i in range(2, 5):
             self.alertControls.grid_rowconfigure(i, minsize=30)
 
 
