@@ -44,13 +44,14 @@ class Alert:
         self.tripValue = tripValue
 
 
-class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses through multiple processing metrics and divides them accordingly
-    # --- Static class variables ---
-   
-    alertRanges = (AlertRange.Above.name, AlertRange.Between.name, AlertRange.Below.name)
-    #alertMetrics = (metric.name for metric in AlertMetric)
+alertDataTypes = (AlertDataType.SoundLevel.name, AlertDataType.Vibration.name, AlertDataType.Position.name, AlertDataType.Temperature.name)
+alertMetrics = (AlertMetric.Average.name, AlertMetric.Maximum.name, AlertMetric.Minimum.name, AlertMetric.Frequency.name, AlertMetric.Magnitude.name)
+alertRanges = (AlertRange.Above.name, AlertRange.Between.name, AlertRange.Below.name)
 
-    def __init__(self, alertControlsFrame, name, thresholdUnits, alertDataType, alertRange, alertMetric, width=400, height=50):
+
+class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses through multiple processing metrics and divides them accordingly
+   
+    def __init__(self, alertControlsFrame, name, thresholdUnits, alertDataType, alertRange, alertMetric, width=400, height=100):
         # Initialize data variables
         self.name = name
         self.thresholdUnits = thresholdUnits
@@ -58,11 +59,9 @@ class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses th
         self.alertDataType = alertDataType
         self.alertRange = alertRange
         self.alertMetric = alertMetric
-        #self.tripValue = tripValue
         self.alertRangeName = StringVar()
         self.alertRangeName.set(self.alertRange.name)
         self.alerts = []
-        #self.notificationQueue = multiprocessing.Queue()
 
         # Threshold levels
         self.belowValue = nan
@@ -76,33 +75,47 @@ class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses th
 
         # Create TKinter frame
         self.frame = tk.Frame(alertControlsFrame, width=width, height=height)
-        self.enableButton = tk.Checkbutton(self.frame, text=self.name, variable=self.alertEnabled, anchor="w", justify=LEFT, font="none 11")
-        self.typeMenu = tk.OptionMenu(self.frame, self.alertRangeName, *AlertTracker.alertRanges, command=self.alertRangeChanged)
+        self.nameEnableButton = tk.Checkbutton(self.frame, text=self.name, variable=self.alertEnabled, anchor="w", justify=LEFT, font="none 11")
+        self.dataTypeLabel = tk.Label(self.frame, text=self.alertDataType.name, anchor="w", justify=LEFT, font="none 11")
+        self.metricLabel = tk.Label(self.frame, text=self.alertMetric.name, anchor="w", justify=LEFT, font="none 11")
+        self.notificationLabel = tk.Label(self.frame, text="None", anchor=CENTER, font="none 11", fg="black")
+        self.rangeMenu = tk.OptionMenu(self.frame, self.alertRangeName, *alertRanges, command=self.alertRangeChanged)
         self.input1 = tk.Entry(self.frame, justify=CENTER, width=5, font="none 11", textvariable=self.thresholdString1)
         self.input2 = tk.Entry(self.frame, justify=CENTER, width=5, font="none 11", textvariable=self.thresholdString2)
-        self.unitsLabel = tk.Label(self.frame, text=self.thresholdUnits, anchor="w", justify=LEFT, font="none 11")
-        self.notificationLabel = tk.Label(self.frame, text="None", anchor=CENTER, font="none 11", fg="black")
+        self.unitsLabel = tk.Label(self.frame, text=self.thresholdUnits, anchor="w", justify=RIGHT, font="none 11")
+        self.clearButton = tk.Button(self.frame, text="CLR", command=self.clearAlerts)
+        self.deleteButton = tk.Button(self.frame, text="DEL", command=self.deleteTracker)
 
     # Builds and returns the alert frame in self.frame 
     def getAlertFrame(self):
         #print(f"Creating and returning alert row for {self.name})
-        self.enableButton.grid(row=1, column=1, columnspan=3)
-        
-        # Alert types
-        self.typeMenu.grid(row=1, column=4, columnspan=2)
+        self.nameEnableButton.grid(row=1, column=1, columnspan=3)
+        self.dataTypeLabel.grid(row=1, column=4, columnspan=2)
+        self.metricLabel.grid(row=1, column=7, columnspan=2)
+        self.notificationLabel.grid(row=1, column=9, columnspan=3)
+
+        # Alert ranges
+        self.rangeMenu.grid(row=2, column=2, columnspan=2)
         
         # Input entry fields: Only show the second entry for 'Between' mode
-        self.input1.grid(row=1, column=6, columnspan=2)
+        self.input1.grid(row=2, column=4, columnspan=2)
         if (self.alertRange == AlertRange.Between):
-            self.input2.grid(row=1, column=8, columnspan=2)
+            self.input2.grid(row=2, column=6, columnspan=2)
             
         # Units
-        self.unitsLabel.grid(row=1, column=9, columnspan=2)
+        self.unitsLabel.grid(row=2, column=9, columnspan=2)
+
+        # Clear and Delete buttons
+        self.clearButton.grid(row=2, column=11)
+        self.deleteButton.grid(row=2, column=12)
 
         # Alert notification
-        self.notificationLabel.grid(row=1, column=11, columnspan=2)
         return self.frame
     
+    def deleteTracker(self):
+        # TODO: Fill in to delete and clean up the tracker
+        print(f"Delete tracker: {self.name}")
+
     # Callback function for changing the alert type
     def alertRangeChanged(self, typeName):
         self.alertRangeName.set(typeName)
@@ -139,10 +152,16 @@ class AlertTracker: # TODO: Make class to contain many AlertTrackers - parses th
             except:
                 print(f"Error: cannot convert string {self.thresholdString2.get()} to a number")
 
+    def clearAlerts(self):
+        self.alerts.clear()
+        self.notificationLabel.grid_forget()
+        self.notificationLabel = tk.Label(self.frame, text="None", anchor=CENTER, font="none 11", fg="black")
+        self.notificationLabel.grid(row=1, column=11, columnspan=2)
+
     def setErrorLabel(self):
         #timeString = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(alert.alertTime)) # Add %Z to show time zone
         self.notificationLabel.grid_forget()
-        self.notificationLabel = tk.Label(self.frame, text="Error", anchor=CENTER, font="none 11 bold", fg="red")
+        self.notificationLabel = tk.Label(self.frame, text=f"Error({len(self.alerts)})", anchor=CENTER, font="none 11 bold", fg="red")
         self.notificationLabel.grid(row=1, column=11, columnspan=2)
 
     def checkForAlerts(self, t, value):
@@ -177,11 +196,44 @@ class AlertsTop:
         self.positionTrackers = []
         self.temperatureTrackers = []
         self.trackers = [self.soundLevelTrackers, self.vibrationTrackers, self.positionTrackers, self.temperatureTrackers]
+        # TK variables for the Add New Alert frame
+        self.nameEntryVar = StringVar()
+        self.newDataTypeVar = StringVar()
+        self.newMetricVar = StringVar()
 
     def addTracker(self, tracker):
         # Add tracker to a list based on the data type
         #print(f"Tracker: {tracker.alertDataType}, int: {(int(tracker.alertDataType))}")
         self.trackers[tracker.alertDataType].append(tracker)
+        # TODO: Update GUI with new tracker
+
+    def buildNewTrackerFrame(self, alertControlsFrame, width=400, height=100):
+        # Create TKinter frame
+        self.newTrackerFrame = tk.Frame(alertControlsFrame, width=width, height=height)
+        self.newTrackerLabel = tk.Label(self.newTrackerFrame, text="Add New Alert:", anchor=CENTER, font="none 11", fg="black")
+        self.newTrackerLabel.grid(row=1, column=1, columnspan=4)
+        self.nameEntry = tk.Entry(self.newTrackerFrame, justify=CENTER, width=15, font="none 11", textvariable=self.nameEntryVar)
+        self.nameEntry.grid(row=1, column=5, columnspan=4)
+        self.dataTypeMenu = tk.OptionMenu(self.newTrackerFrame, self.newDataTypeVar, *alertDataTypes, command=self.alertDataTypeChanged) #TODO: ADD CHANGE HANDLERS
+        self.dataTypeMenu.grid(row=2, column=3, columnspan=3)
+        self.metricMenu = tk.OptionMenu(self.newTrackerFrame, self.newMetricVar, *alertMetrics, command=self.alertMetricChanged)          #TODO: ADD CHANGE HANDLERS
+        self.metricMenu.grid(row=2, column=6, columnspan=3)
+        self.addButton = tk.Button(self.newTrackerFrame, text="+", command=self.buildAndAddTracker)
+        self.addButton.grid(row=1, column=10, rowspan=2, columnspan=2)
+        return self.newTrackerFrame
+        
+    # Callback function for selecting a new 
+    def alertDataTypeChanged(self, typeName):
+        self.newDataTypeVar.set(typeName)
+        self.newDataType = AlertDataType[typeName]
+        
+    # Callback function for selecting a new 
+    def alertMetricChanged(self, metricName):
+        self.newMetricVar.set(metricName)
+        self.newMetric = AlertMetric[metricName]
+
+    def buildAndAddTracker(self):
+        print("New tracker!") # TODO: create a new tracker object and add it to the frame
 
     # Check processing queue for new metrics and distribute to proper trackers
     def readProcessedData(self):

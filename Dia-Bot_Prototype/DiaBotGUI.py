@@ -298,16 +298,18 @@ class DiaBotGUI():
         self.alertControls.grid(row=7, column=1, rowspan=1, columnspan=10)
         tk.Label(self.alertControls, text="Alerts", anchor=CENTER, font="none 14 bold").grid(row=1, column=1, columnspan=9)
         
-        
+        # TODO: Rearrange or remove these guiding table labels
         tk.Label(self.alertControls, text="Type", anchor=CENTER, font="none 11").grid(row=2, column=4, columnspan=2)
         tk.Label(self.alertControls, text="Threshold", anchor=CENTER, font="none 11").grid(row=2, column=7, columnspan=2)
         tk.Label(self.alertControls, text="Alerts", anchor=CENTER, font="none 11").grid(row=2, column=10, columnspan=2)
         
-                    
-        # self, alertControlsFrame, name, thresholdUnits, alertDataType, alertRange, alertMetric, processingQueue, width=400, height=50)
+        # TODO: Use a separate frame for alert trackers
+        self.alertTrackersFrame = tk.Frame(self.alertControls, width=400)
+
         # Create each alert instance and add frames to the UI  
         self.alertsTop = AlertsTop(self.alertControls, self.processingQueue)
 
+        # TODO: Move these trackers into the new frame
         self.vibrationAlertTracker = AlertTracker(self.alertControls,   "Vibration", "m/s2", AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average)
         self.soundAlertTracker = AlertTracker(self.alertControls,       "Sound",       "dB", AlertDataType.SoundLevel,  AlertRange.Above,   AlertMetric.Frequency)
         self.temperatureAlertTracker = AlertTracker(self.alertControls, "Temperature", "°C", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average)
@@ -317,13 +319,18 @@ class DiaBotGUI():
         for tracker in self.alertTrackers:
             self.alertsTop.addTracker(tracker)
             tracker.getAlertFrame().grid(row=nextAlertRow, column=1, columnspan = 10)
-            nextAlertRow = nextAlertRow + 1
+            nextAlertRow += 1
         
         
         # Press this button to confirm and lock in Alert changes
         self.confirmButton = tk.Button(self.alertControls, text="Confirm", command=self.updateAlerts)#, state=DISABLED) #TODO: enable/disable the button for updates
         self.confirmButton.grid(row=nextAlertRow, column=8, columnspan=2)
+        nextAlertRow += 1
         
+        # Add frame to add new trackers
+        self.newAlertsFrame = self.alertsTop.buildNewTrackerFrame(self.alertControls)
+        self.newAlertsFrame.grid(row=nextAlertRow, column=1, columnspan=11)
+        nextAlertRow += 1
         
         self.alertControls.grid_columnconfigure(1, minsize=10)
         for i in range(2,10):
