@@ -115,8 +115,8 @@ class AlertTracker:
     
     def deleteTracker(self):
         print(f"Delete tracker: {self.name}")
+        self.frame.destroy()
         self.alertsTop.removeTracker(self)
-        self.frame.grid_forget()
 
     # Callback function for changing the alert type
     def alertRangeChanged(self, typeName):
@@ -201,18 +201,14 @@ class AlertsTop:
         self.trackers = [self.soundLevelTrackers, self.vibrationTrackers, self.positionTrackers, self.temperatureTrackers]
         # TK variables for the Add New Alert frame
         self.nameEntryVar = StringVar()
-        self.nameEntryVar.set("Name")
+        self.nameEntryVar.set("Tracker Name")
         self.newDataTypeVar = StringVar()
         self.newMetricVar = StringVar()
-        self.nextTrackerRow = 1
-
+        
     def addTracker(self, tracker):
         # Add tracker to a list based on the data type
         self.trackers[tracker.alertDataType].append(tracker)
-        #print(f"Added {tracker.alertDataType.name} Tracker: {tracker.name}. There are now {len(self.trackers[tracker.alertDataType])}")
-        # TODO: Update GUI with new tracker
-        tracker.getAlertFrame().grid(row=self.nextTrackerRow, column=1, columnspan=10)
-        self.nextTrackerRow += 1
+        tracker.getAlertFrame().pack()
 
     # Delete tracker from UI and Top
     def removeTracker(self, tracker):
@@ -221,9 +217,7 @@ class AlertsTop:
         for i in range(len(trackersList)):
             if trackersList[i] == tracker:
                 found = True
-                #print(f"Tracker found at index {i}! Removing (len {len(trackersList)})...")
                 trackersList.pop(i)
-                #print(f"...new len {len(trackersList)}")
                 break
         if not found:
             print(f"Error in alertsTop.removeTracker: ({tracker.name}) not found!")
@@ -253,28 +247,27 @@ class AlertsTop:
         self.newMetricVar.set(metricName)
         self.newMetric = AlertMetric[metricName]
 
+    # Callback button for "+" new tracker - take UI input to build and add a new tracker
     def buildAndAddTracker(self):
-        newTracker = AlertTracker(self, self.alertTrackersFrame, self.nameEntryVar.get(), self.newDataType, AlertRange.Above, AlertMetric.Average)
-        self.addTracker(newTracker) # Add to existing list
-        # Clear new tracker frame of the previous name name
-        self.nameEntryVar.set("Name")
-        return newTracker
+        if len(self.newDataTypeVar.get()) > 1 and len(self.newMetricVar.get()) > 1:
+            newTracker = AlertTracker(self, self.alertTrackersFrame, self.nameEntryVar.get(), self.newDataType, AlertRange.Above, AlertMetric.Average)
+            self.addTracker(newTracker) # Add to existing list
+            # Clear new tracker frame of the previous name name
+            self.nameEntryVar.set("Tracker Name")
+            return newTracker
+        else:
+            print("Error in buildAndAddTracker: data type or metric not selected!")
 
+    # Accept UI changes to existing alert trackers to change tracker behavior
     def updateAlerts(self):
         for trackerList in self.trackers:
             for tracker in trackerList:
                 tracker.confirmUpdates()
 
     # Check processing queue for new metrics and distribute to proper trackers
-    def readProcessedData(self):
-        # TODO: MOVE DATA SOURCE TO PROCESSING PROCESS
-        # Testing UI: Randomly add alerts to the queue
-        #if randint(0, 10) == 2:
-        #    newAlert = Alert(self.alertDataType, time.time(), self.alertRange, self.alertMetric, 10)
-        #    self.processingQueue.put(newAlert)
-
+    def distributeProcessedData(self):
         # Check processing queue for new data
-        while not self.processingQueue.empty(): #  TODO: READ AND PARSE PROCESSING DATA TO FORM ALERT
+        while not self.processingQueue.empty():
             processed = self.processingQueue.get()
             dataType = processed[0]
             alertTime = processed[6]

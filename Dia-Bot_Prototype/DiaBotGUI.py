@@ -298,11 +298,7 @@ class DiaBotGUI():
         self.alertControls.grid(row=7, column=1, rowspan=1, columnspan=10)
         tk.Label(self.alertControls, text="Alerts", anchor=CENTER, font="none 14 bold").grid(row=1, column=1, columnspan=9)
         
-        ## TODO: Rearrange or remove these guiding table labels
-        #tk.Label(self.alertControls, text="Type", anchor=CENTER, font="none 11").grid(row=2, column=4, columnspan=2)
-        #tk.Label(self.alertControls, text="Threshold", anchor=CENTER, font="none 11").grid(row=2, column=7, columnspan=2)
-        #tk.Label(self.alertControls, text="Alerts", anchor=CENTER, font="none 11").grid(row=2, column=10, columnspan=2)
-        
+        # Extra TK frame to display just the alert trackers
         self.alertTrackersFrame = tk.Frame(self.alertControls, width=400)
 
         # Create each alert instance and add frames to the UI  
@@ -311,11 +307,9 @@ class DiaBotGUI():
         # TODO: Move these trackers into the new frame
         self.vibrationAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame,   "Vibration",   AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average)
         self.temperatureAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame, "Temperature", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average)
-        #self.soundAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame,       "Sound",       AlertDataType.SoundLevel,  AlertRange.Above,   AlertMetric.Frequency)
         
-        self.alertTrackers = [self.vibrationAlertTracker, self.temperatureAlertTracker]#, self.soundAlertTracker]
-        for tracker in self.alertTrackers:
-            self.alertsTop.addTracker(tracker)
+        self.alertsTop.addTracker(self.vibrationAlertTracker)
+        self.alertsTop.addTracker(self.temperatureAlertTracker)
 
         self.alertTrackersFrame.grid(row=2, column=1, columnspan=12)
         
@@ -502,7 +496,7 @@ class DiaBotGUI():
    
     # --- Update Alerts Handlers ---
     def updateAlertsHandler(self, event):
-        self.alertsTop.readProcessedData()
+        self.alertsTop.distributeProcessedData()
             #print(f"Finished checking alerts in {tracker.name}")
         
     def printTime(self):
