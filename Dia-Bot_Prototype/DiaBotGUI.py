@@ -309,9 +309,9 @@ class DiaBotGUI():
         self.alertsTop = AlertsTop(self.alertControls, self.alertTrackersFrame, self.processingQueue)
 
         # TODO: Move these trackers into the new frame
-        self.vibrationAlertTracker = AlertTracker(self.alertTrackersFrame,   "Vibration",   AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average)
-        self.temperatureAlertTracker = AlertTracker(self.alertTrackersFrame, "Temperature", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average)
-        #self.soundAlertTracker = AlertTracker(self.alertTrackersFrame,       "Sound",       AlertDataType.SoundLevel,  AlertRange.Above,   AlertMetric.Frequency)
+        self.vibrationAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame,   "Vibration",   AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average)
+        self.temperatureAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame, "Temperature", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average)
+        #self.soundAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame,       "Sound",       AlertDataType.SoundLevel,  AlertRange.Above,   AlertMetric.Frequency)
         
         self.alertTrackers = [self.vibrationAlertTracker, self.temperatureAlertTracker]#, self.soundAlertTracker]
         for tracker in self.alertTrackers:
@@ -573,7 +573,7 @@ class DiaBotGUI():
         threadRunningCount = 0
         self.programRunning = False
         for t in threads:
-            threadRunningCount = threadRunningCount + 1
+            threadRunningCount += 1
             t.endThread()
 
         if self.cameraOn:

@@ -51,9 +51,10 @@ dataTypeUnits = ("dB", "m/s2", "m", "°C")
 
 class AlertTracker:
    
-    def __init__(self, alertControlsFrame, name, alertDataType, alertRange, alertMetric, width=400, height=100):
+    def __init__(self, alertsTop, alertControlsFrame, name, alertDataType, alertRange, alertMetric, width=400, height=100):
         # Initialize data variables
         self.name = name
+        self.alertsTop = alertsTop
         self.alertEnabled = BooleanVar()
         self.alertDataType = alertDataType
         self.thresholdUnits = dataTypeUnits[int(alertDataType)]
@@ -113,8 +114,9 @@ class AlertTracker:
         return self.frame
     
     def deleteTracker(self):
-        # TODO: Fill in to delete and clean up the tracker
         print(f"Delete tracker: {self.name}")
+        self.alertsTop.removeTracker(self)
+        self.frame.grid_forget()
 
     # Callback function for changing the alert type
     def alertRangeChanged(self, typeName):
@@ -199,6 +201,7 @@ class AlertsTop:
         self.trackers = [self.soundLevelTrackers, self.vibrationTrackers, self.positionTrackers, self.temperatureTrackers]
         # TK variables for the Add New Alert frame
         self.nameEntryVar = StringVar()
+        self.nameEntryVar.set("Name")
         self.newDataTypeVar = StringVar()
         self.newMetricVar = StringVar()
         self.nextTrackerRow = 1
@@ -206,10 +209,24 @@ class AlertsTop:
     def addTracker(self, tracker):
         # Add tracker to a list based on the data type
         self.trackers[tracker.alertDataType].append(tracker)
-        print(f"Added {tracker.alertDataType.name} Tracker: {tracker.name}. There are now {len(self.trackers[tracker.alertDataType])}")
+        #print(f"Added {tracker.alertDataType.name} Tracker: {tracker.name}. There are now {len(self.trackers[tracker.alertDataType])}")
         # TODO: Update GUI with new tracker
         tracker.getAlertFrame().grid(row=self.nextTrackerRow, column=1, columnspan=10)
         self.nextTrackerRow += 1
+
+    # Delete tracker from UI and Top
+    def removeTracker(self, tracker):
+        trackersList = self.trackers[tracker.alertDataType]
+        found = False
+        for i in range(len(trackersList)):
+            if trackersList[i] == tracker:
+                found = True
+                #print(f"Tracker found at index {i}! Removing (len {len(trackersList)})...")
+                trackersList.pop(i)
+                #print(f"...new len {len(trackersList)}")
+                break
+        if not found:
+            print(f"Error in alertsTop.removeTracker: ({tracker.name}) not found!")
 
     def buildNewTrackerFrame(self, alertControlsFrame, width=400, height=100):
         # Create TKinter frame
@@ -226,21 +243,21 @@ class AlertsTop:
         self.addButton.grid(row=1, column=10, rowspan=2, columnspan=2)
         return self.newTrackerFrame
         
-    # Callback function for selecting a new 
+    # Callback function for selecting a new alert data type
     def alertDataTypeChanged(self, typeName):
         self.newDataTypeVar.set(typeName)
         self.newDataType = AlertDataType[typeName]
         
-    # Callback function for selecting a new 
+    # Callback function for selecting a new alert metric
     def alertMetricChanged(self, metricName):
         self.newMetricVar.set(metricName)
         self.newMetric = AlertMetric[metricName]
 
     def buildAndAddTracker(self):
-        newTracker = AlertTracker(self.alertTrackersFrame, self.nameEntryVar.get(), self.newDataType, AlertRange.Above, AlertMetric.Average)
+        newTracker = AlertTracker(self, self.alertTrackersFrame, self.nameEntryVar.get(), self.newDataType, AlertRange.Above, AlertMetric.Average)
         self.addTracker(newTracker) # Add to existing list
         # Clear new tracker frame of the previous name name
-        self.nameEntryVar.set("")
+        self.nameEntryVar.set("Name")
         return newTracker
 
     def updateAlerts(self):
@@ -259,12 +276,8 @@ class AlertsTop:
         # Check processing queue for new data
         while not self.processingQueue.empty(): #  TODO: READ AND PARSE PROCESSING DATA TO FORM ALERT
             processed = self.processingQueue.get()
-            dataType, average, maximum, minimum, freq, mag, alertTime = processed
-            #print(f"Receiving processed data! {processed}")
-            # Look for alert trackers for that data type
-            i=0
+            dataType = processed[0]
+            alertTime = processed[6]
             for tracker in self.trackers[int(dataType)]:
-                i += 1
                 value = processed[int(tracker.alertMetric)]
-                print(f"Give new {tracker.alertMetric.name} value to tracker #{i}: {value}")
                 tracker.checkForAlerts(alertTime, value)
