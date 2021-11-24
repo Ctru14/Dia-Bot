@@ -8,8 +8,8 @@ import multiprocessing
 
 class DiaThread():
     
-    def __init__(self, name, useProcess, globalStartTime, shutdownRespQueue, freqHz, loopFunction, *args):
-        self.globalStartTime = globalStartTime
+    def __init__(self, name, useProcess, startTime, shutdownRespQueue, freqHz, loopFunction, *args):
+        self.startTime = startTime
         self.threadRunning = False
         self.threadEnded = False
         self.shutdownInitQueue = multiprocessing.Queue() # Process receives ending message on this queue
@@ -115,11 +115,11 @@ class DiaThread():
 # Parent process starts a new process which spawns child threads
 class DiaProcess():
 
-    def __init__(self, dataType, name, units, samplingRate, globalStartTime, shutdownInitQueue, shutdownRespQueue, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue):
-        self.name = name
+    def __init__(self, fields, shutdownInitQueue, shutdownRespQueue, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue):
+        self.name = fields.name
         self.externalShutdownInitQueue = shutdownInitQueue # External - Receive shutdown message from main process
         self.externalShutdownRespQueue = shutdownRespQueue # External - Confirm shutdown to main process
-        self.process = multiprocessing.Process(target=DiaProcess.beginDataProcessing, args=(dataType, name, units, samplingRate, globalStartTime, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, shutdownInitQueue))
+        self.process = multiprocessing.Process(target=DiaProcess.beginDataProcessing, args=(fields, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, shutdownInitQueue))
 
     # Called from main process
     def startProcess(self):
@@ -144,18 +144,19 @@ class DiaProcess():
     
     # -------- Function to initialize data processing processes --------
     #   ----- This will be run in the context of the new process! -----
-    def beginDataProcessing(dataType, name, units, samplingRate, startTime, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, externalShutdownInitQueue):
+    def beginDataProcessing(fields, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, externalShutdownInitQueue):
         pid = os.getpid()
         threadRunningCount = 0
         internalShutdownRespQueue = multiprocessing.Queue()
+        name = fields.name
 
         # Initialize DataProcessing class in new process context
-        processing = ProcessingType(dataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue)
+        processing = ProcessingType(fields.alertDataType, name, fields.units, fields.samplingRate, fields.startTime, isPlotted, dataQueue, visualQueue, processingQueue)
 
         # Add child threads for data collection, visuals, and processing
-        collectionThread = DiaThread(f"{name}CollectionThread", False, startTime, internalShutdownRespQueue, samplingRate, processing.getAndAddData)
-        processingThread = DiaThread(f"{name}ProcessingThread", False, startTime, internalShutdownRespQueue, .4, processing.mainProcessing)
-        # TODO: visualThread = 
+        collectionThread = DiaThread(f"{name}CollectionThread", False, fields.startTime, internalShutdownRespQueue, fields.samplingRate, processing.getAndAddData)
+        processingThread = DiaThread(f"{name}ProcessingThread", False, fields.startTime, internalShutdownRespQueue, .4, processing.mainProcessing)
+        #visualThread = DiaThread(f"{name}VisualThread", False, fields.startTime, internalShutdownRespQueue, .18, processing.visualProcessing)
 
         # Start worker threads
         threads = [collectionThread, processingThread]#, visualThread]

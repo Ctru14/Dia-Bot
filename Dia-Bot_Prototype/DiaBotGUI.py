@@ -17,6 +17,7 @@ from matplotlib.figure import Figure
 
 # Dia-Bot specific imports
 import DataCollection
+import DataDisplay
 import DataProcessing
 import Alerts
 from Alerts import Alert
@@ -76,44 +77,30 @@ class DiaBotGUI():
         self.alertControls = tk.Frame(self.controlFrame, width=400, height=280)
 
         # Data collection (Must be created in constructor to guaranteee use in Alerts)
-        self.processingQueue = multiprocessing.Queue() # TODO: Replace individual processing queues with this one
+        self.processingQueue = multiprocessing.Queue()
         self.soundLevelSamplingRate = 100
         self.soundLevelFields, self.soundLevelDataQueue, self.soundLevelVisualQueue, self.soundLevelCollection = DiaBotGUI.createDataFields(
             DataCollection.SoundLevelCollection, "Sound Level", "dB", self.soundLevelSamplingRate, self.startTime)
-         # TODO: DEPRECATE THIS!
-        soundLevelDataQueue, soundLevelCollection, self.soundLevelProcessing = DiaBotGUI.createDataHandlers(
-                                DataCollection.SoundLevelCollection, DataProcessing.SoundLevelProcessing, AlertDataType.SoundLevel,
-                               "Sound Level", "dB", self.soundLevelSamplingRate, self.startTime, self.uiMutex, True, self.soundLevelDataQueue, self.soundLevelVisualQueue)
         
+
         self.vibrationSamplingRate = 100
         self.vibrationFields, self.vibrationDataQueue, self.vibrationVisualQueue, self.vibrationCollection = DiaBotGUI.createDataFields(
             DataCollection.VibrationCollection, "Vibration", "m/s2", self.vibrationSamplingRate, self.startTime)
-         # TODO: DEPRECATE THIS!
-        vibrationDataQueue, vibrationCollection, self.vibrationProcessing = DiaBotGUI.createDataHandlers(
-                                DataCollection.VibrationCollection, DataProcessing.VibrationProcessing, AlertDataType.Vibration,
-                               "Vibration", "m/s2", self.vibrationSamplingRate, self.startTime, self.uiMutex, True, self.vibrationDataQueue, self.vibrationVisualQueue)
-        
+         
+
         self.positionSamplingRate = 10
         self.positionFields, self.positionDataQueue, self.positionVisualQueue, self.positionCollection = DiaBotGUI.createDataFields(
             DataCollection.PositionCollection, "Position", "m", self.positionSamplingRate, self.startTime)
-         # TODO: DEPRECATE THIS!
-        positionDataQueue, positionCollection, self.positionProcessing = DiaBotGUI.createDataHandlers(
-                                DataCollection.PositionCollection, DataProcessing.PositionProcessing, AlertDataType.Position,
-                               "Position", "m", self.positionSamplingRate, self.startTime, self.uiMutex, True, self.positionDataQueue, self.positionVisualQueue)
         
+
         self.temperatureSamplingRate = 1/5
         self.temperatureFields, self.temperatureDataQueue, self.temperatureVisualQueue, self.temperatureCollection = DiaBotGUI.createDataFields(
             DataCollection.TemperatureCollection, "Temperature", "°C", self.temperatureSamplingRate, self.startTime)
-         # TODO: DEPRECATE THIS!
-        temperatureDataQueue, temperatureCollection, self.temperatureProcessing = DiaBotGUI.createDataHandlers(
-                                DataCollection.TemperatureCollection, DataProcessing.TemperatureProcessing, AlertDataType.Temperature,
-                               "Temperature", "°C", self.temperatureSamplingRate, self.startTime, self.uiMutex, True, self.temperatureDataQueue, self.temperatureVisualQueue)
-        
+         
         
         
         # Group of all the data classes
         self.dataFieldsClassList = [self.soundLevelFields, self.vibrationFields, self.positionFields, self.temperatureFields]
-        self.dataProcessingClassList = [self.soundLevelProcessing, self.vibrationProcessing, self.positionProcessing, self.temperatureProcessing]
 
 
 
@@ -304,7 +291,6 @@ class DiaBotGUI():
         # Create each alert instance and add frames to the UI  
         self.alertsTop = AlertsTop(self.alertControls, self.alertTrackersFrame, self.processingQueue)
 
-        # TODO: Move these trackers into the new frame
         self.vibrationAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame,   "Vibration",   AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average)
         self.temperatureAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame, "Temperature", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average)
         
@@ -316,12 +302,10 @@ class DiaBotGUI():
         # Press this button to confirm and lock in Alert changes
         self.confirmButton = tk.Button(self.alertControls, text="Confirm", command=self.alertsTop.updateAlerts)#, state=DISABLED) #TODO: enable/disable the button for updates
         self.confirmButton.grid(row=3, column=8, columnspan=2)
-        #nextAlertRow += 1
         
         # Add frame to add new trackers
         self.newAlertsFrame = self.alertsTop.buildNewTrackerFrame(self.alertControls)
         self.newAlertsFrame.grid(row=4, column=1, columnspan=11)
-        #nextAlertRow += 1
         
         self.alertControls.grid_columnconfigure(1, minsize=10)
         for i in range(2,10):
@@ -337,43 +321,6 @@ class DiaBotGUI():
         print(f"Setting colletData to {self.collectData}")
 
     # ------------------ Data Pane -----------------------
-    
-    # Create class for Temperature text/button display
-    class TemperatureDisplay:
-
-        def __init__(self, visualQueue):#, tempLabel, switchTempViewButton):
-            self.viewFarenheit = False
-            self.currentTempCelsius = 0
-            self.currentTempFarenheit = 0
-            self.tempDisplayText = StringVar()
-            self.tempDisplayText.set(self.getDisplayText())
-            self.tempViewButtonText = StringVar()
-            self.tempViewButtonText.set("View Farenheit")
-            self.visualQueue = visualQueue
-
-        def addViewComponents(self, tempLabel, switchTempViewButton):
-            self.tempLabel = tempLabel
-            self.switchTempViewButton = switchTempViewButton
-            
-        def getDisplayText(self):
-            if self.viewFarenheit:
-                return f"{self.currentTempFarenheit} °F"
-            else:
-                return f"{self.currentTempCelsius} °C"
-        
-        def switchTempView(self):
-            print(f"Switching view! Temp = {self.tempDisplayText.get()}, Button = {self.tempViewButtonText.get()}")
-            if self.viewFarenheit:
-                # Currently Farenheit --> Switch to Celsius
-                self.viewFarenheit = False
-                self.tempDisplayText.set(self.getDisplayText())
-                self.tempViewButtonText.set("View Farenheit")
-            else:
-                # Currently Celsius --> Switch to Farenheit
-                self.viewFarenheit = True
-                self.tempDisplayText.set(self.getDisplayText())
-                self.tempViewButtonText.set("View Celsius")
-
 
     # Main method to setup data pane with each data category
     def setupDataPane(self):
@@ -386,40 +333,40 @@ class DiaBotGUI():
         self.temperatureFrame = tk.Frame(self.dataFrame, width=350, height=350)#, bg="orange")
         self.positionFrame = tk.Frame(self.dataFrame, width=350, height=350)#, bg="green")
         self.dataFrames = [self.soundLevelFrame, self.vibrationFrame, self.temperatureFrame, self.positionFrame]
-        self.units = ["dB", "m/s2", "°C", "m"]
+        #self.units = ["dB", "m/s2", "°C", "m"]
         
         
         # Sound Level
-        soundLevelPlotVars = DiaBotGUI.createNewDataPane(DataProcessing.SoundLevelProcessing, self.soundLevelFields.name, self.soundLevelFrame, 2, 1, self.soundLevelFields.units)
-        
+        #soundLevelPlotVars = DiaBotGUI.createNewDataPane(DataDisplay.DataDisplay, self.soundLevelFields.name, self.soundLevelFrame, 2, 1, self.soundLevelFields.units)
+        self.soundLevelDisplayClass = DataDisplay.DataDisplay(self.soundLevelFields, self.soundLevelFrame, self.soundLevelVisualQueue)
+        self.soundLevelDisplayClass.tkAddDataPane()
+        self.soundLevelFrame.grid(row=2, column=1, padx=10)
+
         # Vibration
-        vibrationPlotVars = DiaBotGUI.createNewDataPane(DataProcessing.VibrationProcessing, self.vibrationFields.name, self.vibrationFrame, 2, 2, self.vibrationFields.units)
-                
+        #vibrationPlotVars = DiaBotGUI.createNewDataPane(DataDisplay.DataDisplay, self.vibrationFields.name, self.vibrationFrame, 2, 2, self.vibrationFields.units)
+        self.vibrationDisplayClass = DataDisplay.DataDisplay(self.vibrationFields, self.vibrationFrame, self.vibrationVisualQueue)
+        self.vibrationDisplayClass.tkAddDataPane()
+        self.vibrationFrame.grid(row=2, column=2, padx=10)
+        
         # Position
-        positionPlotVars = DiaBotGUI.createNewDataPane(DataProcessing.PositionProcessing, self.positionFields.name, self.positionFrame, 2, 3, self.positionFields.units)
+        self.positionDisplayClass = DataDisplay.DataDisplay(self.positionFields, self.positionFrame, self.positionVisualQueue)
+        self.positionDisplayClass.tkAddDataPane()
+        self.positionFrame.grid(row=2, column=3, padx=10)
+        #positionPlotVars = DiaBotGUI.createNewDataPane(self.positionDisplayClass, self.positionFields.name, self.positionFrame, 2, 3, self.positionFields.units)
 
         # Temperature
-        self.tempViewClass = DiaBotGUI.TemperatureDisplay(self.temperatureVisualQueue)
-        self.tempLabel, self.switchTempViewButton = DiaBotGUI.createNewDataPane(DataProcessing.TemperatureProcessing, self.temperatureFields.name, self.temperatureFrame, 2, 4, 
-                                                                                self.tempViewClass.tempDisplayText, self.tempViewClass.tempViewButtonText, self.tempViewClass.switchTempView)
-        self.tempViewClass.addViewComponents(self.tempLabel, self.switchTempViewButton)
+        self.tempDisplayClass = DataDisplay.TemperatureDisplay(self.temperatureFields, self.temperatureFrame, self.temperatureVisualQueue)
+        self.tempDisplayClass.tkAddDataPane()
+        self.temperatureFrame.grid(row=2, column=4, padx=10)
+        
+       # DiaBotGUI.createNewDataPane(self.tempDisplayClass, self.temperatureFields.name, self.temperatureFrame, 2, 4, 
+       #                             self.tempDisplayClass.tempDisplayText, self.tempDisplayClass.tempViewButtonText, self.tempDisplayClass.switchTempView)
 
-        self.dataViewVarsList = [soundLevelPlotVars, vibrationPlotVars, positionPlotVars, self.tempViewClass]
+        #self.dataViewVarsList = [soundLevelPlotVars, vibrationPlotVars, positionPlotVars, self.tempDisplayClass]
+        #self.dataViewVarsList = [positionPlotVars, self.tempDisplayClass]
 
-
-    # Creates new data collection and processing classes, returns those along with their Processing queue 
-    # TO BE DEPRECATED
-    def createDataHandlers(CollectionType, ProcessingType, dataType, name, units, samplingRate, startTime, uiMutex, isPlotted, q, visualQ):
-        #q = multiprocessing.Queue()
-        if CollectionType == DataCollection.TemperatureCollection:
-            collection = CollectionType(name, units, samplingRate, startTime, q, visualQ)
-        else:
-            collection = CollectionType(name, units, samplingRate, startTime, q)
-        processing = ProcessingType(dataType, name, units, samplingRate, startTime, isPlotted, q, 0, 0)
-        return (q, collection, processing)
 
     def createDataFields(CollectionType, name, units, samplingRate, startTime): # TODO: REMOVE VISUALQ FROM COLLECTION
-        fields = DataCollection.DataFields(name, units, samplingRate, startTime)
         dataQueue = multiprocessing.Queue()
         visualQueue = multiprocessing.Queue()
         #collection = CollectionType(name, units, samplingRate, startTime, dataQueue)
@@ -427,12 +374,13 @@ class DiaBotGUI():
             collection = CollectionType(name, units, samplingRate, startTime, dataQueue, visualQueue)
         else:
             collection = CollectionType(name, units, samplingRate, startTime, dataQueue)
+        fields = DataCollection.DataFields(name, units, samplingRate, startTime, collection.alertDataType)
         return (fields, dataQueue, visualQueue, collection)
 
-    def createNewDataPane(ProcessingType, name, frame, row, col, *args):
-        plotVars = ProcessingType.tkAddDataPane(name, frame, *args)
-        frame.grid(row=row, column=col, padx=10)
-        return plotVars
+    #def createNewDataPane(DisplayType, name, frame, row, col, *args):
+    #    plotVars = DisplayType.tkAddDataPane(name, frame, *args)
+    #    frame.grid(row=row, column=col, padx=10)
+    #    return plotVars
 
 
 
@@ -447,7 +395,6 @@ class DiaBotGUI():
         imgLabel.grid(row=1, column=1)
 
     def setupVideoPane(self):
-        #tk.Button(videoFrame, text="Video", command=videoStatus).grid(row=1, column=1)
         self.testImg = ImageTk.PhotoImage(Image.open("vanderlandeTest.png"))#.resize((1000, 500)))
         self.imgLabel = Label(self.videoFrame, image=self.testImg)
         self.imgLabel.grid(row=1, column=1)
@@ -483,21 +430,14 @@ class DiaBotGUI():
     def updateVisualsWrapper(self, event):
         elapsedTime(self.updateVisualsHandler)
     
+    # Any data visual which requires manual update (new graphs use animations to update automatically)
     def updateVisualsHandler(self):
-        # Graphs
-        for i in range(len(self.dataViewVarsList)):
-            if i < 3: # TODO: Splice data collection and remove this case
-                self.dataProcessingClassList[i].updateVisual(self.dataViewVarsList[i])
-            else:
-                DataProcessing.TemperatureProcessing.updateVisual(self.dataViewVarsList[i])
-        #for dataProcessingClass in self.dataProcessingClassList:
-        #    #dataProcessingClass.readNewData()
-        #    dataProcessingClass.updateVisual()
+        # Only temperature view needs updating 
+        self.tempDisplayClass.updateVisual()
    
     # --- Update Alerts Handlers ---
     def updateAlertsHandler(self, event):
         self.alertsTop.distributeProcessedData()
-            #print(f"Finished checking alerts in {tracker.name}")
         
     def printTime(self):
         print(self.totalElapsedTime())
@@ -514,26 +454,35 @@ class DiaBotGUI():
 
         # ----- Create other processes and threads -----
         # GUI updating threads
-        graphThread = DiaThread("graphThread", False, self.startTime, shutdownRespQueue, 1/self.visualsRefreshTime, self.generateEvent, "<<visualsEvent>>")
+        graphThread = DiaThread("graphThread", False, self.startTime, shutdownRespQueue, 1/self.visualsRefreshTime, self.generateEvent, "<<visualsEvent>>") # TODO: increase refresh rate once multiprocessing works
         alertThread = DiaThread("alertThread", False, self.startTime, shutdownRespQueue, 1/2, self.generateEvent, "<<alertsEvent>>")
 
         # Data collection threads (separate processes)
-        soundThread = DiaThread("soundThread", useProcesses, self.startTime, shutdownRespQueue, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData)
+        soundThread = DiaThread("soundThread", useProcesses, self.startTime, shutdownRespQueue, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData) # TODO: remove collection objects
         vibrationThread = DiaThread("vibrationThread", useProcesses, self.startTime, shutdownRespQueue,  self.vibrationSamplingRate, self.vibrationCollection.readAndSendData)
         temperatureThread = DiaThread("temperatureThread", useProcesses, self.startTime, shutdownRespQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
         positionThread = DiaThread("positionThread", useProcesses, self.startTime, shutdownRespQueue, self.positionSamplingRate, self.positionCollection.readAndSendData)
         
         threads = [graphThread, alertThread, soundThread, vibrationThread, positionThread, temperatureThread]
 
-        # TODO: FINISH SECTION WITH OTHER SENSOR - Parent processes for data processing
-        #positionShutdownInitQueue = multiprocessing.Queue()
-        #positionProcess = DiaProcess(AlertDataType.Position, "Position", "m", self.positionSamplingRate, self.startTime, positionShutdownInitQueue, shutdownRespQueue, DataProcessing.PositionProcessing, 
-        #                               False, self.positionDataQueue, self.positionVisualQueue, self.processingQueue)
+        # Parent processes for data processing
+        soundLevelShutdownInitQueue = multiprocessing.Queue()
+        soundLevelProcess = DiaProcess(self.soundLevelFields, soundLevelShutdownInitQueue, shutdownRespQueue, DataProcessing.SoundLevelProcessing, 
+                                       False, self.soundLevelDataQueue, self.soundLevelVisualQueue, self.processingQueue)
+
+        vibrationShutdownInitQueue = multiprocessing.Queue()
+        vibrationProcess = DiaProcess(self.vibrationFields, vibrationShutdownInitQueue, shutdownRespQueue, DataProcessing.VibrationProcessing, 
+                                       False, self.vibrationDataQueue, self.vibrationVisualQueue, self.processingQueue)
+
+        positionShutdownInitQueue = multiprocessing.Queue()
+        positionProcess = DiaProcess(self.positionFields, positionShutdownInitQueue, shutdownRespQueue, DataProcessing.PositionProcessing, 
+                                       False, self.positionDataQueue, self.positionVisualQueue, self.processingQueue)
+        
         tempShutdownInitQueue = multiprocessing.Queue()
-        temperatureProcess = DiaProcess(AlertDataType.Temperature, "Temperature", "°C", self.temperatureSamplingRate, self.startTime, tempShutdownInitQueue, shutdownRespQueue, DataProcessing.TemperatureProcessing, 
+        temperatureProcess = DiaProcess(self.temperatureFields, tempShutdownInitQueue, shutdownRespQueue, DataProcessing.TemperatureProcessing, 
                                        False, self.temperatureDataQueue, self.temperatureVisualQueue, self.processingQueue)
         
-        processes = [temperatureProcess]  # [positionProcess, temperatureProcess]
+        processes = [soundLevelProcess, vibrationProcess, positionProcess, temperatureProcess]
 
         for process in processes:
             process.startProcess()
@@ -561,7 +510,8 @@ class DiaBotGUI():
         # After UI closed: cleanup!
         
         # Shutdown extra processes properly
-        temperatureProcess.beginShutdown()
+        for process in processes:
+            process.beginShutdown()
 
         # Send signals to end all threads
         threadRunningCount = 0
