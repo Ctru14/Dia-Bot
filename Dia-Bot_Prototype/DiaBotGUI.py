@@ -437,7 +437,10 @@ class DiaBotGUI():
    
     # --- Update Alerts Handlers ---
     def updateAlertsHandler(self, event):
-        self.alertsTop.distributeProcessedData()
+        try:
+            self.alertsTop.distributeProcessedData()
+        except Exception as e:
+            print(f"Exception thrown in update alerts: {e}")
         
     def printTime(self):
         print(self.totalElapsedTime())
