@@ -537,7 +537,7 @@ class DiaBotGUI():
 
 
         # Collect signals for ending threads and join 
-        DiaThread.waitForThreadsEnd(threads, shutdownRespQueue, "Main", self.pid)
+        DiaThread.waitForThreadsEnd(threads, shutdownRespQueue, "Main", self.pid, 20)
                   
         print(f"All threads ended in {self.pid}:Parent process! Joining...")
         DiaThread.joinAllThreads(threads)

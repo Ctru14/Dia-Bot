@@ -80,10 +80,12 @@ class DiaThread():
             print(f"Error - Only processes can use terminate() - {self.name} uses threading")
 
     # BLOCKING call to ensure all threads end
-    def waitForThreadsEnd(threads, shutdownRespQueue, name, pid):
+    def waitForThreadsEnd(threads, shutdownRespQueue, name, pid, maxLoops = float('inf')):
         threadRunningCount = len(threads)
-        while threadRunningCount > 0:
+        loops = 0
+        while threadRunningCount > 0 and loops < maxLoops:
             # Check for thread ending messages every second
+            loops += 1
             if not shutdownRespQueue.empty():
                 msg, name = shutdownRespQueue.get()
                 if msg == "THREAD_ENDED":
@@ -93,6 +95,8 @@ class DiaThread():
                     print(f"UNEXPECTED MESSAGE IN SHUTDOWN RESPONSE QUEUE: {msg}")
             else:
                 time.sleep(1)
+                if loops >= maxLoops:
+                    print(f"Max time hit in waitForThreadsEnd! ({maxLoops} loops)")
 
     def joinAllThreads(threads):
         for t in threads:
