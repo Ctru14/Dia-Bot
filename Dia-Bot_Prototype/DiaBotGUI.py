@@ -458,12 +458,12 @@ class DiaBotGUI():
         alertThread = DiaThread("alertThread", False, self.startTime, shutdownRespQueue, 1/2, self.generateEvent, "<<alertsEvent>>")
 
         # Data collection threads (separate processes)
-        soundThread = DiaThread("soundThread", useProcesses, self.startTime, shutdownRespQueue, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData) # TODO: remove collection objects
-        vibrationThread = DiaThread("vibrationThread", useProcesses, self.startTime, shutdownRespQueue,  self.vibrationSamplingRate, self.vibrationCollection.readAndSendData)
-        temperatureThread = DiaThread("temperatureThread", useProcesses, self.startTime, shutdownRespQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
-        positionThread = DiaThread("positionThread", useProcesses, self.startTime, shutdownRespQueue, self.positionSamplingRate, self.positionCollection.readAndSendData)
+        soundCollectionProcess = DiaThread("soundCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData) # TODO: remove collection objects
+        vibrationCollectionProcess = DiaThread("vibrationCollectionProcess", useProcesses, self.startTime, shutdownRespQueue,  self.vibrationSamplingRate, self.vibrationCollection.readAndSendData)
+        temperatureCollectionProcess = DiaThread("temperatureCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
+        positionCollectionProcess = DiaThread("positionCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.positionSamplingRate, self.positionCollection.readAndSendData)
         
-        threads = [graphThread, alertThread, soundThread, vibrationThread, positionThread, temperatureThread]
+        threads = [graphThread, alertThread, soundCollectionProcess, vibrationCollectionProcess, positionCollectionProcess, temperatureCollectionProcess]
 
         # Parent processes for data processing
         soundLevelShutdownInitQueue = multiprocessing.Queue()
@@ -482,9 +482,10 @@ class DiaBotGUI():
         temperatureProcess = DiaProcess(self.temperatureFields, tempShutdownInitQueue, shutdownRespQueue, DataProcessing.TemperatureProcessing, 
                                        False, self.temperatureDataQueue, self.temperatureVisualQueue, self.processingQueue)
         
-        processes = [soundLevelProcess, vibrationProcess, positionProcess, temperatureProcess]
+        parentProcesses = [soundLevelProcess, vibrationProcess, positionProcess, temperatureProcess]
 
-        for process in processes:
+       
+        for process in parentProcesses:
             process.startProcess()
 
         for t in threads:
@@ -509,11 +510,11 @@ class DiaBotGUI():
         
         # After UI closed: cleanup!
         
+        # Send signals to end all threads and processes
         # Shutdown extra processes properly
-        for process in processes:
+        for process in parentProcesses: # DiaProcess
             process.beginShutdown()
 
-        # Send signals to end all threads
         threadRunningCount = 0
         self.programRunning = False
         for t in threads:
@@ -523,14 +524,21 @@ class DiaBotGUI():
         if self.cameraOn:
             PiInterface.stop_camera()
 
+        
+        # Try to join all processes after completion
+        print(f"Joining parent processes...") # DiaProcess
+        for process in parentProcesses:
+            print(f"Joining parent process {process.name} (alive = {process.is_alive()})...")
+            process.joinProcess(1)
+            print(f"...parent process {process.name} attempted join. (alive = {process.is_alive()})")
+
+
         # Collect signals for ending threads and join 
         DiaThread.waitForThreadsEnd(threads, shutdownRespQueue, "Main", self.pid)
                   
-        print(f"All threads ended in {self.pid}:parent process! Joining...")
+        print(f"All threads ended in {self.pid}:Parent process! Joining...")
         DiaThread.joinAllThreads(threads)
 
-        # TODO: Confirm all processes have completed
-        
         print("Thank you for using Dia-Bot")
         
 
