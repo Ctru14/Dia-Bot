@@ -509,6 +509,7 @@ class DiaBotGUI():
         # ----- Blocking call: Begin TK mainloop -----
         print("-------- BEGINING TK MAINLOOP --------")
         self.top.mainloop()
+        self.programRunning = False
         print("-------- TK MAINLOOP ENDED: ENDING WORKER THREADS --------")
         
         # After UI closed: cleanup!
@@ -519,7 +520,6 @@ class DiaBotGUI():
             process.beginShutdown()
 
         threadRunningCount = 0
-        self.programRunning = False
         for t in threads:
             threadRunningCount += 1
             t.endThread()
