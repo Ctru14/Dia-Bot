@@ -1,0 +1,91 @@
+
+body {
+    font-family: "ff-meta-web-pro",sans-serif;
+    font-size: 16px;
+    color: black;
+    background-color: #EF7B10;
+    margin: 20px;
+    padding-right: 10%;
+    padding-left: 10%;
+    text-align: center;
+}
+
+title {
+    color: rgb(239,123,16);
+    background-color: rgb(153,153,153); 
+    font-size: 22;
+    margin: 0;
+    margin-bottom: 7px;
+    padding: 2px;
+    font-style: italic;
+    font-family: "ff-meta-web-pro",sans-serif;
+    text-align: center;
+}
+
+
+.teamViewHolder {
+    width:  1080px;
+    height:  300px;
+}
+
+.teamMemberView {
+    text-align: center;
+    width: 180px;
+    height: 30s0px;
+    float: left;
+}
+  
+
+.profileImage {
+    width: 135px;
+    height: 135px;
+}
+
+.teamMemberText {
+    margin-top: -10px;
+    color: black;
+}
+
+img {
+    border-style: solid;
+    border-width: 3px;
+    border-color: black;
+}
+
+
+.problemStatementHolder {
+    width: 1080px;
+    height: 410px;
+    margin-top: 20px;
+}
+
+.deliverablesLabel {
+    width: 800px;
+    height: 30px;
+    border: thick outset rgb(200, 200, 200);
+    background: rgb(185, 185, 185);
+    align-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 400;
+    text-align: center;
+    color: black;
+}
+
+
+.deliverablesBlock {
+    width: 800px;
+    height: 300px;
+    border-left: thick outset rgb(200, 200, 200);
+    border-right: thick outset rgb(200, 200, 200);
+    border-bottom: thick outset rgb(200, 200, 200);
+    background: rgb(185, 185, 185);
+    align-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 400;
+    text-align: center;
+    color: black;
+}
