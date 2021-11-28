@@ -457,7 +457,7 @@ class DiaBotGUI():
 
         # ----- Create other processes and threads -----
         # GUI updating threads
-        graphThread = DiaThread("graphThread", False, self.startTime, shutdownRespQueue, 1/self.visualsRefreshTime, self.generateEvent, "<<visualsEvent>>") # TODO: increase refresh rate once multiprocessing works
+        visualThread = DiaThread("visualThread", False, self.startTime, shutdownRespQueue, 1/self.visualsRefreshTime, self.generateEvent, "<<visualsEvent>>") # TODO: increase refresh rate once multiprocessing works
         alertThread = DiaThread("alertThread", False, self.startTime, shutdownRespQueue, 1/2, self.generateEvent, "<<alertsEvent>>")
 
         # Data collection threads (separate processes)
@@ -466,7 +466,7 @@ class DiaBotGUI():
         temperatureCollectionProcess = DiaThread("temperatureCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
         positionCollectionProcess = DiaThread("positionCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.positionSamplingRate, self.positionCollection.readAndSendData)
         
-        threads = [graphThread, alertThread, soundCollectionProcess, vibrationCollectionProcess, positionCollectionProcess, temperatureCollectionProcess]
+        threads = [visualThread, alertThread, soundCollectionProcess, vibrationCollectionProcess, positionCollectionProcess, temperatureCollectionProcess]
 
         # Parent processes for data processing
         soundLevelShutdownInitQueue = multiprocessing.Queue()

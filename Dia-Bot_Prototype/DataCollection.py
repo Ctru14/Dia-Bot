@@ -62,7 +62,7 @@ class SoundLevelCollection(DataCollection):
         return super().__init__(name, units, samplingRate, startTime, dataQueue, AlertDataType.SoundLevel)
 
     def readData(self):
-        num = randint(-10, 10)
+        num = uniform(-10, 10)
         #print("Reading sound level! - " + str(num))
         return num
 
@@ -74,7 +74,7 @@ class VibrationCollection(DataCollection):
         return super().__init__(name, units, samplingRate, startTime, dataQueue, AlertDataType.Vibration)
 
     def readData(self):
-        num = randint(-10, 10)
+        num = uniform(-10, 10)
         #print("Reading vibration! - " + str(num))
         return num
     
@@ -86,7 +86,7 @@ class PositionCollection(DataCollection):
         return super().__init__(name, units, samplingRate, startTime, dataQueue, AlertDataType.Position)
 
     def readData(self):
-        num = randint(-10, 10)
+        num = uniform(-10, 10)
         #print("Reading position! - " + str(num))
         return num
 
@@ -99,7 +99,7 @@ class TemperatureCollection(DataCollection):
         self.visualQueue = visualQueue # TODO: REMOVE ONCE EXTRA PROCESS IS RUNNING
 
     def readData(self):
-        num = randint(-10, 10)
+        num = uniform(-10, 10)
         #print("Reading temperature! - " + str(num))
         return num
 

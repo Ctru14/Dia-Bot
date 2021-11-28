@@ -142,7 +142,7 @@ class TemperatureProcessing(DataProcessing):
             t, dataC = tempView.visualQueue.get()
             tempView.currentTempCelsius = dataC
             tempView.currentTempFarenheit = dataC * 9 / 5 + 32
-            print(f"New temperature data! {t}, C={tempView.currentTempCelsius}, F={tempView.currentTempFarenheit}")
+            #print(f"New temperature data! {t}, C={tempView.currentTempCelsius}, F={tempView.currentTempFarenheit}")
 
     #def visualProcessing(self, *args):
     #    # Temperature is simple: read latest temperature and send it to visual queue

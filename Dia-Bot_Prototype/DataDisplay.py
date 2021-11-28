@@ -28,8 +28,11 @@ class DataDisplay:
         self.units = fields.units
         self.tkTop = tkTop
         self.visualQueue = visualQueue
-        self.t = deque([], maxlen=200)
-        self.data = deque([], maxlen=200)
+        # Finf max length of data to display: 3 seconds worth or 250, whichever is smaller
+        self.displayDataLen = int((fields.samplingRate * 3)/10)*10
+        self.displayDataLen = min(self.displayDataLen, 250)
+        self.t = deque([], maxlen=self.displayDataLen)
+        self.data = deque([], maxlen=self.displayDataLen)
 
     # Create and add the Tkinter pane for data visualization - may be overwritten for those without graphs
     def tkAddDataPane(self, *args):
@@ -47,9 +50,8 @@ class DataDisplay:
         self.ani = animation.FuncAnimation(
             self.fig,
             self.appendNewData,
-            frames=100,
-            interval=1000,
-            repeat=False)
+            interval=2000, # Time (ms) between graph updates
+            repeat=True)
         self.ani._start()
 
 
@@ -108,9 +110,11 @@ class TemperatureDisplay(DataDisplay):
 
     def getDisplayText(self):
         if self.viewFarenheit:
-            return f"{self.currentTempFarenheit} °F"
+            tempF = "{:.2f}".format(self.currentTempFarenheit)
+            return f"{tempF} °F"
         else:
-            return f"{self.currentTempCelsius} °C"
+            tempC = "{:.2f}".format(self.currentTempCelsius)
+            return f"{tempC} °C"
         
     def switchTempView(self):
         print(f"Switching temp view! Temp = {self.tempDisplayText.get()}, Button = {self.tempViewButtonText.get()}")

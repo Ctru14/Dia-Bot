@@ -4,6 +4,7 @@ from tkinter import *
 import time
 import threading
 import multiprocessing
+import uuid
 from math import *
 from random import *
 import enum
@@ -37,6 +38,7 @@ class AlertRange(enum.IntEnum):
 class Alert:
 
     def __init__(self, alertDataType, alertTime, alertRange, alertMetric, tripValue):
+        self.id = str(uuid.uuid4())
         self.alertDataType = alertDataType
         self.alertTime = alertTime
         self.alertRange = alertRange
@@ -63,6 +65,7 @@ class AlertTracker:
         self.alertRangeName = StringVar()
         self.alertRangeName.set(self.alertRange.name)
         self.alerts = []
+        self.errorActive = False
 
         # Threshold levels
         self.belowValue = nan
@@ -168,22 +171,42 @@ class AlertTracker:
 
     def checkForAlerts(self, t, value):
         if self.alertEnabled.get():
+            errorFound = False
             # Checks tracker thresholds to compare this value
             if self.alertRange == AlertRange.Above:
                 if value > self.aboveValue:
-                    self.alerts.append(Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value))
-                    print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.aboveValue}")
-                    self.setErrorLabel()
+                    errorFound = True
+                    if not self.errorActive:
+                        self.errorActive = True
+                        self.alerts.append(Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value))
+                        print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.aboveValue}")
+                        self.setErrorLabel()
+                    else:
+                        print(f"Error {self.alerts[-1].id} currently active in {self.name}! Append data to file...")
             if self.alertRange == AlertRange.Below:
                 if value < self.belowValue:
-                    self.alerts.append(Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value))
-                    print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.belowValue}")
-                    self.setErrorLabel()
+                    errorFound = True
+                    if not self.errorActive:
+                        self.errorActive = True
+                        self.alerts.append(Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value))
+                        print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.belowValue}")
+                        self.setErrorLabel()
+                    else:
+                        print(f"Error {self.alerts[-1].id} currently active in {self.name}! Append data to file...")
             if self.alertRange == AlertRange.Between:
                 if value < self.betweenHiValue and value > self.betweenLoValue:
-                    self.alerts.append(Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value))
-                    print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.betweenLoValue} and {self.betweenHiValue}")
-                    self.setErrorLabel()
+                    errorFound = True
+                    if not self.errorActive:
+                        self.errorActive = True
+                        self.alerts.append(Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value))
+                        print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.betweenLoValue} and {self.betweenHiValue}")
+                        self.setErrorLabel()
+                    else:
+                        print(f"Error {self.alerts[-1].id} currently active in {self.name}! Append data to file...")
+        if self.errorActive and not errorFound:
+            print(f"Previously active error in {self.name} was not tripped - resetting active")
+            self.errorActive = False
+
 
 # Top-level class to contain AlertTrackers
 # Receives processing info from queue and sends it to each relevant tracker
@@ -250,7 +273,7 @@ class AlertsTop:
     # Callback button for "+" new tracker - take UI input to build and add a new tracker
     def buildAndAddTracker(self):
         if len(self.newDataTypeVar.get()) > 1 and len(self.newMetricVar.get()) > 1:
-            newTracker = AlertTracker(self, self.alertTrackersFrame, self.nameEntryVar.get(), self.newDataType, AlertRange.Above, AlertMetric.Average)
+            newTracker = AlertTracker(self, self.alertTrackersFrame, self.nameEntryVar.get(), self.newDataType, AlertRange.Above, self.newMetric)
             self.addTracker(newTracker) # Add to existing list
             # Clear new tracker frame of the previous name name
             self.nameEntryVar.set("Tracker Name")
