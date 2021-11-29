@@ -157,7 +157,7 @@ class DiaProcess():
 
         # Initialize DataProcessing class in new process context
         processing = ProcessingType(fields.alertDataType, name, fields.units, fields.samplingRate, fields.startTime, isPlotted, dataQueue, visualQueue, processingQueue)
-        fileIO = FileIO.FileIO(fields, alertIOqueue)
+        fileIO = FileIO.FileIO(fields, alertIOqueue, processing)
 
         # Add child threads for data collection, visuals, and processing
         collectionThread = DiaThread(f"{name}CollectionThread", False, fields.startTime, internalShutdownRespQueue, fields.samplingRate, processing.getAndAddData)

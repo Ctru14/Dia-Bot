@@ -70,7 +70,7 @@ class DataProcessing(DataCollection):
             freq = self.frequency(idxLo, idxHi)
             mag = self.magnitude(idxLo, idxHi)
             #print(f"Sending {self.name}[{idxLo}:{idxHi}] update to processing queue: (Avg={avg}, Max={maximum}, Min={minimum}, Freq={freq}, Mag={mag})")
-            self.processingQueue.put((self.alertDataType, avg, maximum, minimum, freq, mag, t))
+            self.processingQueue.put((self.alertDataType, avg, maximum, minimum, freq, mag, t, (idxLo, idxHi)))
             while self.lastIdx <= idxHi:
                 self.visualQueue.put((self.t[self.lastIdx], self.data[self.lastIdx]))
                 self.lastIdx += 1
