@@ -53,7 +53,7 @@ dataTypeUnits = ("dB", "m/s2", "m", "°C")
 
 class AlertTracker:
    
-    def __init__(self, alertsTop, alertControlsFrame, name, alertDataType, alertRange, alertMetric, width=400, height=100):
+    def __init__(self, alertsTop, alertControlsFrame, name, alertDataType, alertRange, alertMetric, alertIOqueue, width=400, height=100):
         # Initialize data variables
         self.name = name
         self.alertsTop = alertsTop
@@ -64,6 +64,7 @@ class AlertTracker:
         self.alertMetric = alertMetric
         self.alertRangeName = StringVar()
         self.alertRangeName.set(self.alertRange.name)
+        self.alertIOqueue = alertIOqueue
         self.alerts = []
         self.errorActive = False
 
@@ -178,7 +179,9 @@ class AlertTracker:
                     errorFound = True
                     if not self.errorActive:
                         self.errorActive = True
-                        self.alerts.append(Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value))
+                        newAlert = Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value)
+                        self.alerts.append(newAlert)
+                        self.alertIOqueue.put(newAlert)
                         print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.aboveValue}")
                         self.setErrorLabel()
                     else:
@@ -188,7 +191,9 @@ class AlertTracker:
                     errorFound = True
                     if not self.errorActive:
                         self.errorActive = True
-                        self.alerts.append(Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value))
+                        newAlert = Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value)
+                        self.alerts.append(newAlert)
+                        self.alertIOqueue.put(newAlert)
                         print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.belowValue}")
                         self.setErrorLabel()
                     else:
@@ -198,7 +203,9 @@ class AlertTracker:
                     errorFound = True
                     if not self.errorActive:
                         self.errorActive = True
-                        self.alerts.append(Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value))
+                        newAlert = Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value)
+                        self.alerts.append(newAlert)
+                        self.alertIOqueue.put(newAlert)
                         print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.betweenLoValue} and {self.betweenHiValue}")
                         self.setErrorLabel()
                     else:
@@ -212,10 +219,11 @@ class AlertTracker:
 # Receives processing info from queue and sends it to each relevant tracker
 class AlertsTop:
 
-    def __init__(self, alertControlsFrame, alertTrackersFrame, processingQueue):
+    def __init__(self, alertControlsFrame, alertTrackersFrame, processingQueue, alertIOqueues):
         self.alertControlsFrame = alertControlsFrame
         self.alertTrackersFrame = alertTrackersFrame
         self.processingQueue = processingQueue
+        self.alertIOqueues = alertIOqueues
         # Sort trackers in lists based on their data type
         self.soundLevelTrackers = []
         self.vibrationTrackers = []
@@ -273,7 +281,7 @@ class AlertsTop:
     # Callback button for "+" new tracker - take UI input to build and add a new tracker
     def buildAndAddTracker(self):
         if len(self.newDataTypeVar.get()) > 1 and len(self.newMetricVar.get()) > 1:
-            newTracker = AlertTracker(self, self.alertTrackersFrame, self.nameEntryVar.get(), self.newDataType, AlertRange.Above, self.newMetric)
+            newTracker = AlertTracker(self, self.alertTrackersFrame, self.nameEntryVar.get(), self.newDataType, AlertRange.Above, self.newMetric, self.alertIOqueues[int(self.newDataType)])
             self.addTracker(newTracker) # Add to existing list
             # Clear new tracker frame of the previous name name
             self.nameEntryVar.set("Tracker Name")

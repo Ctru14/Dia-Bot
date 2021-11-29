@@ -76,8 +76,17 @@ class DiaBotGUI():
         self.cameraControls = tk.Frame(self.controlFrame, width=400, height=280)
         self.alertControls = tk.Frame(self.controlFrame, width=400, height=280)
 
-        # Data collection (Must be created in constructor to guaranteee use in Alerts)
+
+        # Create queues
         self.processingQueue = multiprocessing.Queue()
+        self.soundLevelAlertIOQueue = multiprocessing.Queue()
+        self.vibrationAlertIOQueue = multiprocessing.Queue()
+        self.positionAlertIOQueue = multiprocessing.Queue()
+        self.tempAlertIOQueue = multiprocessing.Queue()
+        self.alertIOqueues = [self.soundLevelAlertIOQueue, self.vibrationAlertIOQueue, self.positionAlertIOQueue, self.tempAlertIOQueue]
+
+
+        # Data collection (Must be created in constructor to guaranteee use in Alerts)
         self.soundLevelSamplingRate = 100
         self.soundLevelFields, self.soundLevelDataQueue, self.soundLevelVisualQueue, self.soundLevelCollection = DiaBotGUI.createDataFields(
             DataCollection.SoundLevelCollection, "Sound Level", "dB", self.soundLevelSamplingRate, self.startTime)
@@ -289,10 +298,10 @@ class DiaBotGUI():
         self.alertTrackersFrame = tk.Frame(self.alertControls, width=400)
 
         # Create each alert instance and add frames to the UI  
-        self.alertsTop = AlertsTop(self.alertControls, self.alertTrackersFrame, self.processingQueue)
+        self.alertsTop = AlertsTop(self.alertControls, self.alertTrackersFrame, self.processingQueue, self.alertIOqueues)
 
-        self.vibrationAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame,   "Vibration",   AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average)
-        self.temperatureAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame, "Temperature", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average)
+        self.vibrationAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame,   "Vibration",   AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average, self.vibrationAlertIOQueue)
+        self.temperatureAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame, "Temperature", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average, self.tempAlertIOQueue)
         
         self.alertsTop.addTracker(self.vibrationAlertTracker)
         self.alertsTop.addTracker(self.temperatureAlertTracker)
@@ -428,7 +437,8 @@ class DiaBotGUI():
     
     # Wrapper function around the handler for updating the visuals
     def updateVisualsWrapper(self, event):
-        elapsedTime(self.updateVisualsHandler)
+        #elapsedTime(self.updateVisualsHandler)
+        self.updateVisualsHandler()
     
     # Any data visual which requires manual update (new graphs use animations to update automatically)
     def updateVisualsHandler(self):
@@ -471,21 +481,22 @@ class DiaBotGUI():
         # Parent processes for data processing
         soundLevelShutdownInitQueue = multiprocessing.Queue()
         soundLevelProcess = DiaProcess(self.soundLevelFields, soundLevelShutdownInitQueue, shutdownRespQueue, DataProcessing.SoundLevelProcessing, 
-                                       False, self.soundLevelDataQueue, self.soundLevelVisualQueue, self.processingQueue)
+                                       False, self.soundLevelDataQueue, self.soundLevelVisualQueue, self.processingQueue, self.soundLevelAlertIOQueue)
 
         vibrationShutdownInitQueue = multiprocessing.Queue()
         vibrationProcess = DiaProcess(self.vibrationFields, vibrationShutdownInitQueue, shutdownRespQueue, DataProcessing.VibrationProcessing, 
-                                       False, self.vibrationDataQueue, self.vibrationVisualQueue, self.processingQueue)
+                                       False, self.vibrationDataQueue, self.vibrationVisualQueue, self.processingQueue, self.vibrationAlertIOQueue)
 
         positionShutdownInitQueue = multiprocessing.Queue()
         positionProcess = DiaProcess(self.positionFields, positionShutdownInitQueue, shutdownRespQueue, DataProcessing.PositionProcessing, 
-                                       False, self.positionDataQueue, self.positionVisualQueue, self.processingQueue)
+                                       False, self.positionDataQueue, self.positionVisualQueue, self.processingQueue, self.positionAlertIOQueue)
         
         tempShutdownInitQueue = multiprocessing.Queue()
         temperatureProcess = DiaProcess(self.temperatureFields, tempShutdownInitQueue, shutdownRespQueue, DataProcessing.TemperatureProcessing, 
-                                       False, self.temperatureDataQueue, self.temperatureVisualQueue, self.processingQueue)
+                                       False, self.temperatureDataQueue, self.temperatureVisualQueue, self.processingQueue, self.tempAlertIOQueue)
         
-        parentProcesses = [soundLevelProcess, vibrationProcess, positionProcess, temperatureProcess]
+        parentProcesses = [temperatureProcess]
+        #parentProcesses = [soundLevelProcess, vibrationProcess, positionProcess, temperatureProcess]
 
        
         for process in parentProcesses:
