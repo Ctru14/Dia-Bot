@@ -495,7 +495,6 @@ class DiaBotGUI():
         temperatureProcess = DiaProcess(self.temperatureFields, tempShutdownInitQueue, shutdownRespQueue, DataProcessing.TemperatureProcessing, 
                                        False, self.temperatureDataQueue, self.temperatureVisualQueue, self.processingQueue, self.tempAlertIOQueue)
         
-        #parentProcesses = [temperatureProcess]
         parentProcesses = [soundLevelProcess, vibrationProcess, positionProcess, temperatureProcess]
 
        

@@ -62,8 +62,8 @@ img {
 .deliverablesLabel {
     width: 800px;
     height: 30px;
-    border: thick outset rgb(200, 200, 200);
-    background: rgb(185, 185, 185);
+    border: thick outset rgb(220, 220, 220);
+    background: rgb(200, 200, 200);
     align-content: center;
     align-items: center;
     font-size: 20px;
@@ -77,10 +77,10 @@ img {
 .deliverablesBlock {
     width: 800px;
     height: 300px;
-    border-left: thick outset rgb(200, 200, 200);
-    border-right: thick outset rgb(200, 200, 200);
-    border-bottom: thick outset rgb(200, 200, 200);
-    background: rgb(185, 185, 185);
+    border-left: thick outset rgb(220, 220, 220);
+    border-right: thick outset rgb(220, 220, 220);
+    border-bottom: thick outset rgb(220, 220, 220);
+    background: rgb(200, 200, 200);
     align-content: center;
     align-items: center;
     font-size: 20px;

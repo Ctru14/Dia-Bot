@@ -81,4 +81,5 @@ class FileIO:
         while not self.alertIOqueue.empty():
             alert = self.alertIOqueue.get()
             self.writeAlertData(alert)
+            print(f"Writing {self.alertDataType.name} to file - Alert IO in {self.name}! {alert}")
         

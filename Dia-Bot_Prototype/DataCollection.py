@@ -1,5 +1,6 @@
 import sys
 import time
+from datetime import datetime
 import threading
 import multiprocessing
 import math
@@ -47,7 +48,8 @@ class DataCollection(DataFields):
 
     # Reads data from given function - called by data collection process
     def readAndSendData(self, *args):
-        t = (time.time_ns()-self.startTime)/1_000_000_000
+        #t = time.time_ns()/1_000_000_000
+        t = datetime.now()
         data = self.readData()
         self.dataQueue.put((t, data))
         #print(f"Putting {self.name} data ({data}) in visual queue: {self.visualQueue}")
@@ -105,7 +107,8 @@ class TemperatureCollection(DataCollection):
 
     # Reads data from given function 
     def readAndSendData(self, *args):
-        t = (time.time_ns()-self.startTime)/1_000_000_000
+        #t = time.time_ns()/1_000_000_000
+        t = datetime.now()
         data = self.readData()
         self.dataQueue.put((t, data))
         self.visualQueue.put((t, data))

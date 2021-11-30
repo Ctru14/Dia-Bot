@@ -1,4 +1,6 @@
 import sys
+import os
+import csv
 import tkinter as tk
 from tkinter import *
 from PIL import ImageTk, Image
@@ -69,7 +71,6 @@ class DataProcessing(DataCollection):
             minimum = self.minimum(idxLo, idxHi)
             freq = self.frequency(idxLo, idxHi)
             mag = self.magnitude(idxLo, idxHi)
-            #print(f"Sending {self.name}[{idxLo}:{idxHi}] update to processing queue: (Avg={avg}, Max={maximum}, Min={minimum}, Freq={freq}, Mag={mag})")
             self.processingQueue.put((self.alertDataType, avg, maximum, minimum, freq, mag, t, (idxLo, idxHi)))
             while self.lastIdx <= idxHi:
                 self.visualQueue.put((self.t[self.lastIdx], self.data[self.lastIdx]))
@@ -92,23 +93,6 @@ class DataProcessing(DataCollection):
         print(f"Update {self.name} graph: indices ({start}..{end})  Latest: ({self.t[-1]}, {self.data[-1]})")
         plot1.plot(self.t[start:end], self.data[start:end])
         #self.dataMutex.release()
-
-    #def visualProcessing(self, *args):
-    #    # TESTING CODE: Make plot to put in visual queue
-    #    idxHi = len(self.t)
-    #    #if idxHi > 0:
-    #    #    t = self.t[idxHi-1]
-    #    #    idxLo = max(0, int(idxHi - (10 * self.samplingRate)))
-    #    #    fig = Figure(figsize = (3,3), dpi = 100)
-    #    #    a = fig.add_subplot(111)
-    #    #    a.plot(self.t[idxLo:idxHi], self.data[idxLo:idxHi])
-    #    #    a.set_title("Test Title")
-    #    #    print(f"Adding {self.name} figure to visual queue (indices {idxLo}..{idxHi})...")
-    #    #    #fig.show()
-    #    #    self.visualQueue.put(fig)
-    
-
-
 
 
 class SoundLevelProcessing(DataProcessing):

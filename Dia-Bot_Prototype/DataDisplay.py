@@ -18,7 +18,57 @@ from matplotlib.figure import Figure
 import matplotlib.animation as animation
 from collections import deque
 
+import matplotlib.dates as mdates
+
 import DataProcessing
+
+
+import matplotlib.ticker as ticker
+
+
+
+# Credit for this solution for millisecond time display goes to StackOverflow user "hemmelig"
+# https://stackoverflow.com/questions/11107748/showing-milliseconds-in-matplotlib
+class PrecisionDateFormatter(ticker.Formatter):
+    """
+    Extend the `matplotlib.ticker.Formatter` class to allow for millisecond
+    precision when formatting a tick (in days since the epoch) with a
+    `~datetime.datetime.strftime` format string.
+
+    """
+
+    def __init__(self, fmt, precision=2, tz=None):
+        """
+        Parameters
+        ----------
+        fmt : str
+            `~datetime.datetime.strftime` format string.
+        """
+        from matplotlib.dates import num2date
+        if tz is None:
+            from matplotlib.dates import _get_rc_timezone
+            tz = _get_rc_timezone()
+        self.num2date = num2date
+        self.fmt = fmt
+        self.tz = tz
+        self.precision = precision
+
+    def __call__(self, x, pos=0):
+        #if x == 0:
+        #    raise ValueError("DateFormatter found a value of x=0, which is "
+        #                     "an illegal date; this usually occurs because "
+        #                     "you have not informed the axis that it is "
+        #                     "plotting dates, e.g., with ax.xaxis_date()")
+        #
+        dt = self.num2date(x, self.tz)
+        ms = dt.strftime("%f")[:self.precision]
+
+        return dt.strftime(self.fmt).format(ms=ms)
+
+    def set_tzinfo(self, tz):
+        self.tz = tz
+
+
 
 # Owned by main TK process to display the data
 class DataDisplay:
@@ -44,6 +94,8 @@ class DataDisplay:
         self.plot1 = self.fig.add_subplot(111)
         self.plot1.set_ylabel(self.units)
         self.line, = self.plot1.plot([], [], lw=2)
+        self.plot1.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(2))
+        self.plot1.xaxis.set_major_formatter(PrecisionDateFormatter("%H:%M:%S.{ms}"))
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.tkTop)
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row=2, column=1, rowspan=3, columnspan=4)
@@ -58,30 +110,10 @@ class DataDisplay:
     # Called by UI thread - after proper changes, this will receive and post a new plot from the visual queue
     def updateVisual(self, dataViewVars):
         print(f"UPDATE VISUAL: {self.name} - Note, this does nothing!")
-        #fig = dataViewVars[0]
-        #plot1 = dataViewVars[1]
-        #canvas = dataViewVars[2]
-          # self.getAndAddData() # TODO - how do we get data? Keep data queue temporarily?
-        
-        # Test: getting plot from visual queue
-        #if not self.visualQueue.empty():
-        #    fig = self.visualQueue.get()
-        #    print(f"Received {self.name} visual: {fig}")
-        #
-        #    #self.createVisual(self.plot1)
-        #    # Update canvas on UI
-        #    #self.globalUImutex.acquire()
-        #    self.canvas.get_tk_widget().grid_forget()
-        #    self.canvas = FigureCanvasTkAgg(self.fig, master=self.tkTop)
-        #    self.canvas.draw()
-        #    self.canvas.get_tk_widget().grid(row=2, column=1, rowspan=3, columnspan=4)
-        #
-        #    print(f"Graph done: {self.name}\n")
-        #    #self.globalUImutex.release()
 
     def appendNewData(self, *args):
         #print(f"Trying to append new {self.name} data...")
-        t0 = time.time()
+        #t0 = time.time()
         while not self.visualQueue.empty():
             t, data = self.visualQueue.get()
             self.t.append(t)
@@ -91,7 +123,7 @@ class DataDisplay:
             self.line.set_data(self.t, self.data)
             self.plot1.set_ylim(min(self.data), max(self.data))
             self.plot1.set_xlim(self.t[0], self.t[-1])
-            t1 = time.time()
+            #t1 = time.time()
             #print(f"Appended new data to {self.name} graph! Took {1000*(t1-t0)}ms")
         return self.line,
 

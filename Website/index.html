@@ -20,40 +20,40 @@
 			<h2>About the team:<br />Operation Omega</h2>
 			<div class="teamViewHolder">
 				<div class="teamMemberView">
-					<img class="profileImage" src="./Images/Profile Pictures/Andrew.jpeg">
+					<img class="profileImage" src="./Images/Profile Pictures/pictureandrewgalant.jpeg">
 					<p style="font-weight: 600">Andrew Galant</p>
 					<p class="teamMemberText">Mechanical Engineering<br/>*role*</p>
 					<a class="teamMemberText" href="https://www.linkedin.com/in/andrew-galant-4a1221152">LinkedIn</a>
 				</div>
 				<div class="teamMemberView">
-					<img class="profileImage" src="./Images/Profile Pictures/Connor.jpeg">
-					<p style="font-weight: 600">Connor Truono</p>
-					<p class="teamMemberText">Computer Engineering<br/>Software Lead</p>
-					<a class="teamMemberText" href="https://www.linkedin.com/in/connor-truono-b332b2151/">LinkedIn</a>
-				</div>
-				<div class="teamMemberView">
-					<img class="profileImage" src="./Images/Profile Pictures/Doug.jpeg">
-					<p style="font-weight: 600">Douglas Walker</p>
-					<p class="teamMemberText">Mechanical Engineering<br/>*role*</p>
-					<a class="teamMemberText" href="https://www.linkedin.com/in/douglas-walker-7b0058171/">LinkedIn</a>
-				</div>
-				<div class="teamMemberView">
-					<img class="profileImage" src="./Images/Profile Pictures/Grace.jpeg">
+					<img class="profileImage" src="./Images/Profile Pictures/picturecatherinekasper.jpeg">
 					<p style="font-weight: 600">Grace Kasper</p>
 					<p class="teamMemberText">Computer Engineering<br/>*role*</p>
 					<a class="teamMemberText" href="https://www.linkedin.com/in/grace-kasper/">LinkedIn</a>
 				</div>
 				<div class="teamMemberView">
-					<img class="profileImage" src="./Images/Profile Pictures/Hunter.jpeg">
+					<img class="profileImage" src="./Images/Profile Pictures/picturejasonpiotter.jpeg">
+					<p style="font-weight: 600">Jason Piotter</p>
+					<p class="teamMemberText">Mechanical Engineering<br/>*role*</p>
+					<a class="teamMemberText" href="https://www.linkedin.com/in/jason-piotter/">LinkedIn</a>
+				</div>
+				<div class="teamMemberView">
+					<img class="profileImage" src="./Images/Profile Pictures/picturehunterpresent.jpeg">
 					<p style="font-weight: 600">Hunter Present</p>
 					<p class="teamMemberText">Mechanical Engineering<br/>*role*</p>
 					<a class="teamMemberText" href="https://www.linkedin.com/in/hunterpresent/">LinkedIn</a>
 				</div>
 				<div class="teamMemberView">
-					<img class="profileImage" src="./Images/Profile Pictures/Jason.jpeg">
-					<p style="font-weight: 600">Jason Piotter</p>
+					<img class="profileImage" src="./Images/Profile Pictures/pictureconnortruono.jpeg">
+					<p style="font-weight: 600">Connor Truono</p>
+					<p class="teamMemberText">Computer Engineering<br/>Software Lead</p>
+					<a class="teamMemberText" href="https://www.linkedin.com/in/connor-truono-b332b2151/">LinkedIn</a>
+				</div>
+				<div class="teamMemberView">
+					<img class="profileImage" src="./Images/Profile Pictures/picturedouglaswalker.jpeg">
+					<p style="font-weight: 600">Douglas Walker</p>
 					<p class="teamMemberText">Mechanical Engineering<br/>*role*</p>
-					<a class="teamMemberText" href="https://www.linkedin.com/in/jason-piotter/">LinkedIn</a>
+					<a class="teamMemberText" href="https://www.linkedin.com/in/douglas-walker-7b0058171/">LinkedIn</a>
 				</div>
 			</div>
 		</div>
@@ -87,23 +87,65 @@
 			
 			<h2>Deliverables</h2>
 
-			<div class="deliverablesLabel">Report #1: Introductory Design Report</div>
-			<div class="deliverablesBlock"></div>
+			<div class="deliverablesLabel" onclick="openCloseBlock('acceptedBidBlock')">
+				<h3 style="margin-top: 0px;">Project Proposal: Vanderlande Dia-Bot</h3>
+			</div>
+			<div class="deliverablesBlock" id="acceptedBidBlock" style="display: none">
+				<a href="Deliverables/acceptedproposal.pdf">Proposal (.pdf)</a>
+				<a href="Deliverables/acceptedproposal.docx">Proposal (.docx)</a>
+			</div>
+
+			<br />
+
+			<div class="deliverablesLabel" onclick="openCloseBlock('report1Block')">
+				<h3 style="margin-top: 0px;">Report #1: Introductory Design Report</h3>
+			</div>
+			<div class="deliverablesBlock" id="report1Block" style="display: none">
+				<a href="Deliverables/report1.pdf">Report #1 (.pdf)</a>
+				<a href="Deliverables/report1.docx">Report #1 (.docx)</a>
+				<a href="Deliverables/report1presentation.docx">Presentation #1 (.pptx)</a>
+			</div>
 
 			<br/>
 
-			<div class="deliverablesLabel">Report #2: Engineering Feasibility Report</div>
-			<div class="deliverablesBlock"></div>
+			<div class="deliverablesLabel" onclick="openCloseBlock('report2Block')">
+				<h3 style="margin-top: 0px;">Report #2: Engineering Feasibility Report</h3>
+			</div>
+			<div class="deliverablesBlock" id="report2Block" style="display: none">
+				<a href="Deliverables/report2.pdf">Report #2 (.pdf)</a>
+				<a href="Deliverables/report2.docx">Report #2 (.docx)</a>
+				<a href="Deliverables/report2presentation.docx">Presentation #2 (.pptx)</a>
+				<a href="Deliverables/report2fabricationpackage.docx">Initial Fabrication Package (.docx)</a>
+			</div>
 
 			<br/>
 
-			<div class="deliverablesLabel">Final Design Report</div>
-			<div class="deliverablesBlock"></div>
+			<div class="deliverablesLabel" onclick="openCloseBlock('finalReportBlock')">
+				<h3 style="margin-top: 0px;">Final Design Report</h3>
+			</div>
+			<div class="deliverablesBlock" id="finalReportBlock" style="display: none">
+				<p style="margin-top: 0px">Coming soon!</p>
+			</div>
+
+			<br />
 
 		</div>
 
 	
 	</center>
 </body>
+
+<script type="text/javascript">
+	
+	function openCloseBlock(blockID) {
+		block = document.getElementById(blockID)
+		if (block.style.display == "none") {
+			block.style.display = "block"
+		} else {
+			block.style.display = "none"
+		}
+	}
+
+</script>
 
 </html>
