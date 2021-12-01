@@ -159,6 +159,9 @@ class DiaBotGUI():
         self.controlsLabel.config(anchor=CENTER)
         self.controlFrame.grid_rowconfigure(1, minsize=60)
         
+        # Get images for menu icons
+        self.importMenuImages()
+
         # Create individual controls panes
         self.setupMovementControls()
         self.setupCameraControls()
@@ -196,52 +199,68 @@ class DiaBotGUI():
             self.movementControls.grid_columnconfigure(i, minsize=20)
             
 
+    def importMenuImages(self):
+        # Directional arrows
+        self.arrowUp = ImageTk.PhotoImage(Image.open("Assets/Arrow-Up.jpg").resize((30, 30)))
+        self.arrowUpLeft = ImageTk.PhotoImage(Image.open("Assets/Arrow-Up-Left.jpg").resize((30, 30)))
+        self.arrowUpRight = ImageTk.PhotoImage(Image.open("Assets/Arrow-Up-Right.jpg").resize((30, 30)))
+        self.arrowDown = ImageTk.PhotoImage(Image.open("Assets/Arrow-Down.jpg").resize((30, 30)))
+        self.arrowDownLeft = ImageTk.PhotoImage(Image.open("Assets/Arrow-Down-Left.jpg").resize((30, 30)))
+        self.arrowDownRight = ImageTk.PhotoImage(Image.open("Assets/Arrow-Down-Right.jpg").resize((30, 30)))
+        self.arrowLeft = ImageTk.PhotoImage(Image.open("Assets/Arrow-Left.jpg").resize((30, 30)))
+        self.arrowRight = ImageTk.PhotoImage(Image.open("Assets/Arrow-Right.jpg").resize((30, 30)))
+        # Other
+        self.cameraIcon = ImageTk.PhotoImage(Image.open("Assets/Camera-Icon.jpg").resize((30, 30)))
+
+
+
     # Directional buttons        
     def setupMovementDirectionalButtons(self):
+
         # Forward
-        self.moveForwardButton = tk.Button(self.movementControls, text="^", anchor=CENTER, font="16")
+        self.moveForwardButton = tk.Button(self.movementControls, image=self.arrowUp, anchor=CENTER, font="16")
         self.moveForwardButton.bind("<ButtonPress>", PiInterface.moveForwardPress)
         self.moveForwardButton.bind("<ButtonRelease>", PiInterface.moveForwardRelease)
         self.moveForwardButton.grid(row=3, column=5)
         
         # Forward-Left
-        self.moveForwardLeftButton = tk.Button(self.movementControls, text="FL", anchor=CENTER, font="16")
+        self.moveForwardLeftButton = tk.Button(self.movementControls, image=self.arrowUpLeft, anchor=CENTER, font="16")
         self.moveForwardLeftButton.bind("<ButtonPress>", PiInterface.moveForwardLeftPress)
         self.moveForwardLeftButton.bind("<ButtonRelease>", PiInterface.moveForwardLeftRelease)
         self.moveForwardLeftButton.grid(row=3, column=4)
         
         # Forward-Right
-        self.moveForwardRightButton = tk.Button(self.movementControls, text="FR", anchor=CENTER, font="16")
+        self.moveForwardRightButton = tk.Button(self.movementControls, image=self.arrowUpRight, anchor=CENTER, font="16")
         self.moveForwardRightButton.bind("<ButtonPress>", PiInterface.moveForwardRightPress)
         self.moveForwardRightButton.bind("<ButtonRelease>", PiInterface.moveForwardRightRelease)
         self.moveForwardRightButton.grid(row=3, column=6)
         
         # Backward
-        self.moveBackwardButton = tk.Button(self.movementControls, text="v", anchor=CENTER, font="16")
+        self.moveBackwardButton = tk.Button(self.movementControls, image=self.arrowDown, anchor=CENTER, font="16")
         self.moveBackwardButton.bind("<ButtonPress>", PiInterface.moveBackwardPress)
         self.moveBackwardButton.bind("<ButtonRelease>", PiInterface.moveBackwardRelease)
         self.moveBackwardButton.grid(row=5, column=5)
         
         # Backward-Left
-        self.moveBackwardLeftButton = tk.Button(self.movementControls, text="BL", anchor=CENTER, font="16")
+        self.moveBackwardLeftButton = tk.Button(self.movementControls, image=self.arrowDownLeft, anchor=CENTER, font="16")
         self.moveBackwardLeftButton.bind("<ButtonPress>", PiInterface.moveBackwardLeftPress)
         self.moveBackwardLeftButton.bind("<ButtonRelease>", PiInterface.moveBackwardLeftRelease)
         self.moveBackwardLeftButton.grid(row=5, column=4)
         
         # Backward-Right
-        self.moveBackwardRightButton = tk.Button(self.movementControls, text="BR", anchor=CENTER, font="16")
+        self.moveBackwardRightButton = tk.Button(self.movementControls, image=self.arrowDownRight, anchor=CENTER, font="16")
         self.moveBackwardRightButton.bind("<ButtonPress>", PiInterface.moveBackwardRightPress)
         self.moveBackwardRightButton.bind("<ButtonRelease>", PiInterface.moveBackwardRightRelease)
         self.moveBackwardRightButton.grid(row=5, column=6)
         
         # Left
-        self.moveLeftButton = tk.Button(self.movementControls, text="<", anchor=CENTER, font="16")
+        self.moveLeftButton = tk.Button(self.movementControls, image=self.arrowLeft, anchor=CENTER, font="16")
         self.moveLeftButton.bind("<ButtonPress>", PiInterface.moveLeftPress)
         self.moveLeftButton.bind("<ButtonRelease>", PiInterface.moveLeftRelease)
         self.moveLeftButton.grid(row=4, column=4)
         
         # Right
-        self.moveRightButton = tk.Button(self.movementControls, text=">", anchor=CENTER, font="16")
+        self.moveRightButton = tk.Button(self.movementControls, image=self.arrowRight, anchor=CENTER, font="16")
         self.moveRightButton.bind("<ButtonPress>", PiInterface.moveRightPress)
         self.moveRightButton.bind("<ButtonRelease>", PiInterface.moveRightRelease)
         self.moveRightButton.grid(row=4, column=6)
@@ -263,11 +282,11 @@ class DiaBotGUI():
         
         # Directional buttons
         tk.Label(self.cameraControls, text="Angle", anchor=CENTER, font="bold").grid(row=2, column=2, columnspan=3)
-        tk.Button(self.cameraControls, text="^", command=PiInterface.cameraUp, anchor=CENTER, font="16").grid(row=3, column=3)
-        tk.Button(self.cameraControls, text="v", command=PiInterface.cameraDown, anchor=CENTER, font="16").grid(row=5, column=3)
-        tk.Button(self.cameraControls, text="<", command=PiInterface.cameraLeft, anchor=CENTER, font="16").grid(row=4, column=2)
-        tk.Button(self.cameraControls, text=">", command=PiInterface.cameraRight, anchor=CENTER, font="16").grid(row=4, column=4)
-        tk.Button(self.cameraControls, text="Pic", command=PiInterface.takePhoto, anchor=CENTER, font="16").grid(row=4, column=3)
+        tk.Button(self.cameraControls, image=self.arrowUp, command=PiInterface.cameraUp, anchor=CENTER, font="16").grid(row=3, column=3)
+        tk.Button(self.cameraControls, image=self.arrowDown, command=PiInterface.cameraDown, anchor=CENTER, font="16").grid(row=5, column=3)
+        tk.Button(self.cameraControls, image=self.arrowLeft, command=PiInterface.cameraLeft, anchor=CENTER, font="16").grid(row=4, column=2)
+        tk.Button(self.cameraControls, image=self.arrowRight, command=PiInterface.cameraRight, anchor=CENTER, font="16").grid(row=4, column=4)
+        tk.Button(self.cameraControls, image=self.cameraIcon, command=PiInterface.takePhoto, anchor=CENTER, font="16").grid(row=4, column=3)
         
         # Stop and lock buttons
         tk.Label(self.cameraControls, text="Light", anchor=CENTER, font="bold").grid(row=2, column=6)
