@@ -1,3 +1,6 @@
+#do not use!! please reference the test_temp_and_mic.py file
+
+
 '''
 import time
 import mcp3002 as mcp #
