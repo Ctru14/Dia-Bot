@@ -68,13 +68,13 @@ class DiaBotGUI():
 
         # Define GUI frames
         #   Primary sections
-        self.controlFrame = tk.Frame(self.top, width=400, height=900)#, bg='orange')
+        self.controlFrame = tk.Frame(self.top, width=450, height=900)#, bg='orange')
         self.dataFrame = tk.Frame(self.top, width=1120, height=270)#, bg='blue')
         self.videoFrame = tk.Frame(self.top, width=1120, height=630)#, bg='red')
         #   Individual Control Frames
-        self.movementControls = tk.Frame(self.controlFrame, width=400, height=280)#, bg='blue')
-        self.cameraControls = tk.Frame(self.controlFrame, width=400, height=280)
-        self.alertControls = tk.Frame(self.controlFrame, width=400, height=280)
+        self.movementControls = tk.Frame(self.controlFrame, width=450, height=280)#, bg='blue')
+        self.cameraControls = tk.Frame(self.controlFrame, width=450, height=280)
+        self.alertControls = tk.Frame(self.controlFrame, width=450, height=450)
 
 
         # Create queues
@@ -128,18 +128,13 @@ class DiaBotGUI():
     # -------------------------- GUI SETUP CODE --------------------------
     def setupGuiFrames(self):
         self.top.resizable(width=False, height=False)
-        self.top.geometry("1600x900")
+        self.top.geometry("1920x1016")
 
         # Build the frames
         self.setupControlsPane()
         self.setupDataPane()
         self.setupVideoPane()
         
-        # Arrange frames
-        self.controlFrame.grid(row=1, column=1, sticky="nesw")
-        self.dataFrame.grid(row=1, column=2)
-        self.videoFrame.grid(row=2, column=2)
-
         # Place frames
         self.bindEvents()
         self.placeFrames()
@@ -326,6 +321,7 @@ class DiaBotGUI():
 
     def toggleData(self):
         #global collectData
+        print(f"Width: {self.top.winfo_width()}, Height: {self.top.winfo_height()}")
         self.collectData = not self.collectData
         print(f"Setting colletData to {self.collectData}")
 
@@ -413,7 +409,7 @@ class DiaBotGUI():
         # Place the frames
         self.controlFrame.place(relx=0.01, rely=0.01, anchor=tk.NW)
         self.dataFrame.place(relx=0.3, rely=0.01, anchor=tk.NW)
-        self.videoFrame.place(x=400, y=300, anchor=tk.NW)
+        self.videoFrame.place(x=450, y=300, anchor=tk.NW)
 
 
     # ---------- Threading functions ----------

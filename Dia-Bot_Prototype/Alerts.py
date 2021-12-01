@@ -88,8 +88,8 @@ class AlertTracker:
         self.metricLabel = tk.Label(self.frame, text=self.alertMetric.name, anchor="w", justify=LEFT, font="none 11")
         self.notificationLabel = tk.Label(self.frame, text="None", anchor=CENTER, font="none 11", fg="black")
         self.rangeMenu = tk.OptionMenu(self.frame, self.alertRangeName, *alertRanges, command=self.alertRangeChanged)
-        self.input1 = tk.Entry(self.frame, justify=CENTER, width=5, font="none 11", textvariable=self.thresholdString1)
-        self.input2 = tk.Entry(self.frame, justify=CENTER, width=5, font="none 11", textvariable=self.thresholdString2)
+        self.input1 = tk.Entry(self.frame, justify=CENTER, width=6, font="none 11", textvariable=self.thresholdString1)
+        self.input2 = tk.Entry(self.frame, justify=CENTER, width=6, font="none 11", textvariable=self.thresholdString2)
         self.unitsLabel = tk.Label(self.frame, text=self.thresholdUnits, anchor="w", justify=RIGHT, font="none 11")
         self.clearButton = tk.Button(self.frame, text="CLR", command=self.clearAlerts)
         self.deleteButton = tk.Button(self.frame, text="DEL", command=self.deleteTracker)
@@ -97,25 +97,25 @@ class AlertTracker:
     # Builds and returns the alert frame in self.frame 
     def getAlertFrame(self):
         #print(f"Creating and returning alert row for {self.name})
-        self.nameEnableButton.grid(row=1, column=1, columnspan=3)
-        self.dataTypeLabel.grid(row=1, column=4, columnspan=2)
-        self.metricLabel.grid(row=1, column=7, columnspan=2)
-        self.notificationLabel.grid(row=1, column=9, columnspan=3)
+        self.nameEnableButton.place(x=0, y=0, anchor=tk.NW)#.grid(row=1, column=1, columnspan=3)
+        self.dataTypeLabel.place(x=135, y=0, anchor=tk.NW)#grid(row=1, column=4, columnspan=2)
+        self.metricLabel.place(x=260, y=0, anchor=tk.NW)#grid(row=1, column=7, columnspan=2)
+        self.notificationLabel.place(x=400, y=0, anchor=tk.NE)#grid(row=1, column=9, columnspan=3)
 
         # Alert ranges
-        self.rangeMenu.grid(row=2, column=2, columnspan=2)
+        self.rangeMenu.place(x=0, y=30, anchor=tk.NW)#grid(row=2, column=2, columnspan=2)
         
         # Input entry fields: Only show the second entry for 'Between' mode
-        self.input1.grid(row=2, column=4, columnspan=2)
+        self.input1.place(x=110, y=30, anchor=tk.NW)#grid(row=2, column=4, columnspan=2)
         if (self.alertRange == AlertRange.Between):
-            self.input2.grid(row=2, column=6, columnspan=2)
+            self.input2.place(x=185, y=30, anchor=tk.NW)#grid(row=2, column=6, columnspan=2)
             
         # Units
-        self.unitsLabel.grid(row=2, column=9, columnspan=2)
+        self.unitsLabel.place(x=260, y=30, anchor=tk.NW)#grid(row=2, column=9, columnspan=2)
 
         # Clear and Delete buttons
-        self.clearButton.grid(row=2, column=11)
-        self.deleteButton.grid(row=2, column=12)
+        self.clearButton.place(x=300, y=30, anchor=tk.NW)#grid(row=2, column=11)
+        self.deleteButton.place(x=400, y=30, anchor=tk.NE)#grid(row=2, column=12)
 
         # Alert notification
         return self.frame
@@ -131,13 +131,13 @@ class AlertTracker:
         self.alertRange = AlertRange[typeName]
         if typeName == AlertRange.Above.name:
             print(f"Alert type changed to {self.alertRange} ({typeName}): change above limit!")
-            self.input2.grid_forget()
+            self.input2.place_forget()#grid_forget()
         elif typeName == AlertRange.Below.name:
             print(f"Alert type changed to {self.alertRange} ({typeName}): change below limit!")
-            self.input2.grid_forget()
+            self.input2.place_forget()#grid_forget()
         elif typeName == AlertRange.Between.name:
             print(f"Alert type changed to {self.alertRange} ({typeName}): change between limits and add the entry box")
-            self.input2.grid(row=2, column=6, columnspan=2)
+            self.input2.place(x=185, y=30, anchor=tk.NW)#grid(row=2, column=6, columnspan=2)
             
     
     def confirmUpdates(self):
@@ -163,15 +163,15 @@ class AlertTracker:
 
     def clearAlerts(self):
         self.alerts.clear()
-        self.notificationLabel.grid_forget()
+        self.notificationLabel.place_forget()#grid_forget()
         self.notificationLabel = tk.Label(self.frame, text="None", anchor=CENTER, font="none 11", fg="black")
-        self.notificationLabel.grid(row=1, column=11, columnspan=2)
+        self.notificationLabel.place(x=400, y=0, anchor=tk.NE)#grid(row=1, column=11, columnspan=2)
 
     def setErrorLabel(self):
         #timeString = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(alert.time)) # Add %Z to show time zone
-        self.notificationLabel.grid_forget()
+        self.notificationLabel.place_forget()#grid_forget()
         self.notificationLabel = tk.Label(self.frame, text=f"Error({len(self.alerts)})", anchor=CENTER, font="none 11 bold", fg="red")
-        self.notificationLabel.grid(row=1, column=11, columnspan=2)
+        self.notificationLabel.place(x=400, y=0, anchor=tk.NE)#grid(row=1, column=11, columnspan=2)
 
     def checkForAlerts(self, t, value, indices):
         if self.alertEnabled.get():
