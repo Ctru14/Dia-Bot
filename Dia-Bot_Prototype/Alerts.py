@@ -56,7 +56,7 @@ dataTypeUnits = ("dB", "m/s2", "m", "°C")
 
 class AlertTracker:
    
-    def __init__(self, alertsTop, alertControlsFrame, name, alertDataType, alertRange, alertMetric, alertIOqueue, width=400, height=100):
+    def __init__(self, alertsTop, alertControlsFrame, name, alertDataType, alertRange, alertMetric, alertIOqueue, deleteIcon, clearIcon, width=400, height=100):
         # Initialize data variables
         self.name = name
         self.alertsTop = alertsTop
@@ -69,7 +69,10 @@ class AlertTracker:
         self.alertRangeName.set(self.alertRange.name)
         self.alertIOqueue = alertIOqueue
         self.alerts = []
+        self.deleteIcon = deleteIcon
+        self.clearIcon = clearIcon
         self.errorActive = False
+        self.alertsMutex = threading.Lock()
 
         # Threshold levels
         self.belowValue = nan
@@ -91,8 +94,8 @@ class AlertTracker:
         self.input1 = tk.Entry(self.frame, justify=CENTER, width=6, font="none 11", textvariable=self.thresholdString1)
         self.input2 = tk.Entry(self.frame, justify=CENTER, width=6, font="none 11", textvariable=self.thresholdString2)
         self.unitsLabel = tk.Label(self.frame, text=self.thresholdUnits, anchor="w", justify=RIGHT, font="none 11")
-        self.clearButton = tk.Button(self.frame, text="CLR", command=self.clearAlerts)
-        self.deleteButton = tk.Button(self.frame, text="DEL", command=self.deleteTracker)
+        self.clearButton = tk.Button(self.frame, image=self.clearIcon, command=self.clearAlerts)
+        self.deleteButton = tk.Button(self.frame, image=self.deleteIcon, command=self.deleteTracker)
 
     # Builds and returns the alert frame in self.frame 
     def getAlertFrame(self):
@@ -114,7 +117,7 @@ class AlertTracker:
         self.unitsLabel.place(x=260, y=30, anchor=tk.NW)#grid(row=2, column=9, columnspan=2)
 
         # Clear and Delete buttons
-        self.clearButton.place(x=300, y=30, anchor=tk.NW)#grid(row=2, column=11)
+        self.clearButton.place(x=365, y=30, anchor=tk.NE)#grid(row=2, column=11)
         self.deleteButton.place(x=400, y=30, anchor=tk.NE)#grid(row=2, column=12)
 
         # Alert notification
@@ -162,7 +165,10 @@ class AlertTracker:
                 print(f"Error: cannot convert string {self.thresholdString2.get()} to a number")
 
     def clearAlerts(self):
+        self.errorActive = False
+        self.alertsMutex.acquire()
         self.alerts.clear()
+        self.alertsMutex.release()
         self.notificationLabel.place_forget()#grid_forget()
         self.notificationLabel = tk.Label(self.frame, text="None", anchor=CENTER, font="none 11", fg="black")
         self.notificationLabel.place(x=400, y=0, anchor=tk.NE)#grid(row=1, column=11, columnspan=2)
@@ -183,13 +189,17 @@ class AlertTracker:
                     if not self.errorActive:
                         self.errorActive = True
                         newAlert = Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value, indices, self.name)
+                        self.alertsMutex.acquire()
                         self.alerts.append(newAlert)
+                        self.alertsMutex.release()
                         self.alertIOqueue.put(newAlert)
                         print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.aboveValue}")
                         self.setErrorLabel()
                     else:
                         print(f"Error {self.alerts[-1].id} currently active in {self.name}! Append data to file...")
+                        self.alertsMutex.acquire()
                         newAlert = deepcopy(self.alerts[-1])
+                        self.alertsMutex.release()
                         newAlert.indices = indices
                         self.alertIOqueue.put(newAlert)
             if self.alertRange == AlertRange.Below:
@@ -198,13 +208,17 @@ class AlertTracker:
                     if not self.errorActive:
                         self.errorActive = True
                         newAlert = Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value, indices, self.name)
+                        self.alertsMutex.acquire()
                         self.alerts.append(newAlert)
+                        self.alertsMutex.release()
                         self.alertIOqueue.put(newAlert)
                         print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.belowValue}")
                         self.setErrorLabel()
                     else:
                         print(f"Error {self.alerts[-1].id} currently active in {self.name}! Append data to file...")
+                        self.alertsMutex.acquire()
                         newAlert = deepcopy(self.alerts[-1])
+                        self.alertsMutex.release()
                         newAlert.indices = indices
                         self.alertIOqueue.put(newAlert)
             if self.alertRange == AlertRange.Between:
@@ -213,13 +227,17 @@ class AlertTracker:
                     if not self.errorActive:
                         self.errorActive = True
                         newAlert = Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value, indices, self.name)
+                        self.alertsMutex.acquire()
                         self.alerts.append(newAlert)
+                        self.alertsMutex.release()
                         self.alertIOqueue.put(newAlert)
                         print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.betweenLoValue} and {self.betweenHiValue}")
                         self.setErrorLabel()
                     else:
                         print(f"Error {self.alerts[-1].id} currently active in {self.name}! Append data to file...")
+                        self.alertsMutex.acquire()
                         newAlert = deepcopy(self.alerts[-1])
+                        self.alertsMutex.release()
                         newAlert.indices = indices
                         self.alertIOqueue.put(newAlert)
         if self.errorActive and not errorFound:
@@ -231,11 +249,13 @@ class AlertTracker:
 # Receives processing info from queue and sends it to each relevant tracker
 class AlertsTop:
 
-    def __init__(self, alertControlsFrame, alertTrackersFrame, processingQueue, alertIOqueues):
+    def __init__(self, alertControlsFrame, alertTrackersFrame, processingQueue, alertIOqueues, deleteIcon, clearIcon):
         self.alertControlsFrame = alertControlsFrame
         self.alertTrackersFrame = alertTrackersFrame
         self.processingQueue = processingQueue
         self.alertIOqueues = alertIOqueues
+        self.deleteIcon = deleteIcon
+        self.clearIcon = clearIcon
         # Sort trackers in lists based on their data type
         self.soundLevelTrackers = []
         self.vibrationTrackers = []
@@ -293,7 +313,7 @@ class AlertsTop:
     # Callback button for "+" new tracker - take UI input to build and add a new tracker
     def buildAndAddTracker(self):
         if len(self.newDataTypeVar.get()) > 1 and len(self.newMetricVar.get()) > 1:
-            newTracker = AlertTracker(self, self.alertTrackersFrame, self.nameEntryVar.get(), self.newDataType, AlertRange.Above, self.newMetric, self.alertIOqueues[int(self.newDataType)])
+            newTracker = AlertTracker(self, self.alertTrackersFrame, self.nameEntryVar.get(), self.newDataType, AlertRange.Above, self.newMetric, self.alertIOqueues[int(self.newDataType)], self.deleteIcon, self.clearIcon)
             self.addTracker(newTracker) # Add to existing list
             # Clear new tracker frame of the previous name name
             self.nameEntryVar.set("Tracker Name")
