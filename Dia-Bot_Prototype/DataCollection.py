@@ -73,13 +73,14 @@ class SoundLevelCollection(DataCollection):
 class VibrationCollection(DataCollection):
 
     def __init__(self, name, units, samplingRate, startTime, dataQueue):
-        return super().__init__(name, units, samplingRate, startTime, dataQueue, AlertDataType.Vibration)
+        super().__init__(name, units, samplingRate, startTime, dataQueue, AlertDataType.Vibration)
 
+    # addData override in DataProcessing class!
+        
     def readData(self):
-        num = uniform(-10, 10)
-        #print("Reading vibration! - " + str(num))
-        return num
-    
+        vib = (uniform(-10, 10), uniform(-10, 10), uniform(-10, 10))
+        #print("Reading vibration! - " + str(vib))
+        return vib
     
 
 class PositionCollection(DataCollection):
@@ -88,9 +89,9 @@ class PositionCollection(DataCollection):
         return super().__init__(name, units, samplingRate, startTime, dataQueue, AlertDataType.Position)
 
     def readData(self):
-        num = uniform(-10, 10)
-        #print("Reading position! - " + str(num))
-        return num
+        pos = (uniform(-10, 10), uniform(-10, 10), uniform(-10, 10))
+        #print("Reading position! - " + str(pos))
+        return pos
 
 
 

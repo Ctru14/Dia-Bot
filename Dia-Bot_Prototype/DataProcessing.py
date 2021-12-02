@@ -17,6 +17,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 
 from DataCollection import DataCollection
+from DataCollection import VibrationCollection
 from Alerts import AlertDataType
 from Alerts import AlertMetric
 import Threads
@@ -28,7 +29,7 @@ class DataProcessing(DataCollection):
         self.alertDataType = alertDataType
         self.visualQueue = visualQueue
         self.processingQueue = processingQueue
-        #self.dataMutex = threading.Lock()
+        self.dataMutex = threading.Lock()
         #self.dataMutex = multiprocessing.Lock()
         self.lastIdx = 0
                
@@ -59,6 +60,11 @@ class DataProcessing(DataCollection):
         #print(f"Finding magnitude between {idxLo} and {idxHi}: {fft}")
         return fft[0]
 
+    def addDataToVisualQueue(self, idxHi):
+        while self.lastIdx <= idxHi:
+            self.visualQueue.put((self.t[self.lastIdx], self.data[self.lastIdx]))
+            self.lastIdx += 1
+
    
     def mainProcessing(self, *args):
         # Calculate all processing values and put them into the queue
@@ -72,28 +78,8 @@ class DataProcessing(DataCollection):
             freq = self.frequency(idxLo, idxHi)
             mag = self.magnitude(idxLo, idxHi)
             self.processingQueue.put((self.alertDataType, avg, maximum, minimum, freq, mag, t, (idxLo, idxHi)))
-            while self.lastIdx <= idxHi:
-                self.visualQueue.put((self.t[self.lastIdx], self.data[self.lastIdx]))
-                self.lastIdx += 1
-
-    # Visual Processing
-   
-    def createVisual(self, plot1):
-        # Find start and end indices for graphing
-        start = 0
-        end = len(self.t)
-        if end == 0:
-            print(f"Error in updateVisual ({self.name}) - data length is zero!")
-            return
-        # Graph the last 5 seconds
-        start = int(max(0, end-2*self.samplingRate))
-        plot1.cla() # Find way to update graphs without it taking too long!!
-        # Update plot
-        #self.dataMutex.acquire()
-        print(f"Update {self.name} graph: indices ({start}..{end})  Latest: ({self.t[-1]}, {self.data[-1]})")
-        plot1.plot(self.t[start:end], self.data[start:end])
-        #self.dataMutex.release()
-
+            self.addDataToVisualQueue(idxHi)
+            
 
 class SoundLevelProcessing(DataProcessing):
 
@@ -105,7 +91,19 @@ class SoundLevelProcessing(DataProcessing):
 class VibrationProcessing(DataProcessing):
 
     def __init__(self, alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue):
-        return super().__init__(alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue)
+        super().__init__(alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue)
+        self.dataRaw = []
+
+    # DataCollection method! Overridden  instead due to inheritance complications
+    # Used in processing process - appends new data point to the data array
+    def addData(self, t, data):
+        #self.dataMutex.acquire()
+        self.t.append(t)  # self.t[-1]+self.samplingTime)
+        self.dataRaw.append(data)
+        mag = (data[0]**2 + data[1]**2 + data[2]**2)**0.5
+        self.data.append(mag)
+        #self.dataMutex.release()
+
 
 
 
@@ -114,6 +112,19 @@ class PositionProcessing(DataProcessing):
     def __init__(self, alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue):
         return super().__init__(alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue)
 
+    def mainProcessing(self, *args):
+        # Calculate all processing values and put them into the queue
+        idxHi = len(self.t)-1
+        if idxHi > 0:
+            t = self.t[idxHi]
+            idxLo = max(0, int(idxHi - (10 * self.samplingRate)))
+            #avg = self.average(idxLo, idxHi)
+            #maximum = self.maximum(idxLo, idxHi)
+            #minimum = self.minimum(idxLo, idxHi)
+            #freq = self.frequency(idxLo, idxHi)
+            #mag = self.magnitude(idxLo, idxHi)
+            #self.processingQueue.put((self.alertDataType, avg, maximum, minimum, freq, mag, t, (idxLo, idxHi)))
+            self.addDataToVisualQueue(idxHi)
 
 
 class TemperatureProcessing(DataProcessing):
@@ -121,12 +132,6 @@ class TemperatureProcessing(DataProcessing):
     def __init__(self, alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue):
         super().__init__(alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue)
 
-    def readNewData(tempView):
-        while not tempView.visualQueue.empty():
-            t, dataC = tempView.visualQueue.get()
-            tempView.currentTempCelsius = dataC
-            tempView.currentTempFarenheit = dataC * 9 / 5 + 32
-            #print(f"New temperature data! {t}, C={tempView.currentTempCelsius}, F={tempView.currentTempFarenheit}")
 
     #def visualProcessing(self, *args):
     #    # Temperature is simple: read latest temperature and send it to visual queue

@@ -59,7 +59,7 @@ class DiaBotGUI():
         self.zoom = IntVar()
 
         # Threading control
-        self.visualsRefreshTime = 5 # Number of seconds between graph refresh
+        self.visualsRefreshTime = 2 # Number of seconds between visuals refresh
         self.programRunning = True
         self.collectData = True
         #self.uiMutex = threading.Lock()
@@ -373,7 +373,7 @@ class DiaBotGUI():
         self.vibrationFrame.grid(row=2, column=2, padx=10)
         
         # Position
-        self.positionDisplayClass = DataDisplay.DataDisplay(self.positionFields, self.positionFrame, self.positionVisualQueue)
+        self.positionDisplayClass = DataDisplay.PositionDisplay(self.positionFields, self.positionFrame, self.positionVisualQueue)
         self.positionDisplayClass.tkAddDataPane()
         self.positionFrame.grid(row=2, column=3, padx=10)
         #positionPlotVars = DiaBotGUI.createNewDataPane(self.positionDisplayClass, self.positionFields.name, self.positionFrame, 2, 3, self.positionFields.units)
@@ -411,15 +411,9 @@ class DiaBotGUI():
     # ------------------ Video Pane -----------------------
 
     # --- Callback functions ---
-    def updateFrameImage():
-        fileName = "frame.png"
-        camera.capture(fileName)
-        img = ImageTk.PhotoImage(Image.open(fileName).resize((1000, 500)))
-        imgLabel = Label(videoFrame, image=img)
-        imgLabel.grid(row=1, column=1)
 
     def setupVideoPane(self):
-        self.testImg = ImageTk.PhotoImage(Image.open("vanderlandeTest.png"))#.resize((1000, 500)))
+        self.testImg = ImageTk.PhotoImage(Image.open("vanderlandeTest.png").resize((1380, 715)))
         self.imgLabel = Label(self.videoFrame, image=self.testImg)
         self.imgLabel.grid(row=1, column=1)
 
@@ -437,9 +431,6 @@ class DiaBotGUI():
         self.top.bind("<<visualsEvent>>", self.updateVisualsWrapper)
         self.top.bind("<<alertsEvent>>", self.updateAlertsHandler)
 
-       
-    #tk.Button(videoFrame, text="Update Image", command=updateFrameImage).grid(row=2, column=1)
-    
     # --- Update Visuals Handlers ---
 
     # Sends update visuals event to TK
@@ -459,6 +450,7 @@ class DiaBotGUI():
     def updateVisualsHandler(self):
         # Only temperature view needs updating 
         self.tempDisplayClass.updateVisual()
+        self.positionDisplayClass.updateVisual()
    
     # --- Update Alerts Handlers ---
     def updateAlertsHandler(self, event):
