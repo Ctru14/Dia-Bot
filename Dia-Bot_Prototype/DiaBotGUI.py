@@ -118,11 +118,6 @@ class DiaBotGUI():
         self.camera.close()
         self.top.destroy
         quit()
-    
-    # Returns a printout of the total time since execution began
-    def totalElapsedTime(self):
-        return f"(total time = {(time.time_ns()-self.startTime)/1_000_000_000} s)"
-    
 
 
     # -------------------------- GUI SETUP CODE --------------------------
@@ -181,7 +176,7 @@ class DiaBotGUI():
 
         # Speed slider
         tk.Label(self.movementControls, text="Speed", anchor=CENTER, font="bold").grid(row=2, column=2)
-        self.speedScale = tk.Scale(self.movementControls, from_=100, to=0, orient=tk.VERTICAL, variable=self.speed, command=self.speedChanged, length=150, showvalue=0, sliderlength=20)
+        self.speedScale = tk.Scale(self.movementControls, from_=100, to=0, orient=tk.VERTICAL, variable=self.speed, command=self.speedChanged, length=150, showvalue=1, sliderlength=20)
         self.speedScale.grid(row=3, column=2, rowspan=4)
         self.speedScale.set(50)
 
@@ -202,15 +197,21 @@ class DiaBotGUI():
     def importMenuImages(self):
         # Directional arrows
         self.arrowUp = ImageTk.PhotoImage(Image.open("Assets/Arrow-Up.jpg").resize((30, 30)))
+        self.arrowUpW = ImageTk.PhotoImage(Image.open("Assets/Arrow-Up-W.jpg").resize((30, 30)))
         self.arrowUpLeft = ImageTk.PhotoImage(Image.open("Assets/Arrow-Up-Left.jpg").resize((30, 30)))
         self.arrowUpRight = ImageTk.PhotoImage(Image.open("Assets/Arrow-Up-Right.jpg").resize((30, 30)))
         self.arrowDown = ImageTk.PhotoImage(Image.open("Assets/Arrow-Down.jpg").resize((30, 30)))
+        self.arrowDownS = ImageTk.PhotoImage(Image.open("Assets/Arrow-Down-S.jpg").resize((30, 30)))
         self.arrowDownLeft = ImageTk.PhotoImage(Image.open("Assets/Arrow-Down-Left.jpg").resize((30, 30)))
         self.arrowDownRight = ImageTk.PhotoImage(Image.open("Assets/Arrow-Down-Right.jpg").resize((30, 30)))
         self.arrowLeft = ImageTk.PhotoImage(Image.open("Assets/Arrow-Left.jpg").resize((30, 30)))
+        self.arrowLeftA = ImageTk.PhotoImage(Image.open("Assets/Arrow-Left-A.jpg").resize((30, 30)))
         self.arrowRight = ImageTk.PhotoImage(Image.open("Assets/Arrow-Right.jpg").resize((30, 30)))
+        self.arrowRightD = ImageTk.PhotoImage(Image.open("Assets/Arrow-Right-D.jpg").resize((30, 30)))
         # Other
         self.cameraIcon = ImageTk.PhotoImage(Image.open("Assets/Camera-Icon.jpg").resize((30, 30)))
+        self.deleteIcon = ImageTk.PhotoImage(Image.open("Assets/Delete-Icon.jpg").resize((22, 22)))
+        self.clearIcon = ImageTk.PhotoImage(Image.open("Assets/Clear-Icon.jpg").resize((22, 22)))
 
 
 
@@ -218,7 +219,7 @@ class DiaBotGUI():
     def setupMovementDirectionalButtons(self):
 
         # Forward
-        self.moveForwardButton = tk.Button(self.movementControls, image=self.arrowUp, anchor=CENTER, font="16")
+        self.moveForwardButton = tk.Button(self.movementControls, image=self.arrowUpW, anchor=CENTER, font="16")
         self.moveForwardButton.bind("<ButtonPress>", PiInterface.moveForwardPress)
         self.moveForwardButton.bind("<ButtonRelease>", PiInterface.moveForwardRelease)
         self.moveForwardButton.grid(row=3, column=5)
@@ -236,7 +237,7 @@ class DiaBotGUI():
         self.moveForwardRightButton.grid(row=3, column=6)
         
         # Backward
-        self.moveBackwardButton = tk.Button(self.movementControls, image=self.arrowDown, anchor=CENTER, font="16")
+        self.moveBackwardButton = tk.Button(self.movementControls, image=self.arrowDownS, anchor=CENTER, font="16")
         self.moveBackwardButton.bind("<ButtonPress>", PiInterface.moveBackwardPress)
         self.moveBackwardButton.bind("<ButtonRelease>", PiInterface.moveBackwardRelease)
         self.moveBackwardButton.grid(row=5, column=5)
@@ -254,13 +255,13 @@ class DiaBotGUI():
         self.moveBackwardRightButton.grid(row=5, column=6)
         
         # Left
-        self.moveLeftButton = tk.Button(self.movementControls, image=self.arrowLeft, anchor=CENTER, font="16")
+        self.moveLeftButton = tk.Button(self.movementControls, image=self.arrowLeftA, anchor=CENTER, font="16")
         self.moveLeftButton.bind("<ButtonPress>", PiInterface.moveLeftPress)
         self.moveLeftButton.bind("<ButtonRelease>", PiInterface.moveLeftRelease)
         self.moveLeftButton.grid(row=4, column=4)
         
         # Right
-        self.moveRightButton = tk.Button(self.movementControls, image=self.arrowRight, anchor=CENTER, font="16")
+        self.moveRightButton = tk.Button(self.movementControls, image=self.arrowRightD, anchor=CENTER, font="16")
         self.moveRightButton.bind("<ButtonPress>", PiInterface.moveRightPress)
         self.moveRightButton.bind("<ButtonRelease>", PiInterface.moveRightRelease)
         self.moveRightButton.grid(row=4, column=6)
@@ -311,11 +312,11 @@ class DiaBotGUI():
         # Extra TK frame to display just the alert trackers
         self.alertTrackersFrame = tk.Frame(self.alertControls, width=400)
 
-        # Create each alert instance and add frames to the UI  
-        self.alertsTop = AlertsTop(self.alertControls, self.alertTrackersFrame, self.processingQueue, self.alertIOqueues)
+        # Create each alert instance and add frames to the UI
+        self.alertsTop = AlertsTop(self.alertControls, self.alertTrackersFrame, self.processingQueue, self.alertIOqueues, self.deleteIcon, self.clearIcon)
 
-        self.vibrationAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame,   "Vibration",   AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average, self.vibrationAlertIOQueue)
-        self.temperatureAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame, "Temperature", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average, self.tempAlertIOQueue)
+        self.vibrationAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame,   "Vibration",   AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average, self.vibrationAlertIOQueue, self.deleteIcon, self.clearIcon)
+        self.temperatureAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame, "Temperature", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average, self.tempAlertIOQueue, self.deleteIcon, self.clearIcon)
         
         self.alertsTop.addTracker(self.vibrationAlertTracker)
         self.alertsTop.addTracker(self.temperatureAlertTracker)
@@ -342,6 +343,7 @@ class DiaBotGUI():
         #global collectData
         print(f"Width: {self.top.winfo_width()}, Height: {self.top.winfo_height()}")
         self.collectData = not self.collectData
+        # TODO: send collect data message to queues
         print(f"Setting colletData to {self.collectData}")
 
     # ------------------ Data Pane -----------------------
@@ -361,13 +363,11 @@ class DiaBotGUI():
         
         
         # Sound Level
-        #soundLevelPlotVars = DiaBotGUI.createNewDataPane(DataDisplay.DataDisplay, self.soundLevelFields.name, self.soundLevelFrame, 2, 1, self.soundLevelFields.units)
         self.soundLevelDisplayClass = DataDisplay.DataDisplay(self.soundLevelFields, self.soundLevelFrame, self.soundLevelVisualQueue)
         self.soundLevelDisplayClass.tkAddDataPane()
         self.soundLevelFrame.grid(row=2, column=1, padx=10)
 
         # Vibration
-        #vibrationPlotVars = DiaBotGUI.createNewDataPane(DataDisplay.DataDisplay, self.vibrationFields.name, self.vibrationFrame, 2, 2, self.vibrationFields.units)
         self.vibrationDisplayClass = DataDisplay.DataDisplay(self.vibrationFields, self.vibrationFrame, self.vibrationVisualQueue)
         self.vibrationDisplayClass.tkAddDataPane()
         self.vibrationFrame.grid(row=2, column=2, padx=10)
@@ -376,18 +376,11 @@ class DiaBotGUI():
         self.positionDisplayClass = DataDisplay.PositionDisplay(self.positionFields, self.positionFrame, self.positionVisualQueue)
         self.positionDisplayClass.tkAddDataPane()
         self.positionFrame.grid(row=2, column=3, padx=10)
-        #positionPlotVars = DiaBotGUI.createNewDataPane(self.positionDisplayClass, self.positionFields.name, self.positionFrame, 2, 3, self.positionFields.units)
 
         # Temperature
         self.tempDisplayClass = DataDisplay.TemperatureDisplay(self.temperatureFields, self.temperatureFrame, self.temperatureVisualQueue)
         self.tempDisplayClass.tkAddDataPane()
         self.temperatureFrame.grid(row=2, column=4, padx=10)
-        
-       # DiaBotGUI.createNewDataPane(self.tempDisplayClass, self.temperatureFields.name, self.temperatureFrame, 2, 4, 
-       #                             self.tempDisplayClass.tempDisplayText, self.tempDisplayClass.tempViewButtonText, self.tempDisplayClass.switchTempView)
-
-        #self.dataViewVarsList = [soundLevelPlotVars, vibrationPlotVars, positionPlotVars, self.tempDisplayClass]
-        #self.dataViewVarsList = [positionPlotVars, self.tempDisplayClass]
 
 
     def createDataFields(CollectionType, name, units, samplingRate, startTime): # TODO: REMOVE VISUALQ FROM COLLECTION
@@ -401,11 +394,6 @@ class DiaBotGUI():
         fields = DataCollection.DataFields(name, units, samplingRate, startTime, collection.alertDataType)
         return (fields, dataQueue, visualQueue, collection)
 
-    #def createNewDataPane(DisplayType, name, frame, row, col, *args):
-    #    plotVars = DisplayType.tkAddDataPane(name, frame, *args)
-    #    frame.grid(row=row, column=col, padx=10)
-    #    return plotVars
-
 
 
     # ------------------ Video Pane -----------------------
@@ -413,7 +401,7 @@ class DiaBotGUI():
     # --- Callback functions ---
 
     def setupVideoPane(self):
-        self.testImg = ImageTk.PhotoImage(Image.open("vanderlandeTest.png").resize((1380, 715)))
+        self.testImg = ImageTk.PhotoImage(Image.open("Assets/Video-Frame.jpg").resize((1380, 715)))
         self.imgLabel = Label(self.videoFrame, image=self.testImg)
         self.imgLabel.grid(row=1, column=1)
 
@@ -435,7 +423,7 @@ class DiaBotGUI():
 
     # Sends update visuals event to TK
     def generateEvent(self, eventString, *args):
-        if self.collectData and self.programRunning:
+        if self.programRunning:
             try:
                 self.top.event_generate(eventString)
             except Exception as e:
@@ -459,9 +447,6 @@ class DiaBotGUI():
         except Exception as e:
             print(f"Exception thrown in update alerts: {e}")
         
-    def printTime(self):
-        print(self.totalElapsedTime())
-
 
     # ----- Main method for GUI - Starts extra threads and processes and other programs ----
     def startProgram(self):

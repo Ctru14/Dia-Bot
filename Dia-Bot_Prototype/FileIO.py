@@ -44,12 +44,14 @@ class FileIO:
             print(f"{self.name} alerts data path does not exist - creating: {self.alertsDataPath}")
             os.mkdir(self.alertsDataPath)
         self.timeFormat = "%y%m%d-%H%M%S"
+        self.dateTimeFormat = "{:%Y%m%d-%H%M%S}"
 
 
     def writeAlertData(self, alert):
         # Construct directory name:  YYYYMMDD-hhmmss_Metric_Range_ID/
         trackerName = alert.trackerName.replace(" ", "")
-        timeString = time.strftime(self.timeFormat, time.gmtime(alert.time)) # time.gmtime(alert.time).strftime(self.timeFormat)
+        #timeString = time.strftime(self.timeFormat, time.gmtime(alert.time)) # time.gmtime(alert.time).strftime(self.timeFormat)
+        timeString = self.dateTimeFormat.format(alert.time)#.strftime(self.timeFormat, time.gmtime(alert.time)) # time.gmtime(alert.time).strftime(self.timeFormat)
         alertDirName = f"{trackerName}_{timeString}_{alert.alertMetric}_{alert.alertRange}_{alert.id}"
         alertDirPath = os.path.join(self.alertsDataPath, alertDirName)
         idxLo = alert.indices[0]
