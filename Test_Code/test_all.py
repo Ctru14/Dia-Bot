@@ -10,6 +10,24 @@ import digitalio
 import adafruit_mcp3xxx.mcp3002 as MCP
 from adafruit_mcp3xxx.analog_in import AnalogIn
 import neopixel
+import picamera
+
+# Camera
+camera = picamera.PiCamera()
+
+def start_camera():
+    camera.preview_fullscreen=False
+    camera.preview_window=(90,100, 1280, 720)
+    camera.resolution=(1280,720)
+
+def updateFrameImage():
+    fileName = "frame.png"
+    camera.capture(fileName)
+    img = ImageTk.PhotoImage(Image.open(fileName).resize((1000, 500)))
+    imgLabel = Label(videoFrame, image=img)
+    imgLabel.grid(row=1, column=1)
+    camera.start_preview()
+
 
 # LED
 pixels = neopixel.NeoPixel(board.D18, 12)
@@ -94,19 +112,22 @@ while True:
     print('Temp ADC Value SCALED : ', temp_scaled)
     # read the volume pin NO SCALING
     sound_scaled = sound_raw - 32000
-    print('Souund ADC Value SCALED: ', sound_scaled)
+    print('Sound ADC Value SCALED: ', sound_scaled)
     # hang out and do nothing for a half second
     time.sleep(1.0)
     
     pixels.fill((255, 255, 255))
     time.sleep(1)
-    pixels.fill((255, 0, 0))
+
+    
+    camera.preview_fullscreen=False
+    camera.preview_window=(500, 400, 1000, 600)
+    camera.resolution=(1280,720)
+    camera.rotation = 0
+    camera.start_preview()
+    time.sleep(30.0)
+    camera.stop_preview()
+    pixels.fill((255, 255, 255))
     time.sleep(1)
-    pixels.fill((255, 255, 0))
-    time.sleep(1)
-    pixels.fill((0, 255, 0))
-    time.sleep(1)
-    pixels.fill((0, 0, 255))
-    time.sleep(1)
-    pixels.fill((0, 0, 0))
-    time.sleep(1)
+    camera.close()
+    
