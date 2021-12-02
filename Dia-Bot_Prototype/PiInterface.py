@@ -49,7 +49,7 @@ def stopGpio():
 
 # Opens the camera preview on the screen
 #   Note: for VNC users to see the feed, the setting "Enable Direct Capture Mode" must be on
-def start_camera(previewWindow=(640,500, 1080, 720), resolution=(1280,720), rotation=180):
+def start_camera(previewWindow=(452,366, 1380, 715), resolution=(1380,715), rotation=180):
     camera.preview_fullscreen=False
     camera.preview_window=previewWindow
     camera.resolution=resolution

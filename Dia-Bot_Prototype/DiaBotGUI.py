@@ -330,7 +330,7 @@ class DiaBotGUI():
     # Main method to setup data pane with each data category
     def setupDataPane(self):
         tk.Label(self.dataFrame, text="Data", font="none 18 bold").grid(row=1, column=1, columnspan=50)
-        tk.Button(self.dataFrame, text="Toggle Data", command=self.toggleData).grid(row=1, column=2)
+        #tk.Button(self.dataFrame, text="Toggle Data", command=self.toggleData).grid(row=1, column=2)
 
         # Individual Frames
         self.soundLevelFrame = tk.Frame(self.dataFrame, width=350, height=350)#, bg="red")
