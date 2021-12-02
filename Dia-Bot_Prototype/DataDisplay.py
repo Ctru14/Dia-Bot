@@ -127,7 +127,63 @@ class DataDisplay:
             #print(f"Appended new data to {self.name} graph! Took {1000*(t1-t0)}ms")
         return self.line,
 
- # Create class for Temperature text/button display
+
+# Displaying X/Y/Z data for positioning
+class PositionDisplay(DataDisplay):
+
+    def __init__(self, fields, tkTop, visualQueue):
+        super().__init__(fields, tkTop, visualQueue)
+        self.posMutex = threading.Lock()
+        self.curX = 0.0
+        self.curY = 0.0
+        self.curZ = 0.0
+        self.displayX = StringVar()
+        self.displayY = StringVar()
+        self.displayZ = StringVar()
+        self.updateVisual()
+
+    def readNewData(self):
+        pos = (self.curX, self.curY, self.curZ)
+        while not self.visualQueue.empty():
+            t, pos = self.visualQueue.get()
+        self.posMutex.acquire()
+        self.curX, self.curY, self.curZ = pos
+        self.posMutex.release()
+    
+    # Called periodically by UI thread
+    def updateVisual(self):
+        self.readNewData()
+        self.posMutex.acquire()
+        self.displayX.set("X: {:.2f} m".format(self.curX))
+        self.displayY.set("Y: {:.2f} m".format(self.curY))
+        self.displayZ.set("Z: {:.2f} m".format(self.curZ))
+        self.posMutex.release()
+
+    def zeroPosition(self):
+        self.posMutex.acquire()
+        self.curX = 0.0
+        self.curY = 0.0
+        self.curZ = 0.0
+        self.posMutex.release()
+        
+    # Overwrite data visuals method: no graph needed
+    def tkAddDataPane(self):
+        # Top label
+        self.topLabel = tk.Label(self.tkTop, text=self.name, font="none 12 bold")
+        self.topLabel.grid(row=1, column=1, columnspan=5)
+        # Add temperature text and display button
+        self.xLabel = tk.Label(self.tkTop, textvariable=self.displayX, font="none 14")
+        self.yLabel = tk.Label(self.tkTop, textvariable=self.displayY, font="none 14")
+        self.zLabel = tk.Label(self.tkTop, textvariable=self.displayZ, font="none 14")
+        self.xLabel.grid(row=3, column=1, columnspan=5)
+        self.yLabel.grid(row=4, column=1, columnspan=5)
+        self.zLabel.grid(row=5, column=1, columnspan=5)
+        # Button to reset position to zero
+        self.zeroPosButton = tk.Button(self.tkTop, text = "Zero Position", command = self.zeroPosition)
+        self.zeroPosButton.grid(row=6, column=1, columnspan=5)
+
+
+# Displaying text and button for Temperature data
 class TemperatureDisplay(DataDisplay):
 
     def __init__(self, fields, tkTop, visualQueue):
@@ -161,13 +217,19 @@ class TemperatureDisplay(DataDisplay):
             self.tempDisplayText.set(self.getDisplayText())
             self.tempViewButtonText.set("View Celsius")
 
+    # UI thread - collect new temperature data
+    def readNewData(self):
+        while not self.visualQueue.empty():
+            t, dataC = self.visualQueue.get()
+            self.currentTempCelsius = dataC
+            self.currentTempFarenheit = dataC * 9 / 5 + 32
+            #print(f"New temperature data! {t}, C={self.currentTempCelsius}, F={self.currentTempFarenheit}")
 
     # Called by UI thread to update temperature printout
     def updateVisual(self):
-        DataProcessing.TemperatureProcessing.readNewData(self)
+        self.readNewData()
         #print(f"Update TEMPERATURE visual: {self.getDisplayText()}")
         self.tempDisplayText.set(self.getDisplayText())
-
 
     # Overwrite data visuals method: no graph needed
     def tkAddDataPane(self):
