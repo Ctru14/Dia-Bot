@@ -20,6 +20,8 @@ from DataCollection import DataCollection
 from DataCollection import VibrationCollection
 from Alerts import AlertDataType
 from Alerts import AlertMetric
+from Positioning import Point3d
+import Positioning
 import Threads
 
 class DataProcessing(DataCollection):
@@ -79,7 +81,7 @@ class DataProcessing(DataCollection):
             mag = self.magnitude(idxLo, idxHi)
             self.processingQueue.put((self.alertDataType, avg, maximum, minimum, freq, mag, t, (idxLo, idxHi)))
             self.addDataToVisualQueue(idxHi)
-            
+        return idxHi
 
 class SoundLevelProcessing(DataProcessing):
 
@@ -90,21 +92,49 @@ class SoundLevelProcessing(DataProcessing):
 
 class VibrationProcessing(DataProcessing):
 
-    def __init__(self, alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue):
+    def __init__(self, alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue, positionQueue):
         super().__init__(alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue)
-        self.dataRaw = []
+        self.positionQueue = positionQueue
+        self.dataRaw = [] # Point3d
+        self.lastPosIdx = 0
+        self.curVel = Point3d(0, 0, 0, 0)
+        self.curPos = Point3d(0, 0, 0, 0)
+
 
     # DataCollection method! Overridden  instead due to inheritance complications
     # Used in processing process - appends new data point to the data array
     def addData(self, t, data):
         #self.dataMutex.acquire()
         self.t.append(t)  # self.t[-1]+self.samplingTime)
-        self.dataRaw.append(data)
-        mag = (data[0]**2 + data[1]**2 + data[2]**2)**0.5
-        self.data.append(mag)
+        newPoint = Point3d(t.timestamp(), data[0], data[1], data[2])
+        self.dataRaw.append(newPoint)
+        self.data.append(newPoint.mag())
         #self.dataMutex.release()
 
+    # Calculate all processing values and put them into the queue
+    # Processing done on magnitude!
+    def mainProcessing(self, *args):
+        idxHi = super().mainProcessing()
+        # Integrate the new vibration acceleration data
+        if idxHi > 0:
+            self.calculatePosition(idxHi)
 
+    def calculatePosition(self, idxHi):
+        # Track position up to the last index
+        if self.lastPosIdx == 0 and len(self.dataRaw) > 0:
+            self.curVel.t = self.dataRaw[0].t
+            self.curPos.t = self.dataRaw[0].t
+        #print(f"Track position from idx {self.lastPosIdx} up to idx {idxHi}:")
+        while self.lastPosIdx < idxHi:
+            acc = self.dataRaw[self.lastPosIdx]
+            #print(f"  idx {self.lastPosIdx}: Pos={self.curPos}, Vel={self.curVel}, Acc={acc}")
+            Positioning.writeNextIntegralPoint(self.curVel, acc.t, acc.x, acc.y, acc.z)
+            Positioning.writeNextIntegralPoint(self.curPos, self.curVel.t, self.curVel.x, self.curVel.y, self.curVel.z)
+            self.lastPosIdx += 1
+        # Write new position to the queue
+        #print(f"New position update: {self.curPos}")
+        self.positionQueue.put((self.curPos.t, (self.curPos.x, self.curPos.y, self.curPos.z)))
+        
 
 
 class PositionProcessing(DataProcessing):

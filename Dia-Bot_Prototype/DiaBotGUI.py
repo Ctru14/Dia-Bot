@@ -91,20 +91,18 @@ class DiaBotGUI():
         self.soundLevelFields, self.soundLevelDataQueue, self.soundLevelVisualQueue, self.soundLevelCollection = DiaBotGUI.createDataFields(
             DataCollection.SoundLevelCollection, "Sound Level", "dB", self.soundLevelSamplingRate, self.startTime)
         
-
         self.vibrationSamplingRate = 100
         self.vibrationFields, self.vibrationDataQueue, self.vibrationVisualQueue, self.vibrationCollection = DiaBotGUI.createDataFields(
             DataCollection.VibrationCollection, "Vibration", "m/s2", self.vibrationSamplingRate, self.startTime)
          
-
-        self.positionSamplingRate = 10
-        self.positionFields, self.positionDataQueue, self.positionVisualQueue, self.positionCollection = DiaBotGUI.createDataFields(
-            DataCollection.PositionCollection, "Position", "m", self.positionSamplingRate, self.startTime)
-        
-
         self.temperatureSamplingRate = 1/5
         self.temperatureFields, self.temperatureDataQueue, self.temperatureVisualQueue, self.temperatureCollection = DiaBotGUI.createDataFields(
             DataCollection.TemperatureCollection, "Temperature", "°C", self.temperatureSamplingRate, self.startTime)
+        
+        # Position is handled differently! Still creates fields, but no extra processes
+        self.positionSamplingRate = 10
+        self.positionFields, self.positionDataQueue, self.positionVisualQueue, self.positionCollection = DiaBotGUI.createDataFields(
+            DataCollection.PositionCollection, "Position", "m", self.positionSamplingRate, self.startTime)
          
         
         
@@ -162,12 +160,7 @@ class DiaBotGUI():
         self.setupCameraControls()
         self.setupAlertControls()
     
-        # ----- Other -----
         
-        ## Testing buttons TODO: Test and remove these
-        #tk.Button(self.controlFrame, text="Motor", command=PiInterface.motorTurnTest).grid(row=14, column=2)
-        #tk.Button(self.controlFrame, text="Off", command=PiInterface.stopGpio).grid(row=14, column=3)
-
 
     # ----- Movement controls -----
     def setupMovementControls(self):
@@ -371,16 +364,16 @@ class DiaBotGUI():
         self.vibrationDisplayClass = DataDisplay.DataDisplay(self.vibrationFields, self.vibrationFrame, self.vibrationVisualQueue)
         self.vibrationDisplayClass.tkAddDataPane()
         self.vibrationFrame.grid(row=2, column=2, padx=10)
-        
-        # Position
-        self.positionDisplayClass = DataDisplay.PositionDisplay(self.positionFields, self.positionFrame, self.positionVisualQueue)
-        self.positionDisplayClass.tkAddDataPane()
-        self.positionFrame.grid(row=2, column=3, padx=10)
 
         # Temperature
         self.tempDisplayClass = DataDisplay.TemperatureDisplay(self.temperatureFields, self.temperatureFrame, self.temperatureVisualQueue)
         self.tempDisplayClass.tkAddDataPane()
-        self.temperatureFrame.grid(row=2, column=4, padx=10)
+        self.temperatureFrame.grid(row=2, column=3, padx=10)
+        
+        # Position
+        self.positionDisplayClass = DataDisplay.PositionDisplay(self.positionFields, self.positionFrame, self.positionVisualQueue)
+        self.positionDisplayClass.tkAddDataPane()
+        self.positionFrame.grid(row=2, column=4, padx=10)
 
 
     def createDataFields(CollectionType, name, units, samplingRate, startTime): # TODO: REMOVE VISUALQ FROM COLLECTION
@@ -466,9 +459,8 @@ class DiaBotGUI():
         soundCollectionProcess = DiaThread("soundCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData) # TODO: remove collection objects
         vibrationCollectionProcess = DiaThread("vibrationCollectionProcess", useProcesses, self.startTime, shutdownRespQueue,  self.vibrationSamplingRate, self.vibrationCollection.readAndSendData)
         temperatureCollectionProcess = DiaThread("temperatureCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
-        positionCollectionProcess = DiaThread("positionCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.positionSamplingRate, self.positionCollection.readAndSendData)
         
-        threads = [visualThread, alertThread, soundCollectionProcess, vibrationCollectionProcess, positionCollectionProcess, temperatureCollectionProcess]
+        threads = [visualThread, alertThread, soundCollectionProcess, vibrationCollectionProcess, temperatureCollectionProcess]
 
         # Parent processes for data processing
         soundLevelShutdownInitQueue = multiprocessing.Queue()
@@ -477,17 +469,13 @@ class DiaBotGUI():
 
         vibrationShutdownInitQueue = multiprocessing.Queue()
         vibrationProcess = DiaProcess(self.vibrationFields, vibrationShutdownInitQueue, shutdownRespQueue, DataProcessing.VibrationProcessing, 
-                                       False, self.vibrationDataQueue, self.vibrationVisualQueue, self.processingQueue, self.vibrationAlertIOQueue)
+                                       False, self.vibrationDataQueue, self.vibrationVisualQueue, self.processingQueue, self.vibrationAlertIOQueue, self.positionVisualQueue)
 
-        positionShutdownInitQueue = multiprocessing.Queue()
-        positionProcess = DiaProcess(self.positionFields, positionShutdownInitQueue, shutdownRespQueue, DataProcessing.PositionProcessing, 
-                                       False, self.positionDataQueue, self.positionVisualQueue, self.processingQueue, self.positionAlertIOQueue)
-        
         tempShutdownInitQueue = multiprocessing.Queue()
         temperatureProcess = DiaProcess(self.temperatureFields, tempShutdownInitQueue, shutdownRespQueue, DataProcessing.TemperatureProcessing, 
                                        False, self.temperatureDataQueue, self.temperatureVisualQueue, self.processingQueue, self.tempAlertIOQueue)
         
-        parentProcesses = [soundLevelProcess, vibrationProcess, positionProcess, temperatureProcess]
+        parentProcesses = [soundLevelProcess, vibrationProcess, temperatureProcess]
 
        
         for process in parentProcesses:

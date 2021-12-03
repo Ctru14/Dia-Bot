@@ -78,7 +78,7 @@ class VibrationCollection(DataCollection):
     # addData override in DataProcessing class!
         
     def readData(self):
-        vib = (uniform(-10, 10), uniform(-10, 10), uniform(-10, 10))
+        vib = (uniform(-1, 1), uniform(-1, 1), uniform(-1, 1))
         #print("Reading vibration! - " + str(vib))
         return vib
     
