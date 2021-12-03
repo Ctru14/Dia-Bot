@@ -179,67 +179,43 @@ class AlertTracker:
         self.notificationLabel = tk.Label(self.frame, text=f"Error({len(self.alerts)})", anchor=CENTER, font="none 11 bold", fg="red")
         self.notificationLabel.place(x=400, y=0, anchor=tk.NE)#grid(row=1, column=11, columnspan=2)
 
+    def checkAlertCondition(self, value):
+        if self.alertRange == AlertRange.Above:
+            if value > self.aboveValue:
+                self.tripValue = self.aboveValue
+                return True
+        elif self.alertRange == AlertRange.Below:
+            if value < self.belowValue:
+                self.tripValue = self.belowValue
+                return True
+        elif self.alertRange == AlertRange.Between:
+            if value < self.betweenHiValue and value > self.betweenLoValue:
+                self.tripValue = (self.betweenLoValue, self.betweenHiValue)
+                return True
+        return False
+
     def checkForAlerts(self, t, value, indices):
         if self.alertEnabled.get():
             errorFound = False
             # Checks tracker thresholds to compare this value
-            if self.alertRange == AlertRange.Above:
-                if value > self.aboveValue:
-                    errorFound = True
-                    if not self.errorActive:
-                        self.errorActive = True
-                        newAlert = Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value, indices, self.name)
-                        self.alertsMutex.acquire()
-                        self.alerts.append(newAlert)
-                        self.alertsMutex.release()
-                        self.alertIOqueue.put(newAlert)
-                        print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.aboveValue}")
-                        self.setErrorLabel()
-                    else:
-                        print(f"Error {self.alerts[-1].id} currently active in {self.name}! Append data to file...")
-                        self.alertsMutex.acquire()
-                        newAlert = deepcopy(self.alerts[-1])
-                        self.alertsMutex.release()
-                        newAlert.indices = indices
-                        self.alertIOqueue.put(newAlert)
-            if self.alertRange == AlertRange.Below:
-                if value < self.belowValue:
-                    errorFound = True
-                    if not self.errorActive:
-                        self.errorActive = True
-                        newAlert = Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value, indices, self.name)
-                        self.alertsMutex.acquire()
-                        self.alerts.append(newAlert)
-                        self.alertsMutex.release()
-                        self.alertIOqueue.put(newAlert)
-                        print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.belowValue}")
-                        self.setErrorLabel()
-                    else:
-                        print(f"Error {self.alerts[-1].id} currently active in {self.name}! Append data to file...")
-                        self.alertsMutex.acquire()
-                        newAlert = deepcopy(self.alerts[-1])
-                        self.alertsMutex.release()
-                        newAlert.indices = indices
-                        self.alertIOqueue.put(newAlert)
-            if self.alertRange == AlertRange.Between:
-                if value < self.betweenHiValue and value > self.betweenLoValue:
-                    errorFound = True
-                    if not self.errorActive:
-                        self.errorActive = True
-                        newAlert = Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value, indices, self.name)
-                        self.alertsMutex.acquire()
-                        self.alerts.append(newAlert)
-                        self.alertsMutex.release()
-                        self.alertIOqueue.put(newAlert)
-                        print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.betweenLoValue} and {self.betweenHiValue}")
-                        self.setErrorLabel()
-                    else:
-                        print(f"Error {self.alerts[-1].id} currently active in {self.name}! Append data to file...")
-                        self.alertsMutex.acquire()
-                        newAlert = deepcopy(self.alerts[-1])
-                        self.alertsMutex.release()
-                        newAlert.indices = indices
-                        self.alertIOqueue.put(newAlert)
+            if self.checkAlertCondition(value):
+                errorFound = True
+                if not self.errorActive:
+                    self.errorActive = True
+                    newAlert = Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value, indices, self.name)
+                    self.alertsMutex.acquire()
+                    self.alerts.append(newAlert)
+                    self.alertsMutex.release()
+                    self.alertIOqueue.put(newAlert)
+                    print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.tripValue}")
+                    self.setErrorLabel()
+                else:
+                    print(f"Error {self.alerts[-1].id} currently active in {self.name}! Append data to file...")
+                    self.alertsMutex.acquire()
+                    newAlert = deepcopy(self.alerts[-1])
+                    self.alertsMutex.release()
+                    newAlert.indices = indices
+                    self.alertIOqueue.put(newAlert)
         if self.errorActive and not errorFound:
             print(f"Previously active error in {self.name} was not tripped - resetting active")
             self.errorActive = False
