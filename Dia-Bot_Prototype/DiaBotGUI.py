@@ -436,7 +436,7 @@ class DiaBotGUI():
     # --- Update Alerts Handlers ---
     def updateAlertsHandler(self, event):
         try:
-            self.alertsTop.distributeProcessedData()
+            self.alertsTop.distributeProcessedData((self.positionDisplayClass.curX, self.positionDisplayClass.curY, self.positionDisplayClass.curZ))
         except Exception as e:
             print(f"Exception thrown in update alerts: {e}")
         

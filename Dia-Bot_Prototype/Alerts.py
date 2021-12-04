@@ -12,6 +12,7 @@ from copy import deepcopy
 
 # Dia-Bot classes
 import DataCollection
+from Positioning import Point3d
 
 # Types of alerts - range, processing metric, data type
 
@@ -195,7 +196,7 @@ class AlertTracker:
                 return True
         return False
 
-    def checkForAlerts(self, t, value, indices):
+    def checkForAlerts(self, t, value, indices, position):
         if self.alertEnabled.get():
             errorFound = False
             # Checks tracker thresholds to compare this value
@@ -207,7 +208,7 @@ class AlertTracker:
                     self.alertsMutex.acquire()
                     self.alerts.append(newAlert)
                     self.alertsMutex.release()
-                    self.alertIOqueue.put(newAlert)
+                    self.alertIOqueue.put((newAlert, position))
                     print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.tripValue}")
                     self.setErrorLabel()
                 else:
@@ -216,7 +217,7 @@ class AlertTracker:
                     newAlert = deepcopy(self.alerts[-1])
                     self.alertsMutex.release()
                     newAlert.indices = indices
-                    self.alertIOqueue.put(newAlert)
+                    self.alertIOqueue.put((newAlert, position))
         if self.errorActive and not errorFound:
             print(f"Previously active error in {self.name} was not tripped - resetting active")
             self.errorActive = False
@@ -233,6 +234,7 @@ class AlertsTop:
         self.alertIOqueues = alertIOqueues
         self.deleteIcon = deleteIcon
         self.clearIcon = clearIcon
+        self.position = (0.0, 0.0, 0.0) # Sent with Alerts in IO queue
         # Sort trackers in lists based on their data type
         self.soundLevelTrackers = []
         self.vibrationTrackers = []
@@ -305,8 +307,9 @@ class AlertsTop:
                 tracker.confirmUpdates()
 
     # Check processing queue for new metrics and distribute to proper trackers
-    def distributeProcessedData(self):
+    def distributeProcessedData(self, position):
         # Check processing queue for new data
+        self.position = position
         while not self.processingQueue.empty():
             processed = self.processingQueue.get()
             dataType = processed[0]
@@ -314,4 +317,4 @@ class AlertsTop:
             indices = processed[7]
             for tracker in self.trackers[int(dataType)]:
                 value = processed[int(tracker.alertMetric)]
-                tracker.checkForAlerts(alertTime, value, indices)
+                tracker.checkForAlerts(alertTime, value, indices, position)
