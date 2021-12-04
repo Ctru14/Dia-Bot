@@ -227,7 +227,7 @@ class AlertTracker:
                 trackerName = self.name.replace(" ", "")
                 #timeString = time.strftime(self.timeFormat, time.gmtime(alert.time)) # time.gmtime(alert.time).strftime(self.timeFormat)
                 timeString = self.dateTimeFormat.format(newAlert.time)#.strftime(self.timeFormat, time.gmtime(alert.time)) # time.gmtime(alert.time).strftime(self.timeFormat)
-                alertDirName = f"{trackerName}_{timeString}_{self.alertMetric}_{self.alertRange}"
+                alertDirName = f"{trackerName}_{timeString}_{self.alertMetric.name}_{self.alertRange.name}"
                 alertDirPath = os.path.join(self.alertsDataPath, alertDirName)
                 if not os.path.exists(alertDirPath):
                     # Create new alert directory
