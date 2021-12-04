@@ -57,7 +57,8 @@ def start_camera(previewWindow=(452,366, 1380, 715), resolution=(1380,715), rota
     camera.start_preview()
 
 def captureImage(fileName):
-    camera.capture(fileName)
+    print(f"Take photo: {fileName}")
+    #camera.capture(fileName)
     
 # Closes camera
 def stop_camera():

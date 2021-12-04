@@ -1,4 +1,5 @@
 import sys
+import os
 import tkinter as tk
 from tkinter import *
 import time
@@ -75,6 +76,8 @@ class AlertTracker:
         self.clearIcon = clearIcon
         self.errorActive = False
         self.alertsMutex = threading.Lock()
+        self.alertsDataPath = self.alertsTop.alertsDataPaths[int(self.alertDataType)]
+        self.dateTimeFormat = "{:%Y%m%d-%H%M%S}"
 
         # Threshold levels
         self.belowValue = nan
@@ -202,32 +205,46 @@ class AlertTracker:
             # Checks tracker thresholds to compare this value
             if self.checkAlertCondition(value):
                 errorFound = True
+                #isNewAlert = False
                 if not self.errorActive:
                     self.errorActive = True
+                    isNewAlert = True
                     newAlert = Alert(self.alertDataType, t, self.alertRange, self.alertMetric, value, indices, self.name)
                     self.alertsMutex.acquire()
                     self.alerts.append(newAlert)
                     self.alertsMutex.release()
-                    self.alertIOqueue.put((newAlert, position))
                     print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.tripValue}")
                     self.setErrorLabel()
                 else:
+                    isNewAlert = False
                     print(f"Error {self.alerts[-1].id} currently active in {self.name}! Append data to file...")
                     self.alertsMutex.acquire()
                     newAlert = deepcopy(self.alerts[-1])
                     self.alertsMutex.release()
                     newAlert.indices = indices
-                    self.alertIOqueue.put((newAlert, position))
-        if self.errorActive and not errorFound:
-            print(f"Previously active error in {self.name} was not tripped - resetting active")
-            self.errorActive = False
+                # Alert found: Make new directory if it doesn't already exist
+                # Construct directory name:  YYYYMMDD-hhmmss_Metric_Range_ID/
+                trackerName = self.name.replace(" ", "")
+                #timeString = time.strftime(self.timeFormat, time.gmtime(alert.time)) # time.gmtime(alert.time).strftime(self.timeFormat)
+                timeString = self.dateTimeFormat.format(newAlert.time)#.strftime(self.timeFormat, time.gmtime(alert.time)) # time.gmtime(alert.time).strftime(self.timeFormat)
+                alertDirName = f"{trackerName}_{timeString}_{self.alertMetric}_{self.alertRange}"
+                alertDirPath = os.path.join(self.alertsDataPath, alertDirName)
+                if not os.path.exists(alertDirPath):
+                    # Create new alert directory
+                    os.mkdir(alertDirPath)
+                self.alertIOqueue.put((newAlert, position, alertDirPath, isNewAlert))
+                self.alertsTop.takeImageFunction(os.path.join(alertDirPath, f"img-{self.dateTimeFormat.format(t)}.jpg"))
+            # Check if active error needs to be reset
+            if self.errorActive and not errorFound:
+                print(f"Previously active error in {self.name} was not tripped - resetting active")
+                self.errorActive = False
 
 
 # Top-level class to contain AlertTrackers
 # Receives processing info from queue and sends it to each relevant tracker
 class AlertsTop:
 
-    def __init__(self, alertControlsFrame, alertTrackersFrame, processingQueue, alertIOqueues, deleteIcon, clearIcon):
+    def __init__(self, alertControlsFrame, alertTrackersFrame, processingQueue, alertIOqueues, deleteIcon, clearIcon, takeImageFunction):
         self.alertControlsFrame = alertControlsFrame
         self.alertTrackersFrame = alertTrackersFrame
         self.processingQueue = processingQueue
@@ -235,17 +252,33 @@ class AlertsTop:
         self.deleteIcon = deleteIcon
         self.clearIcon = clearIcon
         self.position = (0.0, 0.0, 0.0) # Sent with Alerts in IO queue
+        self.takeImageFunction = takeImageFunction
         # Sort trackers in lists based on their data type
         self.soundLevelTrackers = []
         self.vibrationTrackers = []
-        self.positionTrackers = []
+        #self.positionTrackers = []
         self.temperatureTrackers = []
-        self.trackers = [self.soundLevelTrackers, self.vibrationTrackers, self.positionTrackers, self.temperatureTrackers]
+        self.trackers = [self.soundLevelTrackers, self.vibrationTrackers, self.temperatureTrackers]
+        #self.trackers = [self.soundLevelTrackers, self.vibrationTrackers, self.positionTrackers, self.temperatureTrackers]
         # TK variables for the Add New Alert frame
         self.nameEntryVar = StringVar()
         self.nameEntryVar.set("Tracker Name")
         self.newDataTypeVar = StringVar()
         self.newMetricVar = StringVar()
+        # Create new directory for alerts, if it does not exist yet
+        self.rootPath = os.path.dirname(__file__)
+        self.alertsPath = os.path.join(self.rootPath, "Alerts")
+        if not os.path.exists(self.alertsPath):
+            print(f"Alerts path does not exist - creating: {self.alertsPath}")
+            os.mkdir(self.alertsPath)
+        self.alertsDataPaths = []
+        for name in alertDataTypes:
+            alertsDataPath = os.path.join(self.alertsPath, name)
+            self.alertsDataPaths.append(alertsDataPath)
+            if not os.path.exists(alertsDataPath):
+                print(f"{name} alerts data path does not exist - creating: {alertsDataPath}")
+                os.mkdir(alertsDataPath)
+
         
     def addTracker(self, tracker):
         # Add tracker to a list based on the data type
