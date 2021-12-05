@@ -3,35 +3,115 @@ import time
 import threading
 import math
 from random import *
-#import picamera
-#import RPi.GPIO as GPIO
-#import pigpio
-#import DCMotor
-#import DualHBridge
+import picamera
+import RPi.GPIO as GPIO
+import pigpio
+
+#import board
+#import busio
+#import adafruit_lsm303_accel_edited as adafruit_lsm303_accel
+
+import DCMotor
+import DualHBridge
 import DataCollection
+
+import signal
 
 
 # RPi GPIO Initializations
-led = 11
-pwmPinA = 12
-motorAIn1 = 15
-motorAIn2 = 16
-pwmPinB = 19
-motorBIn1 = 21
-motorBIn2 = 22
-motorEn = 18
-adcMISO = 35
-adcCS0 = 36
-adcMOSI = 38
-adcSCLK = 40
-#gpioMode = GPIO.BOARD
-#GPIO.setwarnings(False)
-#GPIO.setmode(gpioMode)
-#GPIO.setup(led, GPIO.OUT)
-#pi = pigpio.pi()
-#motors = DualHBridge.DualHBridge(pwmPinA, motorAIn1, motorAIn2, pwmPinB, motorBIn1, motorBIn2, motorEn, gpioMode)
-#camera = picamera.PiCamera()
+#led = 11
+#pwmPinA = 12
+#motorAIn1 = 15
+#motorAIn2 = 16
+#pwmPinB = 19
+#motorBIn1 = 21
+#motorBIn2 = 22
+#motorEn = 18
+#adcMISO = 35
+#adcCS0 = 36
+#adcMOSI = 38
+#adcSCLK = 40
 
+# GPIO Setup
+gpioMode = GPIO.BCM
+#gpioMode = GPIO.BOARD
+GPIO.setwarnings(False)
+GPIO.setmode(gpioMode)
+#GPIO.setup(led, GPIO.OUT)
+pi = pigpio.pi()
+motors = DualHBridge.DualHBridge(pwmPinA, motorAIn1, motorAIn2, pwmPinB, motorBIn1, motorBIn2, motorEn, gpioMode)
+camera = picamera.PiCamera()
+cameraMutex = threading.Lock()
+
+# Motor Pins
+motorIn1L = 24
+motorIn2L = 23
+motorEnL = 25
+motorIn1R = 0
+motorIn2R = 5
+motorEnR = 6
+
+def motorGpioSetup():
+    GPIO.setup(motorIn1L, GPIO.OUT)
+    GPIO.setup(motorIn2L, GPIO.OUT)
+    GPIO.setup(motorEnL, GPIO.OUT)
+    GPIO.output(motorIn1L, GPIO.LOW)
+    GPIO.output(motorIn2L, GPIO.LOW)
+    pwmEnL=GPIO.PWM(motorEnL, 1000)
+    GPIO.setup(motorIn1R, GPIO.OUT)
+    GPIO.setup(motorIn2R, GPIO.OUT)
+    GPIO.setup(motorEnR, GPIO.OUT)
+    GPIO.output(motorIn1R, GPIO.LOW)
+    GPIO.output(motorIn2R, GPIO.LOW)
+    pwmEnR=GPIO.PWM(motorEnR, 1000)
+    
+    pwmEnL.start(25)
+    pwmEnR.start(25)
+
+
+# Camera Control
+class CameraAngle:
+
+    def __init__(tiltPin=12, panPin=13):
+        self.tiltDuty = 8
+        self.panDuty = 5
+        self.tilt = GPIO.PWM(12, 50)
+        self.pan = GPIO.PWM(13, 50)
+        self.tilt.start(self.tiltDuty)
+        self.pan.start(self.panDuty)
+
+    def changeTilt(self, duty):
+        self.tiltDuty = duty
+        self.tilt.changeDutyCycle(self.tiltDuty)
+
+    def changePan(self, duty):
+        self.panDuty = duty
+        self.pan.changeDutyCycle(self.panDuty)
+        
+    def tiltIncrement(self, num):
+        self.tiltDuty += num
+        self.tilt.changeDutyCycle(self.tiltDuty)
+
+    def panIncrement(self, num):
+        self.panDuty += num
+        self.pan.changeDutyCycle(self.panDuty)
+
+cameraAngle = CameraAngle()
+
+class Accelerometer:
+
+    def __init__():
+        #import board
+        #import busio
+        #import adafruit_lsm303_accel_edited as adafruit_lsm303_accel
+
+        self.i2c = busio.I2C(board.SCL, board.SDA)
+        time.sleep(0.2)
+        self.accelSensor = adafruit_lsm303_accel.LSM303_Accel(i2c)
+
+    def readAccData(self):
+        accX, accY, accZ = sensor.acceleration
+        return (accX, accY, accZ)
 
 # Closes relevant processes and stops GPIO
 def exit():
@@ -59,7 +139,9 @@ def start_camera(previewWindow=(452,366, 1380, 715), resolution=(1380,715), rota
 
 def captureImage(fileName):
     try:
+        cameraMutex.acquire()
         camera.capture(fileName)
+        cameraMutex.release()
     except Exception as e:
         print(f"Error capturing camera image: {e}")
     
@@ -68,13 +150,21 @@ def stop_camera():
     camera.stop_preview()
     camera.close()
     
-    
 
 def moveForwardPress(event):
     print(f"Moving forward! Press - Speed = {speed}")
+    GPIO.output(motorIn1L, GPIO.HIGH)
+    GPIO.output(motorIn2L, GPIO.LOW)
+    GPIO.output(motorIn1R, GPIO.LOW)
+    GPIO.output(motorIn2R, GPIO.HIGH)
+    pwmEnL.changeDutyCycle(speed)
+    pwmEnR.changeDutyCycle(speed)
+
 
 def moveForwardRelease(event):
     print(f"Release moving forward")
+    pwmEnL.changeDutyCycle(0)
+    pwmEnR.changeDutyCycle(0)
     
 def moveForwardRightPress(event):
     print(f"Moving forward-right! Press - Speed = {speed}")
@@ -90,9 +180,17 @@ def moveForwardLeftRelease(event):
     
 def moveBackwardPress(event):
     print(f"Moving backward! Press - Speed = {speed}")
+    GPIO.output(motorIn1L, GPIO.LOW)
+    GPIO.output(motorIn2L, GPIO.HIGH)
+    GPIO.output(motorIn1R, GPIO.HIGH)
+    GPIO.output(motorIn2R, GPIO.LOW)
+    pwmEnL.changeDutyCycle(speed)
+    pwmEnR.changeDutyCycle(speed)
 
 def moveBackwardRelease(event):
     print(f"Release moving backward")
+    pwmEnL.changeDutyCycle(0)
+    pwmEnR.changeDutyCycle(0)
 
 def moveBackwardRightPress(event):
     print(f"Moving backward-right! Press - Speed = {speed}")
@@ -120,6 +218,12 @@ def moveRightRelease(event):
         
 def stopMovement():
     print(f"Emergency stop!")
+    GPIO.output(motorIn1L, GPIO.LOW)
+    GPIO.output(motorIn2L, GPIO.LOW)
+    GPIO.output(motorIn2R, GPIO.LOW)
+    GPIO.output(motorIn1R, GPIO.LOW)
+    pwmEnL.changeDutyCycle(0)
+    pwmEnR.changeDutyCycle(0)
     
 def lock():
     print(f"Locking suspension")
@@ -161,19 +265,23 @@ def motorTurnTest():
     
 
 def cameraUp():
-    print(f"Camera tilt up!")
+    cameraAngle.tiltIncrement(1)
+    print(f"Camera tilt up! {cameraAngle.tiltDuty}")
 
 
 def cameraDown():
-    print(f"Camera tilt down!")
+    cameraAngle.tiltIncrement(-1)
+    print(f"Camera tilt down! {cameraAngle.tiltDuty}")
 
 
 def cameraLeft():
-    print(f"Camera tilt left!")
+    cameraAngle.panIncrement(-1)
+    print(f"Camera tilt left! {cameraAngle.panDuty}")
     
     
 def cameraRight():
-    print(f"Camera tilt right!")
+    cameraAngle.panIncrement(1)
+    print(f"Camera tilt right! {cameraAngle.panDuty}")
 
 
 def takePhoto():

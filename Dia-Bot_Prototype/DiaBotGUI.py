@@ -282,7 +282,7 @@ class DiaBotGUI():
         tk.Button(self.cameraControls, image=self.arrowDown, command=PiInterface.cameraDown, anchor=CENTER, font="16").grid(row=5, column=3)
         tk.Button(self.cameraControls, image=self.arrowLeft, command=PiInterface.cameraLeft, anchor=CENTER, font="16").grid(row=4, column=2)
         tk.Button(self.cameraControls, image=self.arrowRight, command=PiInterface.cameraRight, anchor=CENTER, font="16").grid(row=4, column=4)
-        tk.Button(self.cameraControls, image=self.cameraIcon, command=PiInterface.takePhoto, anchor=CENTER, font="16").grid(row=4, column=3)
+        tk.Button(self.cameraControls, image=self.cameraIcon, command=takePhoto, anchor=CENTER, font="16").grid(row=4, column=3)
         
         # Stop and lock buttons
         tk.Label(self.cameraControls, text="Light", anchor=CENTER, font="bold").grid(row=2, column=6)
@@ -298,6 +298,14 @@ class DiaBotGUI():
         self.cameraControls.grid_columnconfigure(1, minsize=10)
         for i in range(2,10):
             self.cameraControls.grid_columnconfigure(i, minsize=20)
+
+    # TK button function to capture and save image
+    def takePhoto():
+        dtFormat = "{:%Y%m%d-%H%M%S}"
+        timeString = dtFormat.format(datetime.now())
+        fileName = f"img-{timeString}.jpg"
+        path = os.path.join(self.photosPath, fileName)
+        PiInterface.captureImage(path)
 
     # ----- Alert Controls -----
     def setupAlertControls(self):
@@ -507,6 +515,18 @@ class DiaBotGUI():
             
         #totalTimeNs = time.time_ns() - startTime
         #print("Start thread time: " + str((totalTimeNs/1_000_000)) + " ms")
+
+        try:
+            PiInterface.motorGpioSetup()
+        except Exception as e:
+            print(f"Error setting up motor GPIO: {e}")
+
+        # Add folder for photos
+        self.rootPath = os.path.dirname(__file__)
+        self.photosPath = os.path.join(self.rootPath, "Photos")
+        if not os.path.exists(self.photosPath):
+            print(f"Photos path does not exist - creating: {self.photosPath}")
+            os.mkdir(self.photosPath)
         
         # ----- Blocking call: Begin TK mainloop -----
         print("-------- BEGINING TK MAINLOOP --------")
