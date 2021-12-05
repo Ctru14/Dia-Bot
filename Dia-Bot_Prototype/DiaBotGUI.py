@@ -2,6 +2,7 @@ import sys
 import os
 import tkinter as tk
 from tkinter import *
+from tkinter.scrolledtext import ScrolledText
 from PIL import ImageTk, Image
 import time
 import threading
@@ -301,7 +302,7 @@ class DiaBotGUI():
     # ----- Alert Controls -----
     def setupAlertControls(self):
         self.alertControls.grid(row=7, column=1, rowspan=1, columnspan=10)
-        tk.Label(self.alertControls, text="Alerts", anchor=CENTER, font="none 14 bold").grid(row=1, column=1, columnspan=9)
+        tk.Label(self.alertControls, text="Alert Trackers", anchor=CENTER, font="none 14 bold").grid(row=1, column=1, columnspan=9)
         
         # Extra TK frame to display just the alert trackers
         self.alertTrackersFrame = tk.Frame(self.alertControls, width=400)
@@ -352,6 +353,7 @@ class DiaBotGUI():
         self.vibrationFrame = tk.Frame(self.dataFrame, width=350, height=350)#, bg="yellow")
         self.temperatureFrame = tk.Frame(self.dataFrame, width=350, height=350)#, bg="orange")
         self.positionFrame = tk.Frame(self.dataFrame, width=350, height=350)#, bg="green")
+        self.alertsDisplayFrame = tk.Frame(self.dataFrame, width=350, height=350)
         self.dataFrames = [self.soundLevelFrame, self.vibrationFrame, self.temperatureFrame, self.positionFrame]
         #self.units = ["dB", "m/s2", "°C", "m"]
         
@@ -375,6 +377,15 @@ class DiaBotGUI():
         self.positionDisplayClass = DataDisplay.PositionDisplay(self.positionFields, self.positionFrame, self.positionVisualQueue)
         self.positionDisplayClass.tkAddDataPane()
         self.positionFrame.grid(row=2, column=4, padx=10)
+
+
+        # Alerts scrolled text
+        self.alertsDisplayLabel = tk.Label(self.alertsDisplayFrame, text="Alerts", font="none 12 bold")
+        self.alertsDisplayLabel.pack()#grid(row=1, column=1)
+        self.alertsText = ScrolledText(self.alertsDisplayFrame, width=65, height=10, font = "none 14")
+        self.alertsText.insert(INSERT, "New text woooooohoo!")
+        self.alertsText.pack()#(row=1, column=1)
+        self.alertsDisplayFrame.grid(row=2, column=5, padx=10)
 
 
     def createDataFields(CollectionType, name, units, samplingRate, startTime): # TODO: REMOVE VISUALQ FROM COLLECTION

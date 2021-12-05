@@ -60,7 +60,7 @@ def start_camera(previewWindow=(452,366, 1380, 715), resolution=(1380,715), rota
 def captureImage(fileName):
     try:
         camera.capture(fileName)
-    except e:
+    except Exception as e:
         print(f"Error capturing camera image: {e}")
     
 # Closes camera
