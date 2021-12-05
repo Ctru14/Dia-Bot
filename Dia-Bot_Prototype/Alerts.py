@@ -184,6 +184,14 @@ class AlertTracker:
         self.notificationLabel = tk.Label(self.frame, text=f"Error({len(self.alerts)})", anchor=CENTER, font="none 11 bold", fg="red")
         self.notificationLabel.place(x=400, y=0, anchor=tk.NE)
 
+    def getAlertsDisplayText(self, alert):
+        alertTime = "{:%H:%M:%S}".format(alert.time)
+        value = "{:.{}f}".format(alert.tripValue, 5)
+        return f"{self.name} #{len(self.alerts)} - {alertTime} \n - {self.alertDataType.name} {self.alertMetric.name} = {value} ({self.alertRange.name} {self.tripValue})\n"
+
+    def addNewAlertText(self, text):
+        self.alertsTop.alertsTextDisplay.insert(INSERT, text)
+
     def checkAlertCondition(self, value):
         if self.alertRange == AlertRange.Above:
             if value > self.aboveValue:
@@ -214,6 +222,7 @@ class AlertTracker:
                     self.alerts.append(newAlert)
                     self.alertsMutex.release()
                     print(f"Alert #{len(self.alerts)} found in {self.name} tracker at time {t}! {self.alertMetric.name}={value} {self.alertRange.name} {self.tripValue}")
+                    self.addNewAlertText(self.getAlertsDisplayText(newAlert))
                     self.setErrorLabel()
                 else:
                     isNewAlert = False
@@ -244,13 +253,14 @@ class AlertTracker:
 # Receives processing info from queue and sends it to each relevant tracker
 class AlertsTop:
 
-    def __init__(self, alertControlsFrame, alertTrackersFrame, processingQueue, alertIOqueues, deleteIcon, clearIcon, takeImageFunction):
+    def __init__(self, alertControlsFrame, alertTrackersFrame, processingQueue, alertIOqueues, deleteIcon, clearIcon, alertsTextDisplay, takeImageFunction):
         self.alertControlsFrame = alertControlsFrame
         self.alertTrackersFrame = alertTrackersFrame
         self.processingQueue = processingQueue
         self.alertIOqueues = alertIOqueues
         self.deleteIcon = deleteIcon
         self.clearIcon = clearIcon
+        self.alertsTextDisplay = alertsTextDisplay
         self.position = (0.0, 0.0, 0.0) # Sent with Alerts in IO queue
         self.takeImageFunction = takeImageFunction
         # Sort trackers in lists based on their data type

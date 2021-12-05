@@ -126,8 +126,8 @@ class DiaBotGUI():
         self.top.geometry("1920x1016")
 
         # Build the frames
-        self.setupControlsPane()
         self.setupDataPane()
+        self.setupControlsPane()
         self.setupVideoPane()
         
         # Place frames
@@ -308,7 +308,7 @@ class DiaBotGUI():
         self.alertTrackersFrame = tk.Frame(self.alertControls, width=400)
 
         # Create each alert instance and add frames to the UI
-        self.alertsTop = AlertsTop(self.alertControls, self.alertTrackersFrame, self.processingQueue, self.alertIOqueues, self.deleteIcon, self.clearIcon, PiInterface.captureImage)
+        self.alertsTop = AlertsTop(self.alertControls, self.alertTrackersFrame, self.processingQueue, self.alertIOqueues, self.deleteIcon, self.clearIcon, self.alertsText, PiInterface.captureImage)
 
         self.vibrationAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame,   "Vibration",   AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average, self.vibrationAlertIOQueue, self.deleteIcon, self.clearIcon)
         self.temperatureAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame, "Temperature", AlertDataType.Temperature, AlertRange.Between, AlertMetric.Average, self.tempAlertIOQueue, self.deleteIcon, self.clearIcon)
@@ -382,8 +382,8 @@ class DiaBotGUI():
         # Alerts scrolled text
         self.alertsDisplayLabel = tk.Label(self.alertsDisplayFrame, text="Alerts", font="none 12 bold")
         self.alertsDisplayLabel.pack()#grid(row=1, column=1)
-        self.alertsText = ScrolledText(self.alertsDisplayFrame, width=65, height=10, font = "none 14")
-        self.alertsText.insert(INSERT, "New text woooooohoo!")
+        self.alertsText = ScrolledText(self.alertsDisplayFrame, width=65, height=9, font = "none 14")
+        #self.alertsText.insert(INSERT, "New text woooooohoo!")
         self.alertsText.pack()#(row=1, column=1)
         self.alertsDisplayFrame.grid(row=2, column=5, padx=10)
 
