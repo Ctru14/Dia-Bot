@@ -7,6 +7,7 @@ import math
 from random import *
 
 from PiInterface import Accelerometer
+from PiInterface import ADC
 
 from Alerts import AlertDataType
 
@@ -63,12 +64,17 @@ class DataCollection(DataFields):
 class SoundLevelCollection(DataCollection):
 
     def __init__(self, name, units, samplingRate, startTime, dataQueue):
-        return super().__init__(name, units, samplingRate, startTime, dataQueue, AlertDataType.SoundLevel)
+        super().__init__(name, units, samplingRate, startTime, dataQueue, AlertDataType.SoundLevel)
+        #self.adc = ADC()
 
     def readData(self):
         num = uniform(-10, 10)
         #print("Reading sound level! - " + str(num))
         return num
+    
+    #def readData(self):
+        #return self.adc.readSoundData()
+        
 
 
 
@@ -83,10 +89,10 @@ class VibrationCollection(DataCollection):
     def readData(self):
         return self.accelerometer.readAccData()
         
-    def readData(self):
-        vib = (uniform(-1, 1), uniform(-1, 1), uniform(-1, 1))
+    #def readData(self):
+        #vib = (uniform(-1, 1), uniform(-1, 1), uniform(-1, 1))
         #print("Reading vibration! - " + str(vib))
-        return vib
+        #return vib
     
 
 class PositionCollection(DataCollection):
@@ -106,11 +112,15 @@ class TemperatureCollection(DataCollection):
     def __init__(self, name, units, samplingRate, startTime, dataQueue, visualQueue): # TODO: REMOVE VISUAL QUEUE
         super().__init__(name, units, samplingRate, startTime, dataQueue, AlertDataType.Temperature)
         self.visualQueue = visualQueue # TODO: REMOVE ONCE EXTRA PROCESS IS RUNNING
+        self.adc = ADC()
 
-    def readData(self):
-        num = uniform(-10, 10)
+    #def readData(self):
+        #num = uniform(-10, 10)
         #print("Reading temperature! - " + str(num))
-        return num
+        #return num
+    
+    def readData(self):
+        return self.adc.readTemperatureData()
 
     # Reads data from given function 
     def readAndSendData(self, *args):

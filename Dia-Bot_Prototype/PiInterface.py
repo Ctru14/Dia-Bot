@@ -17,6 +17,13 @@ import DataCollection
 
 import signal
 
+import os
+import digitalio
+import adafruit_mcp3xxx.mcp3002 as MCP
+from adafruit_mcp3xxx.analog_in import AnalogIn
+
+import neopixel
+
 
 # RPi GPIO Initializations
 #led = 11
@@ -42,6 +49,8 @@ pi = pigpio.pi()
 #motors = DualHBridge.DualHBridge(pwmPinA, motorAIn1, motorAIn2, pwmPinB, motorBIn1, motorBIn2, motorEn, gpioMode)
 camera = picamera.PiCamera()
 cameraMutex = threading.Lock()
+
+pixels = neopixel.NeoPixel(board.D18, 12)
 
 # Motor Pins
 motorIn1L = 24
@@ -112,8 +121,27 @@ class Accelerometer:
         self.accelSensor = adafruit_lsm303_accel.LSM303_Accel(self.i2c)
 
     def readAccData(self):
-        accX, accY, accZ = sensor.acceleration
+        accX, accY, accZ = self.accelSensor.acceleration
         return (accX, accY, accZ)
+
+class ADC:
+
+    def __init__(self):
+        self.spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI) # create the spi bus
+        self.cs = digitalio.DigitalInOut(board.D8) # create the cs (chip select)
+        self.mcp = MCP.MCP3002(self.spi, self.cs) # create the mcp object
+
+        self.chanTemp = AnalogIn(self.mcp, MCP.P0)# create an analog input channel on pin 0 for temperature
+        self.chanSound = AnalogIn(self.mcp, MCP.P1)# create an analog input channel on pin 1 for sound
+
+    def readSoundData(self):
+        self.sound = self.chanSound.value
+        return (self.sound)
+    
+    def readTemperatureData(self):
+        self.temp = self.chanTemp.value#-1984+19
+        print(self.temp)
+        return (self.temp)
 
 # Closes relevant processes and stops GPIO
 def exit():
@@ -232,11 +260,11 @@ def lock():
     
 def ledOn():
     print(f"Turning on LED")
-    GPIO.output(led, True)
+    pixels.fill((255, 255, 255))
     
 def ledOff():
     print(f"Turning off LED")
-    GPIO.output(led, False)
+    pixels.fill((0, 0, 0))
     
 # Testing purposes only - to be deprecated
 def motorTurnTest():
