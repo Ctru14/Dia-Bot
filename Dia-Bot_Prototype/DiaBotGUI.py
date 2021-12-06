@@ -520,10 +520,10 @@ class DiaBotGUI():
         #totalTimeNs = time.time_ns() - startTime
         #print("Start thread time: " + str((totalTimeNs/1_000_000)) + " ms")
 
-        try:
-            PiInterface.motorGpioSetup()
-        except Exception as e:
-            print(f"Error setting up motor GPIO: {e}")
+        #try:
+        #    PiInterface.motorGpioSetup()
+        #except Exception as e:
+        #    print(f"Error setting up motor GPIO: {e}")
 
         # Add folder for photos
         self.rootPath = os.path.dirname(__file__)

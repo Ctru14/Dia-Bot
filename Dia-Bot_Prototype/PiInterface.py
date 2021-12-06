@@ -62,22 +62,22 @@ motorIn1R = 0
 motorIn2R = 5
 motorEnR = 6
 
-def motorGpioSetup():
-    GPIO.setup(motorIn1L, GPIO.OUT)
-    GPIO.setup(motorIn2L, GPIO.OUT)
-    GPIO.setup(motorEnL, GPIO.OUT)
-    GPIO.output(motorIn1L, GPIO.LOW)
-    GPIO.output(motorIn2L, GPIO.LOW)
-    pwmEnL=GPIO.PWM(motorEnL, 1000)
-    GPIO.setup(motorIn1R, GPIO.OUT)
-    GPIO.setup(motorIn2R, GPIO.OUT)
-    GPIO.setup(motorEnR, GPIO.OUT)
-    GPIO.output(motorIn1R, GPIO.LOW)
-    GPIO.output(motorIn2R, GPIO.LOW)
-    pwmEnR=GPIO.PWM(motorEnR, 1000)
-    
-    pwmEnL.start(25)
-    pwmEnR.start(25)
+#def motorGpioSetup():
+GPIO.setup(motorIn1L, GPIO.OUT)
+GPIO.setup(motorIn2L, GPIO.OUT)
+GPIO.setup(motorEnL, GPIO.OUT)
+GPIO.output(motorIn1L, GPIO.LOW)
+GPIO.output(motorIn2L, GPIO.LOW)
+pwmEnL=GPIO.PWM(motorEnL, 1000)
+GPIO.setup(motorIn1R, GPIO.OUT)
+GPIO.setup(motorIn2R, GPIO.OUT)
+GPIO.setup(motorEnR, GPIO.OUT)
+GPIO.output(motorIn1R, GPIO.LOW)
+GPIO.output(motorIn2R, GPIO.LOW)
+pwmEnR=GPIO.PWM(motorEnR, 1000)
+
+pwmEnL.start(25)
+pwmEnR.start(25)
 
 
 # Camera Control
@@ -161,6 +161,7 @@ def exit():
 
 def stopGpio():
     GPIO.setmode(gpioMode)
+    pixels.fill((0, 0, 0))
     GPIO.output(motorEn, GPIO.LOW)
     GPIO.output(pwmPinA, GPIO.LOW)
     #pwm.stop()
@@ -168,7 +169,7 @@ def stopGpio():
 
 # Opens the camera preview on the screen
 #   Note: for VNC users to see the feed, the setting "Enable Direct Capture Mode" must be on
-def start_camera(previewWindow=(452,366, 1380, 715), resolution=(1380,715), rotation=180, framerate=15):
+def start_camera(previewWindow=(452,366, 1380, 715), resolution=(1380,715), rotation=0, framerate=15):
     camera.preview_fullscreen=False
     camera.preview_window=previewWindow
     camera.framerate = framerate
