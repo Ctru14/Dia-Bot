@@ -227,8 +227,8 @@ def moveBackwardPress(event):
     GPIO.output(motorIn2L, GPIO.HIGH)
     GPIO.output(motorIn1R, GPIO.HIGH)
     GPIO.output(motorIn2R, GPIO.LOW)
-    pwmEnL.changeDutyCycle(speed)
-    pwmEnR.changeDutyCycle(speed)
+    pwmEnL.ChangeDutyCycle(speed)
+    pwmEnR.ChangeDutyCycle(speed)
 
 
 def moveBackwardRightPress(event):
@@ -237,8 +237,8 @@ def moveBackwardRightPress(event):
     GPIO.output(motorIn2L, GPIO.HIGH)
     GPIO.output(motorIn1R, GPIO.HIGH)
     GPIO.output(motorIn2R, GPIO.LOW)
-    pwmEnL.changeDutyCycle(speed)
-    pwmEnR.changeDutyCycle(speed/3)
+    pwmEnL.ChangeDutyCycle(speed)
+    pwmEnR.ChangeDutyCycle(speed/3)
 
 
 def moveBackwardLeftPress(event):
@@ -247,8 +247,8 @@ def moveBackwardLeftPress(event):
     GPIO.output(motorIn2L, GPIO.HIGH)
     GPIO.output(motorIn1R, GPIO.HIGH)
     GPIO.output(motorIn2R, GPIO.LOW)
-    pwmEnL.changeDutyCycle(speed)
-    pwmEnR.changeDutyCycle(speed/3)
+    pwmEnL.ChangeDutyCycle(speed)
+    pwmEnR.ChangeDutyCycle(speed/3)
 
 
 def moveLeftPress(event):
@@ -257,8 +257,8 @@ def moveLeftPress(event):
     GPIO.output(motorIn2L, GPIO.HIGH)
     GPIO.output(motorIn1R, GPIO.LOW)
     GPIO.output(motorIn2R, GPIO.HIGH)
-    pwmEnL.changeDutyCycle(speed)
-    pwmEnR.changeDutyCycle(speed)
+    pwmEnL.ChangeDutyCycle(speed)
+    pwmEnR.ChangeDutyCycle(speed)
     
     
 def moveRightPress(event):
@@ -267,8 +267,8 @@ def moveRightPress(event):
     GPIO.output(motorIn2L, GPIO.LOW)
     GPIO.output(motorIn1R, GPIO.HIGH)
     GPIO.output(motorIn2R, GPIO.LOW)
-    pwmEnL.changeDutyCycle(speed)
-    pwmEnR.changeDutyCycle(speed)
+    pwmEnL.ChangeDutyCycle(speed)
+    pwmEnR.ChangeDutyCycle(speed)
     
 
 def moveRelease(event):
