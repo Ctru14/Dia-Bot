@@ -198,10 +198,10 @@ class TemperatureDisplay(DataDisplay):
 
     def getDisplayText(self):
         if self.viewFarenheit:
-            tempF = "{:.2f}".format(self.currentTempFarenheit)
+            tempF = "{:.1f}".format(self.currentTempFarenheit)
             return f"{tempF} °F"
         else:
-            tempC = "{:.2f}".format(self.currentTempCelsius)
+            tempC = "{:.1f}".format(self.currentTempCelsius)
             return f"{tempC} °C"
         
     def switchTempView(self):

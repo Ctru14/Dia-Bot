@@ -477,11 +477,14 @@ class DiaBotGUI():
         alertThread = DiaThread("alertThread", False, self.startTime, shutdownRespQueue, 1/2, self.generateEvent, "<<alertsEvent>>")
 
         # Data collection threads (separate processes)
-        soundCollectionProcess = DiaThread("soundCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData) # TODO: remove collection objects
+        self.adcCollection = DataCollection.ADCCollection("ADC Collection", self.soundLevelSamplingRate, self.soundLevelDataQueue, self.temperatureDataQueue, self.temperatureVisualQueue)
+        adcCollectionProcess = DiaThread("adcCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.soundLevelSamplingRate, self.adcCollection.readAndSendData)
+        #soundCollectionProcess = DiaThread("soundCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData) # TODO: remove collection objects
         vibrationCollectionProcess = DiaThread("vibrationCollectionProcess", useProcesses, self.startTime, shutdownRespQueue,  self.vibrationSamplingRate, self.vibrationCollection.readAndSendData)
-        temperatureCollectionProcess = DiaThread("temperatureCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
+        #temperatureCollectionProcess = DiaThread("temperatureCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
         
-        threads = [visualThread, alertThread, soundCollectionProcess, vibrationCollectionProcess, temperatureCollectionProcess]
+        #threads = [visualThread, alertThread, soundCollectionProcess, vibrationCollectionProcess, temperatureCollectionProcess]
+        threads = [visualThread, alertThread, adcCollectionProcess, vibrationCollectionProcess]
 
         # Parent processes for data processing
         soundLevelShutdownInitQueue = multiprocessing.Queue()

@@ -130,4 +130,29 @@ class TemperatureCollection(DataCollection):
         self.dataQueue.put((t, data))
         self.visualQueue.put((t, data))
 
+    
+class ADCCollection():#DataCollection):
+
+    def __init__(self, name, samplingRate, soundLevelDataQueue, temperatureDataQueue, temperatureVisualQueue): # TODO: REMOVE VISUAL QUEUE
+        #super().__init__(name, units, samplingRate, startTime, soundLevelDataQueue, AlertDataType.Temperature)
+        self.samplingRate = samplingRate
+        self.soundLevelDataQueue = soundLevelDataQueue
+        self.temperatureDataQueue = temperatureDataQueue
+        self.temperatureVisualQueue = temperatureVisualQueue
+        self.tempLoopNum = 0
+        self.tempLoopMax = self.samplingRate * 4 # Approximately 4s/Temp
+        self.adc = ADC()
         
+        
+    def readAndSendData(self, *args):
+        t = datetime.now()
+        soundData = self.adc.readSoundData()
+        #print(f"Sound: {soundData}")
+        self.soundLevelDataQueue.put((t, soundData))
+        if self.tempLoopNum == 0:
+            tempData = self.adc.readTemperatureData()
+            #print(f"Temp: {tempData}")
+            self.temperatureDataQueue.put((t, tempData))
+        self.tempLoopNum += 1
+        if self.tempLoopNum == self.tempLoopMax:
+            self.tempLoopNum = 0

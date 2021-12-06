@@ -149,8 +149,8 @@ class ADC:
     
     def readTemperatureData(self):
         self.temp = self.chanTemp.value#-1984+19
-        print(self.temp)
-        return (self.temp)
+        #print(self.temp)
+        return 19 + math.log(self.temp+1)/4
 
 # Closes relevant processes and stops GPIO
 def exit():
