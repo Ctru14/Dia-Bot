@@ -391,7 +391,7 @@ class DiaBotGUI():
         # Alerts scrolled text
         self.alertsDisplayLabel = tk.Label(self.alertsDisplayFrame, text="Alerts", font="none 12 bold")
         self.alertsDisplayLabel.pack()#grid(row=1, column=1)
-        self.alertsText = ScrolledText(self.alertsDisplayFrame, width=65, height=9, font = "none 14")
+        self.alertsText = ScrolledText(self.alertsDisplayFrame, width=40, height=9, font = "none 14")
         #self.alertsText.insert(INSERT, "New text woooooohoo!")
         self.alertsText.pack()#(row=1, column=1)
         self.alertsDisplayFrame.grid(row=2, column=5, padx=10)
@@ -546,6 +546,11 @@ class DiaBotGUI():
         for t in threads:
             threadRunningCount += 1
             t.endThread()
+            
+        try:
+            PiInterface.stopGpio()
+        except Exception as e:
+            print(f"Error stopping GPIO: {e}")
 
         if self.cameraOn:
             PiInterface.stop_camera()

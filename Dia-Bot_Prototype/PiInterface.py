@@ -24,6 +24,8 @@ from adafruit_mcp3xxx.analog_in import AnalogIn
 
 import neopixel
 
+from gpiozero import Servo
+from gpiozero.pins.pigpio import PiGPIOFactory
 
 # RPi GPIO Initializations
 #led = 11
@@ -82,30 +84,37 @@ def motorGpioSetup():
 class CameraAngle:
 
     def __init__(self, tiltPin=12, panPin=13):
-        GPIO.setup(tiltPin, GPIO.OUT)
-        GPIO.setup(panPin, GPIO.OUT)
-        self.tiltDuty = 8
-        self.panDuty = 5
-        self.tilt = GPIO.PWM(tiltPin, 50)
-        self.pan = GPIO.PWM(panPin, 50)
-        self.tilt.start(self.tiltDuty)
-        self.pan.start(self.panDuty)
-
-    def changeTilt(self, duty):
-        self.tiltDuty = duty
-        self.tilt.ChangeDutyCycle(self.tiltDuty)
-
-    def changePan(self, duty):
-        self.panDuty = duty
-        self.pan.ChangeDutyCycle(self.panDuty)
+        self.factory = PiGPIOFactory()
+        self.tilt = Servo(tiltPin, pin_factory=self.factory)
+        self.pan = Servo(panPin, min_pulse_width=0.83/1000, max_pulse_width=1.55/1000, pin_factory=self.factory)
+        self.pan.mid()
+        self.tilt.mid()
+        self.tilt_value = 0;
+        self.pan_value = 0;
         
     def tiltIncrement(self, num):
-        self.tiltDuty += num
-        self.tilt.ChangeDutyCycle(self.tiltDuty)
+        if self.tilt_value < 0.95 and self.tilt_value > -0.95:
+            self.tilt_value = self.tilt_value + num
+            self.tilt.value = self.tilt_value
+        elif self.tilt_value > 0.95 and num < 0:
+            self.tilt_value = self.tilt_value + num
+            self.tilt.value = self.tilt_value
+        elif self.tilt_value < -0.95 and num > 0:
+            self.tilt_value = self.tilt_value + num
+            self.tilt.value = self.tilt_value
+        print(self.tilt_value)
 
     def panIncrement(self, num):
-        self.panDuty += num
-        self.pan.ChangeDutyCycle(self.panDuty)
+        if self.pan_value < 0.95 and self.pan_value > -0.95:
+            self.pan_value = self.pan_value + num
+            self.pan.value = self.pan_value
+        elif self.pan_value > 0.95 and num < 0:
+            self.pan_value = self.pan_value + num
+            self.pan.value = self.pan_value
+        elif self.pan_value < -0.95 and num > 0:
+            self.pan_value = self.pan_value + num
+            self.pan.value = self.pan_value
+        print(self.pan_value)
 
 cameraAngle = CameraAngle()
 
@@ -295,23 +304,19 @@ def motorTurnTest():
     
 
 def cameraUp():
-    cameraAngle.tiltIncrement(1)
-    print(f"Camera tilt up! {cameraAngle.tiltDuty}")
+    cameraAngle.tiltIncrement(-0.1)
 
 
 def cameraDown():
-    cameraAngle.tiltIncrement(-1)
-    print(f"Camera tilt down! {cameraAngle.tiltDuty}")
+    cameraAngle.tiltIncrement(0.1)
 
 
 def cameraLeft():
-    cameraAngle.panIncrement(-1)
-    print(f"Camera tilt left! {cameraAngle.panDuty}")
+    cameraAngle.panIncrement(0.1)
     
     
 def cameraRight():
-    cameraAngle.panIncrement(1)
-    print(f"Camera tilt right! {cameraAngle.panDuty}")
+    cameraAngle.panIncrement(-0.1)
 
 
 def takePhoto():
