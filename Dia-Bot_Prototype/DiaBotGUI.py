@@ -217,60 +217,60 @@ class DiaBotGUI():
         # Forward
         self.moveForwardButton = tk.Button(self.movementControls, image=self.arrowUpW, anchor=CENTER, font="16")
         self.moveForwardButton.bind("<ButtonPress>", PiInterface.moveForwardPress)
-        self.moveForwardButton.bind("<ButtonRelease>", PiInterface.moveForwardRelease)
+        self.moveForwardButton.bind("<ButtonRelease>", PiInterface.moveRelease)
         self.moveForwardButton.grid(row=3, column=5)
         
         # Forward-Left
         self.moveForwardLeftButton = tk.Button(self.movementControls, image=self.arrowUpLeft, anchor=CENTER, font="16")
         self.moveForwardLeftButton.bind("<ButtonPress>", PiInterface.moveForwardLeftPress)
-        self.moveForwardLeftButton.bind("<ButtonRelease>", PiInterface.moveForwardLeftRelease)
+        self.moveForwardLeftButton.bind("<ButtonRelease>", PiInterface.moveRelease)
         self.moveForwardLeftButton.grid(row=3, column=4)
         
         # Forward-Right
         self.moveForwardRightButton = tk.Button(self.movementControls, image=self.arrowUpRight, anchor=CENTER, font="16")
         self.moveForwardRightButton.bind("<ButtonPress>", PiInterface.moveForwardRightPress)
-        self.moveForwardRightButton.bind("<ButtonRelease>", PiInterface.moveForwardRightRelease)
+        self.moveForwardRightButton.bind("<ButtonRelease>", PiInterface.moveRelease)
         self.moveForwardRightButton.grid(row=3, column=6)
         
         # Backward
         self.moveBackwardButton = tk.Button(self.movementControls, image=self.arrowDownS, anchor=CENTER, font="16")
         self.moveBackwardButton.bind("<ButtonPress>", PiInterface.moveBackwardPress)
-        self.moveBackwardButton.bind("<ButtonRelease>", PiInterface.moveBackwardRelease)
+        self.moveBackwardButton.bind("<ButtonRelease>", PiInterface.moveRelease)
         self.moveBackwardButton.grid(row=5, column=5)
         
         # Backward-Left
         self.moveBackwardLeftButton = tk.Button(self.movementControls, image=self.arrowDownLeft, anchor=CENTER, font="16")
         self.moveBackwardLeftButton.bind("<ButtonPress>", PiInterface.moveBackwardLeftPress)
-        self.moveBackwardLeftButton.bind("<ButtonRelease>", PiInterface.moveBackwardLeftRelease)
+        self.moveBackwardLeftButton.bind("<ButtonRelease>", PiInterface.moveRelease)
         self.moveBackwardLeftButton.grid(row=5, column=4)
         
         # Backward-Right
         self.moveBackwardRightButton = tk.Button(self.movementControls, image=self.arrowDownRight, anchor=CENTER, font="16")
         self.moveBackwardRightButton.bind("<ButtonPress>", PiInterface.moveBackwardRightPress)
-        self.moveBackwardRightButton.bind("<ButtonRelease>", PiInterface.moveBackwardRightRelease)
+        self.moveBackwardRightButton.bind("<ButtonRelease>", PiInterface.moveRelease)
         self.moveBackwardRightButton.grid(row=5, column=6)
         
         # Left
         self.moveLeftButton = tk.Button(self.movementControls, image=self.arrowLeftA, anchor=CENTER, font="16")
         self.moveLeftButton.bind("<ButtonPress>", PiInterface.moveLeftPress)
-        self.moveLeftButton.bind("<ButtonRelease>", PiInterface.moveLeftRelease)
+        self.moveLeftButton.bind("<ButtonRelease>", PiInterface.moveRelease)
         self.moveLeftButton.grid(row=4, column=4)
         
         # Right
         self.moveRightButton = tk.Button(self.movementControls, image=self.arrowRightD, anchor=CENTER, font="16")
         self.moveRightButton.bind("<ButtonPress>", PiInterface.moveRightPress)
-        self.moveRightButton.bind("<ButtonRelease>", PiInterface.moveRightRelease)
+        self.moveRightButton.bind("<ButtonRelease>", PiInterface.moveRelease)
         self.moveRightButton.grid(row=4, column=6)
 
         # Keyboard Buttons
         self.top.bind("<KeyPress-w>", PiInterface.moveForwardPress)
-        self.top.bind("<KeyRelease-w>", PiInterface.moveForwardRelease)
+        self.top.bind("<KeyRelease-w>", PiInterface.moveRelease)
         self.top.bind("<KeyPress-s>", PiInterface.moveBackwardPress)
-        self.top.bind("<KeyRelease-s>", PiInterface.moveBackwardRelease)
+        self.top.bind("<KeyRelease-s>", PiInterface.moveRelease)
         self.top.bind("<KeyPress-a>", PiInterface.moveLeftPress)
-        self.top.bind("<KeyRelease-a>", PiInterface.moveLeftRelease)
+        self.top.bind("<KeyRelease-a>", PiInterface.moveRelease)
         self.top.bind("<KeyPress-d>", PiInterface.moveRightPress)
-        self.top.bind("<KeyRelease-d>", PiInterface.moveRightRelease)
+        self.top.bind("<KeyRelease-d>", PiInterface.moveRelease)
 
     # ----- Camera Controls -----
     def setupCameraControls(self):
