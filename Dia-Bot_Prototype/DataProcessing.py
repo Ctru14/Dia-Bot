@@ -24,7 +24,6 @@ from Positioning import Point3d
 import Positioning
 import Threads
 
-from PiInterface import Accelerometer
 
 
 class DataProcessing(DataCollection):
@@ -102,10 +101,6 @@ class VibrationProcessing(DataProcessing):
         self.lastPosIdx = 0
         self.curVel = Point3d(0, 0, 0, 0)
         self.curPos = Point3d(0, 0, 0, 0)
-        self.accelerometer = Accelerometer()
-
-    def readData(self):
-        return self.accelerometer.readAccData()
 
     # DataCollection method! Overridden  instead due to inheritance complications
     # Used in processing process - appends new data point to the data array

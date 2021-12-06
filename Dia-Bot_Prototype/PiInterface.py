@@ -51,22 +51,22 @@ motorIn1R = 0
 motorIn2R = 5
 motorEnR = 6
 
-#def motorGpioSetup():
-GPIO.setup(motorIn1L, GPIO.OUT)
-GPIO.setup(motorIn2L, GPIO.OUT)
-GPIO.setup(motorEnL, GPIO.OUT)
-GPIO.output(motorIn1L, GPIO.LOW)
-GPIO.output(motorIn2L, GPIO.LOW)
-pwmEnL=GPIO.PWM(motorEnL, 1000)
-GPIO.setup(motorIn1R, GPIO.OUT)
-GPIO.setup(motorIn2R, GPIO.OUT)
-GPIO.setup(motorEnR, GPIO.OUT)
-GPIO.output(motorIn1R, GPIO.LOW)
-GPIO.output(motorIn2R, GPIO.LOW)
-pwmEnR=GPIO.PWM(motorEnR, 1000)
-
-pwmEnL.start(25)
-pwmEnR.start(25)
+def motorGpioSetup():
+    GPIO.setup(motorIn1L, GPIO.OUT)
+    GPIO.setup(motorIn2L, GPIO.OUT)
+    GPIO.setup(motorEnL, GPIO.OUT)
+    GPIO.output(motorIn1L, GPIO.LOW)
+    GPIO.output(motorIn2L, GPIO.LOW)
+    pwmEnL=GPIO.PWM(motorEnL, 1000)
+    GPIO.setup(motorIn1R, GPIO.OUT)
+    GPIO.setup(motorIn2R, GPIO.OUT)
+    GPIO.setup(motorEnR, GPIO.OUT)
+    GPIO.output(motorIn1R, GPIO.LOW)
+    GPIO.output(motorIn2R, GPIO.LOW)
+    pwmEnR=GPIO.PWM(motorEnR, 1000)
+    
+    pwmEnL.start(25)
+    pwmEnR.start(25)
 
 
 # Camera Control
@@ -109,7 +109,7 @@ class Accelerometer:
 
         self.i2c = busio.I2C(board.SCL, board.SDA)
         time.sleep(0.2)
-        self.accelSensor = adafruit_lsm303_accel.LSM303_Accel(i2c)
+        self.accelSensor = adafruit_lsm303_accel.LSM303_Accel(self.i2c)
 
     def readAccData(self):
         accX, accY, accZ = sensor.acceleration

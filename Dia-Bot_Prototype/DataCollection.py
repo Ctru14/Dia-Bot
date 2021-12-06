@@ -6,6 +6,8 @@ import multiprocessing
 import math
 from random import *
 
+from PiInterface import Accelerometer
+
 from Alerts import AlertDataType
 
 class DataFields:
@@ -74,8 +76,12 @@ class VibrationCollection(DataCollection):
 
     def __init__(self, name, units, samplingRate, startTime, dataQueue):
         super().__init__(name, units, samplingRate, startTime, dataQueue, AlertDataType.Vibration)
+        self.accelerometer = Accelerometer()
 
     # addData override in DataProcessing class!
+
+    def readData(self):
+        return self.accelerometer.readAccData()
         
     def readData(self):
         vib = (uniform(-1, 1), uniform(-1, 1), uniform(-1, 1))
