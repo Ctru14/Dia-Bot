@@ -7,9 +7,9 @@ import picamera
 import RPi.GPIO as GPIO
 import pigpio
 
-#import board
-#import busio
-#import adafruit_lsm303_accel_edited as adafruit_lsm303_accel
+import board
+import busio
+import adafruit_lsm303_accel_edited as adafruit_lsm303_accel
 
 import DCMotor
 import DualHBridge
@@ -39,7 +39,7 @@ GPIO.setwarnings(False)
 GPIO.setmode(gpioMode)
 #GPIO.setup(led, GPIO.OUT)
 pi = pigpio.pi()
-motors = DualHBridge.DualHBridge(pwmPinA, motorAIn1, motorAIn2, pwmPinB, motorBIn1, motorBIn2, motorEn, gpioMode)
+#motors = DualHBridge.DualHBridge(pwmPinA, motorAIn1, motorAIn2, pwmPinB, motorBIn1, motorBIn2, motorEn, gpioMode)
 camera = picamera.PiCamera()
 cameraMutex = threading.Lock()
 
@@ -72,11 +72,13 @@ def motorGpioSetup():
 # Camera Control
 class CameraAngle:
 
-    def __init__(tiltPin=12, panPin=13):
+    def __init__(self, tiltPin=12, panPin=13):
+        GPIO.setup(tiltPin, GPIO.OUT)
+        GPIO.setup(panPin, GPIO.OUT)
         self.tiltDuty = 8
         self.panDuty = 5
-        self.tilt = GPIO.PWM(12, 50)
-        self.pan = GPIO.PWM(13, 50)
+        self.tilt = GPIO.PWM(tiltPin, 50)
+        self.pan = GPIO.PWM(panPin, 50)
         self.tilt.start(self.tiltDuty)
         self.pan.start(self.panDuty)
 
@@ -100,7 +102,7 @@ cameraAngle = CameraAngle()
 
 class Accelerometer:
 
-    def __init__():
+    def __init__(self):
         #import board
         #import busio
         #import adafruit_lsm303_accel_edited as adafruit_lsm303_accel

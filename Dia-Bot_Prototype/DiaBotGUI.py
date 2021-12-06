@@ -282,7 +282,7 @@ class DiaBotGUI():
         tk.Button(self.cameraControls, image=self.arrowDown, command=PiInterface.cameraDown, anchor=CENTER, font="16").grid(row=5, column=3)
         tk.Button(self.cameraControls, image=self.arrowLeft, command=PiInterface.cameraLeft, anchor=CENTER, font="16").grid(row=4, column=2)
         tk.Button(self.cameraControls, image=self.arrowRight, command=PiInterface.cameraRight, anchor=CENTER, font="16").grid(row=4, column=4)
-        tk.Button(self.cameraControls, image=self.cameraIcon, command=takePhoto, anchor=CENTER, font="16").grid(row=4, column=3)
+        tk.Button(self.cameraControls, image=self.cameraIcon, command=self.takePhoto, anchor=CENTER, font="16").grid(row=4, column=3)
         
         # Stop and lock buttons
         tk.Label(self.cameraControls, text="Light", anchor=CENTER, font="bold").grid(row=2, column=6)
