@@ -200,23 +200,26 @@ def moveForwardPress(event):
     pwmEnL.ChangeDutyCycle(speed)
     pwmEnR.ChangeDutyCycle(speed)
 
-
-def moveForwardRelease(event):
-    print(f"Release moving forward")
-    pwmEnL.ChangeDutyCycle(0)
-    pwmEnR.ChangeDutyCycle(0)
-    
+        
 def moveForwardRightPress(event):
     print(f"Moving forward-right! Press - Speed = {speed}")
+    GPIO.output(motorIn1L, GPIO.HIGH)
+    GPIO.output(motorIn2L, GPIO.LOW)
+    GPIO.output(motorIn1R, GPIO.LOW)
+    GPIO.output(motorIn2R, GPIO.HIGH)
+    pwmEnL.ChangeDutyCycle(speed)
+    pwmEnR.ChangeDutyCycle(speed/3)
 
-def moveForwardRightRelease(event):
-    print(f"Release moving forward-right")
 
 def moveForwardLeftPress(event):
     print(f"Moving forward-left! Press - Speed = {speed}")
+    GPIO.output(motorIn1L, GPIO.HIGH)
+    GPIO.output(motorIn2L, GPIO.LOW)
+    GPIO.output(motorIn1R, GPIO.LOW)
+    GPIO.output(motorIn2R, GPIO.HIGH)
+    pwmEnL.ChangeDutyCycle(speed/3)
+    pwmEnR.ChangeDutyCycle(speed)
 
-def moveForwardLeftRelease(event):
-    print(f"Release moving forward-left")
     
 def moveBackwardPress(event):
     print(f"Moving backward! Press - Speed = {speed}")
@@ -227,35 +230,52 @@ def moveBackwardPress(event):
     pwmEnL.changeDutyCycle(speed)
     pwmEnR.changeDutyCycle(speed)
 
-def moveBackwardRelease(event):
-    print(f"Release moving backward")
-    pwmEnL.changeDutyCycle(0)
-    pwmEnR.changeDutyCycle(0)
 
 def moveBackwardRightPress(event):
     print(f"Moving backward-right! Press - Speed = {speed}")
+    GPIO.output(motorIn1L, GPIO.LOW)
+    GPIO.output(motorIn2L, GPIO.HIGH)
+    GPIO.output(motorIn1R, GPIO.HIGH)
+    GPIO.output(motorIn2R, GPIO.LOW)
+    pwmEnL.changeDutyCycle(speed)
+    pwmEnR.changeDutyCycle(speed/3)
 
-def moveBackwardRightRelease(event):
-    print(f"Release moving backward-right")
 
 def moveBackwardLeftPress(event):
     print(f"Moving backward-left! Press - Speed = {speed}")
+    GPIO.output(motorIn1L, GPIO.LOW)
+    GPIO.output(motorIn2L, GPIO.HIGH)
+    GPIO.output(motorIn1R, GPIO.HIGH)
+    GPIO.output(motorIn2R, GPIO.LOW)
+    pwmEnL.changeDutyCycle(speed)
+    pwmEnR.changeDutyCycle(speed/3)
 
-def moveBackwardLeftRelease(event):
-    print(f"Release moving backward-left")
 
 def moveLeftPress(event):
     print(f"Turn left! Press")
+    GPIO.output(motorIn1L, GPIO.LOW)
+    GPIO.output(motorIn2L, GPIO.HIGH)
+    GPIO.output(motorIn1R, GPIO.LOW)
+    GPIO.output(motorIn2R, GPIO.HIGH)
+    pwmEnL.changeDutyCycle(speed)
+    pwmEnR.changeDutyCycle(speed)
     
-def moveLeftRelease(event):
-    print(f"Release moving left")
     
 def moveRightPress(event):
     print(f"Turn right! Press")
+    GPIO.output(motorIn1L, GPIO.HIGH)
+    GPIO.output(motorIn2L, GPIO.LOW)
+    GPIO.output(motorIn1R, GPIO.HIGH)
+    GPIO.output(motorIn2R, GPIO.LOW)
+    pwmEnL.changeDutyCycle(speed)
+    pwmEnR.changeDutyCycle(speed)
     
-def moveRightRelease(event):
-    print(f"Release moving right")
-        
+
+def moveRelease(event):
+    print(f"Release movement button")
+    pwmEnL.ChangeDutyCycle(0)
+    pwmEnR.ChangeDutyCycle(0)
+    
 def stopMovement():
     print(f"Emergency stop!")
     GPIO.output(motorIn1L, GPIO.LOW)
