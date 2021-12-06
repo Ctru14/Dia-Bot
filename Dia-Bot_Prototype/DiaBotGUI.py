@@ -5,6 +5,7 @@ from tkinter import *
 from tkinter.scrolledtext import ScrolledText
 from PIL import ImageTk, Image
 import time
+import datetime
 import threading
 import multiprocessing
 import math
@@ -300,7 +301,7 @@ class DiaBotGUI():
             self.cameraControls.grid_columnconfigure(i, minsize=20)
 
     # TK button function to capture and save image
-    def takePhoto():
+    def takePhoto(*args):
         dtFormat = "{:%Y%m%d-%H%M%S}"
         timeString = dtFormat.format(datetime.now())
         fileName = f"img-{timeString}.jpg"

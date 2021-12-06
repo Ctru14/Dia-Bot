@@ -51,22 +51,22 @@ motorIn1R = 0
 motorIn2R = 5
 motorEnR = 6
 
-def motorGpioSetup():
-    GPIO.setup(motorIn1L, GPIO.OUT)
-    GPIO.setup(motorIn2L, GPIO.OUT)
-    GPIO.setup(motorEnL, GPIO.OUT)
-    GPIO.output(motorIn1L, GPIO.LOW)
-    GPIO.output(motorIn2L, GPIO.LOW)
-    pwmEnL=GPIO.PWM(motorEnL, 1000)
-    GPIO.setup(motorIn1R, GPIO.OUT)
-    GPIO.setup(motorIn2R, GPIO.OUT)
-    GPIO.setup(motorEnR, GPIO.OUT)
-    GPIO.output(motorIn1R, GPIO.LOW)
-    GPIO.output(motorIn2R, GPIO.LOW)
-    pwmEnR=GPIO.PWM(motorEnR, 1000)
-    
-    pwmEnL.start(25)
-    pwmEnR.start(25)
+#def motorGpioSetup():
+GPIO.setup(motorIn1L, GPIO.OUT)
+GPIO.setup(motorIn2L, GPIO.OUT)
+GPIO.setup(motorEnL, GPIO.OUT)
+GPIO.output(motorIn1L, GPIO.LOW)
+GPIO.output(motorIn2L, GPIO.LOW)
+pwmEnL=GPIO.PWM(motorEnL, 1000)
+GPIO.setup(motorIn1R, GPIO.OUT)
+GPIO.setup(motorIn2R, GPIO.OUT)
+GPIO.setup(motorEnR, GPIO.OUT)
+GPIO.output(motorIn1R, GPIO.LOW)
+GPIO.output(motorIn2R, GPIO.LOW)
+pwmEnR=GPIO.PWM(motorEnR, 1000)
+
+pwmEnL.start(25)
+pwmEnR.start(25)
 
 
 # Camera Control
@@ -84,19 +84,19 @@ class CameraAngle:
 
     def changeTilt(self, duty):
         self.tiltDuty = duty
-        self.tilt.changeDutyCycle(self.tiltDuty)
+        self.tilt.ChangeDutyCycle(self.tiltDuty)
 
     def changePan(self, duty):
         self.panDuty = duty
-        self.pan.changeDutyCycle(self.panDuty)
+        self.pan.ChangeDutyCycle(self.panDuty)
         
     def tiltIncrement(self, num):
         self.tiltDuty += num
-        self.tilt.changeDutyCycle(self.tiltDuty)
+        self.tilt.ChangeDutyCycle(self.tiltDuty)
 
     def panIncrement(self, num):
         self.panDuty += num
-        self.pan.changeDutyCycle(self.panDuty)
+        self.pan.ChangeDutyCycle(self.panDuty)
 
 cameraAngle = CameraAngle()
 
@@ -159,14 +159,14 @@ def moveForwardPress(event):
     GPIO.output(motorIn2L, GPIO.LOW)
     GPIO.output(motorIn1R, GPIO.LOW)
     GPIO.output(motorIn2R, GPIO.HIGH)
-    pwmEnL.changeDutyCycle(speed)
-    pwmEnR.changeDutyCycle(speed)
+    pwmEnL.ChangeDutyCycle(speed)
+    pwmEnR.ChangeDutyCycle(speed)
 
 
 def moveForwardRelease(event):
     print(f"Release moving forward")
-    pwmEnL.changeDutyCycle(0)
-    pwmEnR.changeDutyCycle(0)
+    pwmEnL.ChangeDutyCycle(0)
+    pwmEnR.ChangeDutyCycle(0)
     
 def moveForwardRightPress(event):
     print(f"Moving forward-right! Press - Speed = {speed}")
@@ -224,8 +224,8 @@ def stopMovement():
     GPIO.output(motorIn2L, GPIO.LOW)
     GPIO.output(motorIn2R, GPIO.LOW)
     GPIO.output(motorIn1R, GPIO.LOW)
-    pwmEnL.changeDutyCycle(0)
-    pwmEnR.changeDutyCycle(0)
+    pwmEnL.ChangeDutyCycle(0)
+    pwmEnR.ChangeDutyCycle(0)
     
 def lock():
     print(f"Locking suspension")
