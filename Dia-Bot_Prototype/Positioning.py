@@ -47,6 +47,11 @@ class Point3d:
         newV = np.matmul(m,v)
         return Point3d(self.t, newV[0], newV[1], newV[2])
 
+    def multiply(self, num):
+        self.x = self.x * num
+        self.y = self.y * num
+        self.z = self.z * num
+
     def __repr__(self):
         return "[t: %f, x: %f, y: %f, z: %f]" % (self.t, self.x, self.y, self.z)
 
@@ -97,9 +102,9 @@ def calibrateAcc(accRaw):
     idx = 0
     grav = Point3d(0, 0, 0, 0)
     mags = []
-    while ( ((abs(accRaw[idx].mag()-1) < 0.08) | 
-             (abs(accRaw[idx+1].mag()-1) < 0.08) ) 
-             & (accRaw[idx+1].mag() < 1.5) ): # TODO: do this better
+    while idx < len(accRaw):#( ((abs(accRaw[idx].mag()-1) < 0.08) | 
+          #   (abs(accRaw[idx+1].mag()-1) < 0.08) ) 
+          #   & (accRaw[idx+1].mag() < 1.5) ): # TODO: do this better
         print(str(idx) + ":  mag = " + str(accRaw[idx].mag()))
         grav = grav + accRaw[idx]
         mags.append(accRaw[idx])

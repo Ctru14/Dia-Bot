@@ -112,11 +112,11 @@ class DiaThread():
 # Parent process starts a new process which spawns child threads
 class DiaProcess():
 
-    def __init__(self, fields, shutdownInitQueue, shutdownRespQueue, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, alertIOqueue, positionQueue=0):
+    def __init__(self, fields, shutdownInitQueue, shutdownRespQueue, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, alertIOqueue, positionQueue=0, accCalibration=0):
         self.name = fields.name.replace(" ", "")
         self.externalShutdownInitQueue = shutdownInitQueue # External - Receive shutdown message from main process
         self.externalShutdownRespQueue = shutdownRespQueue # External - Confirm shutdown to main process
-        self.process = multiprocessing.Process(target=DiaProcess.beginDataProcessing, args=(fields, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, alertIOqueue, shutdownInitQueue, positionQueue))
+        self.process = multiprocessing.Process(target=DiaProcess.beginDataProcessing, args=(fields, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, alertIOqueue, shutdownInitQueue, positionQueue, accCalibration))
         self.process.daemon = True
 
     # Called from main process
@@ -149,7 +149,7 @@ class DiaProcess():
     
     # -------- Function to initialize data processing processes --------
     #   ----- This will be run in the context of the new process! -----
-    def beginDataProcessing(fields, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, alertIOqueue, externalShutdownInitQueue, positionQueue):
+    def beginDataProcessing(fields, ProcessingType, isPlotted, dataQueue, visualQueue, processingQueue, alertIOqueue, externalShutdownInitQueue, positionQueue, accCalibration):
         pid = os.getpid()
         threadRunningCount = 0
         internalShutdownRespQueue = multiprocessing.Queue()
@@ -157,7 +157,7 @@ class DiaProcess():
 
         # Initialize DataProcessing class in new process context
         if name == "Vibration": # Send position queue to vibration processing
-            processing = ProcessingType(fields.alertDataType, name, fields.units, fields.samplingRate, fields.startTime, isPlotted, dataQueue, visualQueue, processingQueue, positionQueue)
+            processing = ProcessingType(fields.alertDataType, name, fields.units, fields.samplingRate, fields.startTime, isPlotted, dataQueue, visualQueue, processingQueue, positionQueue, accCalibration)
         else:
             processing = ProcessingType(fields.alertDataType, name, fields.units, fields.samplingRate, fields.startTime, isPlotted, dataQueue, visualQueue, processingQueue)
 

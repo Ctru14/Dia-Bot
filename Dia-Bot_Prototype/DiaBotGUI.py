@@ -22,6 +22,7 @@ import DataCollection
 import DataDisplay
 import DataProcessing
 import Alerts
+import Positioning
 from Alerts import Alert
 from Alerts import AlertDataType
 from Alerts import AlertMetric
@@ -461,9 +462,32 @@ class DiaBotGUI():
         except Exception as e:
             print(f"Exception thrown in update alerts: {e}")
         
+    def calibrateAccelerometer(self):
+        accelerometer = PiInterface.Accelerometer()
+        testPoints = []
+        # Collect 3s of data
+        t0 = time.time()
+        while time.time() - t0 < 3:
+            data = accelerometer.readAccData()
+            #data = (uniform(11.9, 12.1), uniform(-1.5, -1.55), uniform(0.2, 0.35))
+            point = Point3d(time.time(), data[0], data[1], data[2])
+            testPoints.append(point)
+            time.sleep(.01)
+        # Return rotation angles and magnitude of gravity
+        print(f"Calculating acceleration metrics for {len(testPoints)} points...")
+        angX, angZ, gravMag = Positioning.calibrateAccelerometer(testPoints)
+        print(f"Acceleration calibration: angX={angX}, angZ={angZ}, gravMag={gravMag}")
+        return (angX, angZ, gravMag)
+
+
 
     # ----- Main method for GUI - Starts extra threads and processes and other programs ----
     def startProgram(self):
+        # Calibrate accelerometer
+        print("Calibrating accelerometer...")
+        self.accCalibration = self.calibrateAccelerometer()
+        print(f"...calibration complete: {accCalibration}")
+
         # Create GUI
         self.setupGuiFrames()
 
@@ -493,7 +517,7 @@ class DiaBotGUI():
 
         vibrationShutdownInitQueue = multiprocessing.Queue()
         vibrationProcess = DiaProcess(self.vibrationFields, vibrationShutdownInitQueue, shutdownRespQueue, DataProcessing.VibrationProcessing, 
-                                       False, self.vibrationDataQueue, self.vibrationVisualQueue, self.processingQueue, self.vibrationAlertIOQueue, self.positionVisualQueue)
+                                       False, self.vibrationDataQueue, self.vibrationVisualQueue, self.processingQueue, self.vibrationAlertIOQueue, self.positionVisualQueue, self.accCalibration)
 
         tempShutdownInitQueue = multiprocessing.Queue()
         temperatureProcess = DiaProcess(self.temperatureFields, tempShutdownInitQueue, shutdownRespQueue, DataProcessing.TemperatureProcessing, 

@@ -94,13 +94,14 @@ class SoundLevelProcessing(DataProcessing):
 
 class VibrationProcessing(DataProcessing):
 
-    def __init__(self, alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue, positionQueue):
+    def __init__(self, alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue, positionQueue, accCalibration):
         super().__init__(alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue)
         self.positionQueue = positionQueue
         self.dataRaw = [] # Point3d
         self.lastPosIdx = 0
         self.curVel = Point3d(0, 0, 0, 0)
         self.curPos = Point3d(0, 0, 0, 0)
+        self.angX, self.angZ, self.gravMag = accCalibration
 
     # DataCollection method! Overridden  instead due to inheritance complications
     # Used in processing process - appends new data point to the data array
@@ -108,6 +109,10 @@ class VibrationProcessing(DataProcessing):
         #self.dataMutex.acquire()
         self.t.append(t)  # self.t[-1]+self.samplingTime)
         newPoint = Point3d(t.timestamp(), data[0], data[1], data[2])
+        newPoint = newPoint.rotX(newPoint, self.angX)
+        newPoint = newPoint.rotZ(newPoint, self.angZ)
+        newPoint.y = newPoint.y + self.gravMag
+        newPoint.multiply(9.80665/self.gravMag)
         self.dataRaw.append(newPoint)
         self.data.append(newPoint.mag())
         #self.dataMutex.release()
