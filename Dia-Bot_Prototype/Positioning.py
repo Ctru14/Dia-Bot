@@ -105,12 +105,12 @@ def calibrateAcc(accRaw):
     while idx < len(accRaw):#( ((abs(accRaw[idx].mag()-1) < 0.08) | 
           #   (abs(accRaw[idx+1].mag()-1) < 0.08) ) 
           #   & (accRaw[idx+1].mag() < 1.5) ): # TODO: do this better
-        print(str(idx) + ":  mag = " + str(accRaw[idx].mag()))
+        #print(str(idx) + ":  mag = " + str(accRaw[idx].mag()))
         grav = grav + accRaw[idx]
-        mags.append(accRaw[idx])
+        mags.append(accRaw[idx].mag())
         idx = idx + 1
-    print("Index beyond calibration: " + str(idx))
-    print("First unused point (of mag " + str(accRaw[idx].mag()) + "): " + str(accRaw[idx]))
+    #print("Index beyond calibration: " + str(idx))
+    #print("First unused point (of mag " + str(accRaw[idx].mag()) + "): " + str(accRaw[idx]))
     # Find the average magnitude direction of gravity
     gravMag = np.mean(mags)
     grav.t = 0

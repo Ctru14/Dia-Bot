@@ -109,8 +109,8 @@ class VibrationProcessing(DataProcessing):
         #self.dataMutex.acquire()
         self.t.append(t)  # self.t[-1]+self.samplingTime)
         newPoint = Point3d(t.timestamp(), data[0], data[1], data[2])
-        newPoint = newPoint.rotX(newPoint, self.angX)
-        newPoint = newPoint.rotZ(newPoint, self.angZ)
+        newPoint = newPoint.rotX(self.angX)
+        newPoint = newPoint.rotZ(self.angZ)
         newPoint.y = newPoint.y + self.gravMag
         newPoint.multiply(9.80665/self.gravMag)
         self.dataRaw.append(newPoint)
