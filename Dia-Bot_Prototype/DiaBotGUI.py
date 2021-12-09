@@ -384,7 +384,8 @@ class DiaBotGUI():
         self.temperatureFrame.grid(row=2, column=3, padx=10)
         
         # Position
-        self.positionDisplayClass = DataDisplay.PositionDisplay(self.positionFields, self.positionFrame, self.positionVisualQueue)
+        self.zeroPositionQueue = multiprocessing.Queue()
+        self.positionDisplayClass = DataDisplay.PositionDisplay(self.positionFields, self.positionFrame, self.positionVisualQueue, self.zeroPositionQueue)
         self.positionDisplayClass.tkAddDataPane()
         self.positionFrame.grid(row=2, column=4, padx=10)
 
@@ -517,7 +518,7 @@ class DiaBotGUI():
 
         vibrationShutdownInitQueue = multiprocessing.Queue()
         vibrationProcess = DiaProcess(self.vibrationFields, vibrationShutdownInitQueue, shutdownRespQueue, DataProcessing.VibrationProcessing, 
-                                       False, self.vibrationDataQueue, self.vibrationVisualQueue, self.processingQueue, self.vibrationAlertIOQueue, self.positionVisualQueue, self.accCalibration)
+                                       False, self.vibrationDataQueue, self.vibrationVisualQueue, self.processingQueue, self.vibrationAlertIOQueue, self.positionVisualQueue, self.zeroPositionQueue, self.accCalibration)
 
         tempShutdownInitQueue = multiprocessing.Queue()
         temperatureProcess = DiaProcess(self.temperatureFields, tempShutdownInitQueue, shutdownRespQueue, DataProcessing.TemperatureProcessing, 

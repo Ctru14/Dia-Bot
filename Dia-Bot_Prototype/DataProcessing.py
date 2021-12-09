@@ -94,7 +94,7 @@ class SoundLevelProcessing(DataProcessing):
 
 class VibrationProcessing(DataProcessing):
 
-    def __init__(self, alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue, positionQueue, accCalibration):
+    def __init__(self, alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue, positionQueue, zeroPositionQueue, accCalibration):
         super().__init__(alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue)
         self.positionQueue = positionQueue
         self.dataRaw = [] # Point3d
@@ -102,6 +102,7 @@ class VibrationProcessing(DataProcessing):
         self.curVel = Point3d(0, 0, 0, 0)
         self.curPos = Point3d(0, 0, 0, 0)
         self.angX, self.angZ, self.gravMag = accCalibration
+        self.zeroPositionQueue = zeroPositionQueue
 
     # DataCollection method! Overridden  instead due to inheritance complications
     # Used in processing process - appends new data point to the data array
@@ -126,6 +127,11 @@ class VibrationProcessing(DataProcessing):
             self.calculatePosition(idxHi)
 
     def calculatePosition(self, idxHi):
+        if not self.zeroPositionQueue.empty():
+            msg = self.zeroPositionQueue.get()
+            if msg == "ZERO":
+                self.curVel = self.curVel * 0
+                self.curPos = self.curPos * 0
         # Track position up to the last index
         if self.lastPosIdx == 0 and len(self.dataRaw) > 0:
             self.curVel.t = self.dataRaw[0].t

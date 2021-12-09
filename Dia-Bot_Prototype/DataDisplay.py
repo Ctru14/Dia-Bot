@@ -131,7 +131,7 @@ class DataDisplay:
 # Displaying X/Y/Z data for positioning
 class PositionDisplay(DataDisplay):
 
-    def __init__(self, fields, tkTop, visualQueue):
+    def __init__(self, fields, tkTop, visualQueue, zeroPositionQueue = 0):
         super().__init__(fields, tkTop, visualQueue)
         self.posMutex = threading.Lock()
         self.curX = 0.0
@@ -141,6 +141,7 @@ class PositionDisplay(DataDisplay):
         self.displayY = StringVar()
         self.displayZ = StringVar()
         self.updateVisual()
+        self.zeroPositionQueue = zeroPositionQueue
 
     def readNewData(self):
         pos = (self.curX, self.curY, self.curZ)
@@ -159,12 +160,8 @@ class PositionDisplay(DataDisplay):
         self.displayZ.set("Z: {:.2f} m".format(self.curZ))
         self.posMutex.release()
 
-    def zeroPosition(self):
-        self.posMutex.acquire()
-        self.curX = 0.0
-        self.curY = 0.0
-        self.curZ = 0.0
-        self.posMutex.release()
+    def zeroPosition(self, *args):
+        self.zeroPositionQueue.put("ZERO")
         
     # Overwrite data visuals method: no graph needed
     def tkAddDataPane(self):
