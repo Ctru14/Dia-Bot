@@ -5,7 +5,7 @@ from tkinter import *
 from tkinter.scrolledtext import ScrolledText
 from PIL import ImageTk, Image
 import time
-import datetime
+from datetime import datetime
 import threading
 import multiprocessing
 import math
@@ -22,6 +22,7 @@ import DataCollection
 import DataDisplay
 import DataProcessing
 import Alerts
+from Positioning import Point3d
 import Positioning
 from Alerts import Alert
 from Alerts import AlertDataType
@@ -302,7 +303,7 @@ class DiaBotGUI():
             self.cameraControls.grid_columnconfigure(i, minsize=20)
 
     # TK button function to capture and save image
-    def takePhoto(*args):
+    def takePhoto(self, *args):
         dtFormat = "{:%Y%m%d-%H%M%S}"
         timeString = dtFormat.format(datetime.now())
         fileName = f"img-{timeString}.jpg"
@@ -476,7 +477,7 @@ class DiaBotGUI():
             time.sleep(.01)
         # Return rotation angles and magnitude of gravity
         print(f"Calculating acceleration metrics for {len(testPoints)} points...")
-        angX, angZ, gravMag = Positioning.calibrateAccelerometer(testPoints)
+        angX, angZ, gravMag = Positioning.calibrateAcc(testPoints)
         print(f"Acceleration calibration: angX={angX}, angZ={angZ}, gravMag={gravMag}")
         return (angX, angZ, gravMag)
 
@@ -487,7 +488,7 @@ class DiaBotGUI():
         # Calibrate accelerometer
         print("Calibrating accelerometer...")
         self.accCalibration = self.calibrateAccelerometer()
-        print(f"...calibration complete: {accCalibration}")
+        print(f"...calibration complete: {self.accCalibration}")
 
         # Create GUI
         self.setupGuiFrames()
