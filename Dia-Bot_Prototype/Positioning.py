@@ -60,7 +60,7 @@ def getNextIntegralPoint(prev, t, int_x, int_y, int_z):
     x = prev.x + (t-prev.t)*int_x
     y = prev.y + (t-prev.t)*int_y
     z = prev.z + (t-prev.t)*int_z
-    # Point3d: {time, x, y, z}
+    # Point3d: {t, x, y, z}
     return Point3d(t, x, y, z)
 
 # In-place version of getNextIntegralPoint - prev is updated
@@ -68,7 +68,7 @@ def writeNextIntegralPoint(prev, t, int_x, int_y, int_z):
     x = prev.x + (t-prev.t)*int_x
     y = prev.y + (t-prev.t)*int_y
     z = prev.z + (t-prev.t)*int_z
-    # Point3d: {time, x, y, z}
+    # Point3d: {t, x, y, z}
     prev.t = t
     prev.x = x
     prev.y = y
@@ -102,15 +102,10 @@ def calibrateAcc(accRaw):
     idx = 0
     grav = Point3d(0, 0, 0, 0)
     mags = []
-    while idx < len(accRaw):#( ((abs(accRaw[idx].mag()-1) < 0.08) | 
-          #   (abs(accRaw[idx+1].mag()-1) < 0.08) ) 
-          #   & (accRaw[idx+1].mag() < 1.5) ): # TODO: do this better
-        #print(str(idx) + ":  mag = " + str(accRaw[idx].mag()))
+    while idx < len(accRaw):
         grav = grav + accRaw[idx]
         mags.append(accRaw[idx].mag())
         idx = idx + 1
-    #print("Index beyond calibration: " + str(idx))
-    #print("First unused point (of mag " + str(accRaw[idx].mag()) + "): " + str(accRaw[idx]))
     # Find the average magnitude direction of gravity
     gravMag = np.mean(mags)
     grav.t = 0
@@ -125,8 +120,6 @@ def calibrateAcc(accRaw):
     print(f"Angle: {angX}  in degrees: {angX*180/math.pi}")
     print(f"New Point: {gravX}")
 
-    #print("")
-    
    # Then about the Z axis
     angZ = math.acos(-1*gravX.y) #/gravX.mag())
     gravZ = gravX.rotZ(-1*angZ)

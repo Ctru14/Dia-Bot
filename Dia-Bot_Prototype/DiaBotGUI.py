@@ -43,9 +43,6 @@ except Exception as e:
 # Debugging function - run a function and report how long it takes
 def elapsedTime(func, *args):
     startTime = time.time_ns()
-    #try:
-    #    func(*args)
-    #except:
     func()
     elapsedTimeNs = time.time_ns() - startTime
     print("ElapsedTime (" + str(func.__name__) + ") = " + str(elapsedTimeNs / 1_000_000) + " ms")
@@ -65,9 +62,6 @@ class DiaBotGUI():
         # Threading control
         self.visualsRefreshTime = 2 # Number of seconds between visuals refresh
         self.programRunning = True
-        self.collectData = True
-        #self.uiMutex = threading.Lock()
-        self.uiMutex = multiprocessing.Lock()
         self.startTime = time.time_ns()
 
         # Define GUI frames
@@ -85,9 +79,7 @@ class DiaBotGUI():
         self.processingQueue = multiprocessing.Queue()
         self.soundLevelAlertIOQueue = multiprocessing.Queue()
         self.vibrationAlertIOQueue = multiprocessing.Queue()
-        #self.positionAlertIOQueue = multiprocessing.Queue()
         self.tempAlertIOQueue = multiprocessing.Queue()
-        #self.alertIOqueues = [self.soundLevelAlertIOQueue, self.vibrationAlertIOQueue, self.positionAlertIOQueue, self.tempAlertIOQueue]
         self.alertIOqueues = [self.soundLevelAlertIOQueue, self.vibrationAlertIOQueue, self.tempAlertIOQueue]
 
 
@@ -108,9 +100,7 @@ class DiaBotGUI():
         self.positionSamplingRate = 10
         self.positionFields, self.positionDataQueue, self.positionVisualQueue, self.positionCollection = DiaBotGUI.createDataFields(
             DataCollection.PositionCollection, "Position", "m", self.positionSamplingRate, self.startTime)
-         
-        
-        
+                 
         # Group of all the data classes
         self.dataFieldsClassList = [self.soundLevelFields, self.vibrationFields, self.positionFields, self.temperatureFields]
 
@@ -145,9 +135,6 @@ class DiaBotGUI():
     def speedChanged(self, event):
         PiInterface.speed=self.speed.get()
     
-    #def updateAlerts(self):
-    #    for alert in self.alertsTop.alertTrackers:
-    #        alert.confirmUpdates()
 
     # --- Controls pane setup function ---
     def setupControlsPane(self):
@@ -318,7 +305,7 @@ class DiaBotGUI():
         # Extra TK frame to display just the alert trackers
         self.alertTrackersFrame = tk.Frame(self.alertControls, width=400)
 
-        # Create each alert instance and add frames to the UI
+        # Create each alert tracker instance and add frames to the UI
         self.alertsTop = AlertsTop(self.alertControls, self.alertTrackersFrame, self.processingQueue, self.alertIOqueues, self.deleteIcon, self.clearIcon, self.alertsText, PiInterface.captureImage)
 
         self.vibrationAlertTracker = AlertTracker(self.alertsTop, self.alertTrackersFrame,   "Vibration",   AlertDataType.Vibration,   AlertRange.Above,   AlertMetric.Average, self.vibrationAlertIOQueue, self.deleteIcon, self.clearIcon)
@@ -330,7 +317,7 @@ class DiaBotGUI():
         self.alertTrackersFrame.grid(row=2, column=1, columnspan=12)
         
         # Press this button to confirm and lock in Alert changes
-        self.confirmButton = tk.Button(self.alertControls, text="Confirm", command=self.alertsTop.updateAlerts)#, state=DISABLED) #TODO: enable/disable the button for updates
+        self.confirmButton = tk.Button(self.alertControls, text="Confirm Trackers", command=self.alertsTop.updateAlerts)
         self.confirmButton.grid(row=3, column=8, columnspan=2)
         
         # Add frame to add new trackers
@@ -345,30 +332,20 @@ class DiaBotGUI():
 
 
 
-    def toggleData(self):
-        #global collectData
-        print(f"Width: {self.top.winfo_width()}, Height: {self.top.winfo_height()}")
-        self.collectData = not self.collectData
-        # TODO: send collect data message to queues
-        print(f"Setting colletData to {self.collectData}")
-
     # ------------------ Data Pane -----------------------
 
     # Main method to setup data pane with each data category
     def setupDataPane(self):
         tk.Label(self.dataFrame, text="Data", font="none 18 bold").grid(row=1, column=1, columnspan=50)
-        #tk.Button(self.dataFrame, text="Toggle Data", command=self.toggleData).grid(row=1, column=2)
 
         # Individual Frames
-        self.soundLevelFrame = tk.Frame(self.dataFrame, width=350, height=350)#, bg="red")
-        self.vibrationFrame = tk.Frame(self.dataFrame, width=350, height=350)#, bg="yellow")
-        self.temperatureFrame = tk.Frame(self.dataFrame, width=350, height=350)#, bg="orange")
-        self.positionFrame = tk.Frame(self.dataFrame, width=350, height=350)#, bg="green")
+        self.soundLevelFrame = tk.Frame(self.dataFrame, width=350, height=350)
+        self.vibrationFrame = tk.Frame(self.dataFrame, width=350, height=350)
+        self.temperatureFrame = tk.Frame(self.dataFrame, width=350, height=350)
+        self.positionFrame = tk.Frame(self.dataFrame, width=350, height=350)
         self.alertsDisplayFrame = tk.Frame(self.dataFrame, width=350, height=350)
         self.dataFrames = [self.soundLevelFrame, self.vibrationFrame, self.temperatureFrame, self.positionFrame]
-        #self.units = ["dB", "m/s2", "°C", "m"]
-        
-        
+                
         # Sound Level
         self.soundLevelDisplayClass = DataDisplay.DataDisplay(self.soundLevelFields, self.soundLevelFrame, self.soundLevelVisualQueue)
         self.soundLevelDisplayClass.tkAddDataPane()
@@ -393,21 +370,16 @@ class DiaBotGUI():
 
         # Alerts scrolled text
         self.alertsDisplayLabel = tk.Label(self.alertsDisplayFrame, text="Alerts", font="none 12 bold")
-        self.alertsDisplayLabel.pack()#grid(row=1, column=1)
+        self.alertsDisplayLabel.pack()
         self.alertsText = ScrolledText(self.alertsDisplayFrame, width=40, height=9, font = "none 14")
-        #self.alertsText.insert(INSERT, "New text woooooohoo!")
-        self.alertsText.pack()#(row=1, column=1)
+        self.alertsText.pack()
         self.alertsDisplayFrame.grid(row=2, column=5, padx=10)
 
 
-    def createDataFields(CollectionType, name, units, samplingRate, startTime): # TODO: REMOVE VISUALQ FROM COLLECTION
+    def createDataFields(CollectionType, name, units, samplingRate, startTime):
         dataQueue = multiprocessing.Queue()
         visualQueue = multiprocessing.Queue()
-        #collection = CollectionType(name, units, samplingRate, startTime, dataQueue)
-        if CollectionType == DataCollection.TemperatureCollection:
-            collection = CollectionType(name, units, samplingRate, startTime, dataQueue, visualQueue)
-        else:
-            collection = CollectionType(name, units, samplingRate, startTime, dataQueue)
+        collection = CollectionType(name, units, samplingRate, startTime, dataQueue)
         fields = DataCollection.DataFields(name, units, samplingRate, startTime, collection.alertDataType)
         return (fields, dataQueue, visualQueue, collection)
 
@@ -464,21 +436,21 @@ class DiaBotGUI():
         except Exception as e:
             print(f"Exception thrown in update alerts: {e}")
         
+    # Calibrate accelerometer for the following purposes:
+    #  1. Rotate data so gravity is in the -Y direction
+    #  2. Find the average magnitude of gravity then re-scale to ~9.8 m/s2
     def calibrateAccelerometer(self):
         accelerometer = PiInterface.Accelerometer()
         testPoints = []
-        # Collect 3s of data
+        # Collect 3s of data for calibration
         t0 = time.time()
         while time.time() - t0 < 3:
             data = accelerometer.readAccData()
-            #data = (uniform(11.9, 12.1), uniform(-1.5, -1.55), uniform(0.2, 0.35))
             point = Point3d(time.time(), data[0], data[1], data[2])
             testPoints.append(point)
             time.sleep(.01)
         # Return rotation angles and magnitude of gravity
-        print(f"Calculating acceleration metrics for {len(testPoints)} points...")
         angX, angZ, gravMag = Positioning.calibrateAcc(testPoints)
-        print(f"Acceleration calibration: angX={angX}, angZ={angZ}, gravMag={gravMag}")
         return (angX, angZ, gravMag)
 
 
@@ -486,9 +458,13 @@ class DiaBotGUI():
     # ----- Main method for GUI - Starts extra threads and processes and other programs ----
     def startProgram(self):
         # Calibrate accelerometer
-        print("Calibrating accelerometer...")
-        self.accCalibration = self.calibrateAccelerometer()
-        print(f"...calibration complete: {self.accCalibration}")
+        try:
+            print("Calibrating accelerometer, keep Dia-Bot still...")
+            self.accCalibration = self.calibrateAccelerometer()
+            print(f"...calibration complete: {self.accCalibration}")
+        except Exception as e:
+            print(f"Error calibrating accelerometer: {e}")
+            self.accCalibration = (0, 0, 1)
 
         # Create GUI
         self.setupGuiFrames()
@@ -499,17 +475,19 @@ class DiaBotGUI():
 
         # ----- Create other processes and threads -----
         # GUI updating threads
-        visualThread = DiaThread("visualThread", False, self.startTime, shutdownRespQueue, 1/self.visualsRefreshTime, self.generateEvent, "<<visualsEvent>>") # TODO: increase refresh rate once multiprocessing works
+        visualThread = DiaThread("visualThread", False, self.startTime, shutdownRespQueue, 1/self.visualsRefreshTime, self.generateEvent, "<<visualsEvent>>")
         alertThread = DiaThread("alertThread", False, self.startTime, shutdownRespQueue, 1/2, self.generateEvent, "<<alertsEvent>>")
 
         # Data collection threads (separate processes)
         self.adcCollection = DataCollection.ADCCollection("ADC Collection", self.soundLevelSamplingRate, self.soundLevelDataQueue, self.temperatureDataQueue, self.temperatureVisualQueue)
         adcCollectionProcess = DiaThread("adcCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.soundLevelSamplingRate, self.adcCollection.readAndSendData)
-        #soundCollectionProcess = DiaThread("soundCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData) # TODO: remove collection objects
         vibrationCollectionProcess = DiaThread("vibrationCollectionProcess", useProcesses, self.startTime, shutdownRespQueue,  self.vibrationSamplingRate, self.vibrationCollection.readAndSendData)
-        #temperatureCollectionProcess = DiaThread("temperatureCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
         
+        # Sound and Temperature are merged into ADC collection - leaving this here in case this ever changes
+        #soundCollectionProcess = DiaThread("soundCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.soundLevelSamplingRate, self.soundLevelCollection.readAndSendData)
+        #temperatureCollectionProcess = DiaThread("temperatureCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.temperatureSamplingRate, self.temperatureCollection.readAndSendData)
         #threads = [visualThread, alertThread, soundCollectionProcess, vibrationCollectionProcess, temperatureCollectionProcess]
+        
         threads = [visualThread, alertThread, adcCollectionProcess, vibrationCollectionProcess]
 
         # Parent processes for data processing
@@ -543,14 +521,7 @@ class DiaBotGUI():
             print(f"Error starting camera: {e}")
             self.cameraOn = False
             
-        #totalTimeNs = time.time_ns() - startTime
-        #print("Start thread time: " + str((totalTimeNs/1_000_000)) + " ms")
-
-        #try:
-        #    PiInterface.motorGpioSetup()
-        #except Exception as e:
-        #    print(f"Error setting up motor GPIO: {e}")
-
+        
         # Add folder for photos
         self.rootPath = os.path.dirname(__file__)
         self.photosPath = os.path.join(self.rootPath, "Photos")

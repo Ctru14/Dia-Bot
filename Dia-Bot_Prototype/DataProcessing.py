@@ -34,7 +34,6 @@ class DataProcessing(DataCollection):
         self.visualQueue = visualQueue
         self.processingQueue = processingQueue
         self.dataMutex = threading.Lock()
-        #self.dataMutex = multiprocessing.Lock()
         self.lastIdx = 0
                
 
@@ -55,14 +54,17 @@ class DataProcessing(DataCollection):
         return min
 
     def frequency(self, idxLo, idxHi):
-        fft = np.fft.fft(self.data[idxLo:idxHi])
-        #print(f"Finding frequency between {idxLo} and {idxHi}: {fft}")
-        return fft
+        self.fft = np.fft.fft(self.data[idxLo:idxHi])
+        self.freqs = np.fft.fftfreq(len(self.fft))
+        self.idx = np.argmax(np.abs(self.fft))
+        freq = self.freqs[self.idx]
+        #print(f"Finding {self.name} frequency between {idxLo} and {idxHi}: {freq}")
+        return freq
 
     def magnitude(self, idxLo, idxHi):
-        fft = np.fft.fft(self.data[idxLo:idxHi])
-        #print(f"Finding magnitude between {idxLo} and {idxHi}: {fft}")
-        return fft[0]
+        mag = np.abs(self.fft[self.idx])
+        #print(f"Finding {self.name} magnitude between {idxLo} and {idxHi}: {mag}")
+        return mag
 
     def addDataToVisualQueue(self, idxHi):
         while self.lastIdx <= idxHi:
@@ -108,7 +110,7 @@ class VibrationProcessing(DataProcessing):
     # Used in processing process - appends new data point to the data array
     def addData(self, t, data):
         #self.dataMutex.acquire()
-        self.t.append(t)  # self.t[-1]+self.samplingTime)
+        self.t.append(t)
         newPoint = Point3d(t.timestamp(), data[0], data[1], data[2])
         newPoint = newPoint.rotX(self.angX)
         newPoint = newPoint.rotZ(self.angZ)
@@ -144,7 +146,6 @@ class VibrationProcessing(DataProcessing):
             Positioning.writeNextIntegralPoint(self.curPos, self.curVel.t, self.curVel.x, self.curVel.y, self.curVel.z)
             self.lastPosIdx += 1
         # Write new position to the queue
-        #print(f"New position update: {self.curPos}")
         self.positionQueue.put((self.curPos.t, (self.curPos.x, self.curPos.y, self.curPos.z)))
         
 
@@ -160,12 +161,6 @@ class PositionProcessing(DataProcessing):
         if idxHi > 0:
             t = self.t[idxHi]
             idxLo = max(0, int(idxHi - (10 * self.samplingRate)))
-            #avg = self.average(idxLo, idxHi)
-            #maximum = self.maximum(idxLo, idxHi)
-            #minimum = self.minimum(idxLo, idxHi)
-            #freq = self.frequency(idxLo, idxHi)
-            #mag = self.magnitude(idxLo, idxHi)
-            #self.processingQueue.put((self.alertDataType, avg, maximum, minimum, freq, mag, t, (idxLo, idxHi)))
             self.addDataToVisualQueue(idxHi)
 
 
@@ -173,10 +168,3 @@ class TemperatureProcessing(DataProcessing):
 
     def __init__(self, alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue):
         super().__init__(alertDataType, name, units, samplingRate, startTime, isPlotted, dataQueue, visualQueue, processingQueue)
-
-
-    #def visualProcessing(self, *args):
-    #    # Temperature is simple: read latest temperature and send it to visual queue
-    #    if len(self.t) > 0:
-    #        print(f"Adding temperature data to visual queue: {(self.t[-1], self.data[-1])}")
-    #        self.visualQueue.put((self.t[-1], self.data[-1]))

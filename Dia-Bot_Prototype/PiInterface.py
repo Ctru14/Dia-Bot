@@ -29,28 +29,15 @@ import neopixel
 from gpiozero import Servo
 from gpiozero.pins.pigpio import PiGPIOFactory
 
+
 # RPi GPIO Initializations
-#led = 11
-#pwmPinA = 12
-#motorAIn1 = 15
-#motorAIn2 = 16
-#pwmPinB = 19
-#motorBIn1 = 21
-#motorBIn2 = 22
-#motorEn = 18
-#adcMISO = 35
-#adcCS0 = 36
-#adcMOSI = 38
-#adcSCLK = 40
 
 # GPIO Setup
 gpioMode = GPIO.BCM
 #gpioMode = GPIO.BOARD
 GPIO.setwarnings(False)
 GPIO.setmode(gpioMode)
-#GPIO.setup(led, GPIO.OUT)
 pi = pigpio.pi()
-#motors = DualHBridge.DualHBridge(pwmPinA, motorAIn1, motorAIn2, pwmPinB, motorBIn1, motorBIn2, motorEn, gpioMode)
 camera = picamera.PiCamera()
 cameraMutex = threading.Lock()
 
@@ -64,7 +51,6 @@ motorIn1R = 0
 motorIn2R = 5
 motorEnR = 6
 
-#def motorGpioSetup():
 GPIO.setup(motorIn1L, GPIO.OUT)
 GPIO.setup(motorIn2L, GPIO.OUT)
 GPIO.setup(motorEnL, GPIO.OUT)
@@ -123,10 +109,6 @@ cameraAngle = CameraAngle()
 class Accelerometer:
 
     def __init__(self):
-        #import board
-        #import busio
-        #import adafruit_lsm303_accel_edited as adafruit_lsm303_accel
-
         self.i2c = busio.I2C(board.SCL, board.SDA)
         time.sleep(0.2)
         self.accelSensor = adafruit_lsm303_accel.LSM303_Accel(self.i2c)
@@ -150,9 +132,8 @@ class ADC:
         return (self.sound)
     
     def readTemperatureData(self):
-        self.temp = self.chanTemp.value#-1984+19
-        #print(self.temp)
-        return 19 + math.log(self.temp+1)/4
+        self.temp = self.chanTemp.value
+        return self.temp 
 
 # Closes relevant processes and stops GPIO
 def exit():
@@ -164,9 +145,12 @@ def exit():
 def stopGpio():
     GPIO.setmode(gpioMode)
     pixels.fill((0, 0, 0))
-    GPIO.output(motorEn, GPIO.LOW)
-    GPIO.output(pwmPinA, GPIO.LOW)
-    #pwm.stop()
+    GPIO.output(motorEnL, GPIO.LOW)
+    GPIO.output(motorEnR, GPIO.LOW)
+    GPIO.output(pwmEnL, GPIO.LOW)
+    GPIO.output(pwmEnR, GPIO.LOW)
+    pwmEnL.stop()
+    pwmEnR.stop()
     GPIO.cleanup()
 
 # Opens the camera preview on the screen
@@ -298,7 +282,7 @@ def ledOff():
     print(f"Turning off LED")
     pixels.fill((0, 0, 0))
     
-# Testing purposes only - to be deprecated
+# Testing purposes only
 def motorTurnTest():
     print(f"Testing DC motor")
     print(f"What goes up...")
@@ -341,6 +325,3 @@ def cameraLeft():
 def cameraRight():
     cameraAngle.panIncrement(-0.1)
 
-
-def takePhoto():
-    print(f"Taking photo!")

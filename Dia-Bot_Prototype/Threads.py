@@ -167,7 +167,6 @@ class DiaProcess():
         collectionThread = DiaThread(f"{name}CollectionThread", False, fields.startTime, internalShutdownRespQueue, fields.samplingRate, processing.getAndAddData)
         processingThread = DiaThread(f"{name}ProcessingThread", False, fields.startTime, internalShutdownRespQueue, .4, processing.mainProcessing)
         alertIOthread = DiaThread(f"{name}AlertIOThread", False, fields.startTime, internalShutdownRespQueue, .1, fileIO.alertIO)
-        #visualThread = DiaThread(f"{name}VisualThread", False, fields.startTime, internalShutdownRespQueue, .18, processing.visualProcessing)
 
         # Start worker threads
         threads = [collectionThread, processingThread, alertIOthread]#, visualThread]

@@ -44,12 +44,11 @@ class FileIO:
         if not os.path.exists(alertDirPath):
             print(f"ERROR IN writeAlertData: dir {alertDirPath} does not exist!")
         # New alert or update?
-        if not isNewAlert: #os.path.exists(alertDirPath):
+        if not isNewAlert:
             # Alert already exists - update image and data
             print(f"Alert path exists! Updating raw data in {alertDirPath}")
             with open(csvDataPath, 'a', newline='') as csvDataFile:
                 writer = csv.writer(csvDataFile)
-                # TODO: Ensure proper indices!!
                 for i in range(idxLo, idxHi):
                     writer.writerow([self.processing.t[i], self.processing.data[i]])
             with open(csvPositionPath, 'a', newline='') as csvPositionFile:

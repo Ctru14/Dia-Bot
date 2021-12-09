@@ -28,7 +28,6 @@ class DataCollection(DataFields):
     def __init__(self, name, units, samplingRate, startTime, dataQueue, alertDataType):
         super().__init__(name, units, samplingRate, startTime, alertDataType)
         #self.dataMutex = threading.Lock()
-        #self.dataMutex = multiprocessing.Lock()
         self.startTime = startTime
         self.t = []
         self.data = []
@@ -37,30 +36,25 @@ class DataCollection(DataFields):
     # Used in processing process - appends new data point to the data array
     def addData(self, t, data):
         #self.dataMutex.acquire()
-        self.t.append(t)  # self.t[-1]+self.samplingTime)
+        self.t.append(t)
         self.data.append(data)
         #self.dataMutex.release()
 
     # Retrieves all new data from the queue and appends it to the array - called by processing process
     def getAndAddData(self, *args):
-        #print(f"Attempting to retrieve from {self.name} queue {self.dataQueue}")
         while not self.dataQueue.empty():
             t, data = self.dataQueue.get()
-            #print(f"Getting ({t}, {data}) from {self.name} data queue: {self.dataQueue}")
             self.addData(t, data)
 
     # Reads data from given function - called by data collection process
     def readAndSendData(self, *args):
-        #t = time.time_ns()/1_000_000_000
         t = datetime.now()
         data = self.readData()
         self.dataQueue.put((t, data))
-        #print(f"Putting {self.name} data ({data}) in visual queue: {self.visualQueue}")
-        #self.visualQueue.put((t, data)) # TODO: decide if this is necessary
-        #print(f"Adding ({t}, {data}) to {self.name} data queue: {self.dataQueue}")
         
 
 
+# DEPRECATED - SOUND LEVEL USES ADC COLLECTION CLASS
 class SoundLevelCollection(DataCollection):
 
     def __init__(self, name, units, samplingRate, startTime, dataQueue):
@@ -69,7 +63,6 @@ class SoundLevelCollection(DataCollection):
 
     def readData(self):
         num = uniform(-10, 10)
-        #print("Reading sound level! - " + str(num))
         return num
     
     #def readData(self):
@@ -89,12 +82,10 @@ class VibrationCollection(DataCollection):
     def readData(self):
         return self.accelerometer.readAccData()
         
-    #def readData(self):
-        #vib = (uniform(-1, 1), uniform(-1, 1), uniform(-1, 1))
-        #print("Reading vibration! - " + str(vib))
-        #return vib
     
 
+# DEPRECATED - POSITION IS NO LONGER HANDLED LIKE THE OTHER DATA TYPES! (updated by vibration)
+#  Leaving this here in case a new position method is found in the future
 class PositionCollection(DataCollection):
 
     def __init__(self, name, units, samplingRate, startTime, dataQueue):
@@ -109,36 +100,27 @@ class PositionCollection(DataCollection):
 
 class TemperatureCollection(DataCollection):
 
-    def __init__(self, name, units, samplingRate, startTime, dataQueue, visualQueue): # TODO: REMOVE VISUAL QUEUE
+    def __init__(self, name, units, samplingRate, startTime, dataQueue): 
         super().__init__(name, units, samplingRate, startTime, dataQueue, AlertDataType.Temperature)
-        self.visualQueue = visualQueue # TODO: REMOVE ONCE EXTRA PROCESS IS RUNNING
-        self.adc = ADC()
-
-    #def readData(self):
-        #num = uniform(-10, 10)
-        #print("Reading temperature! - " + str(num))
-        #return num
+        #self.adc = ADC()
     
     def readData(self):
         return self.adc.readTemperatureData()
 
-    # Reads data from given function 
+    # Reads data from given function (DEPRECATED - INSTEAD USES ACD COLLECTION)
     def readAndSendData(self, *args):
-        #t = time.time_ns()/1_000_000_000
         t = datetime.now()
         data = self.readData()
         self.dataQueue.put((t, data))
-        self.visualQueue.put((t, data))
+        #self.visualQueue.put((t, data))
 
     
-class ADCCollection():#DataCollection):
+class ADCCollection():
 
-    def __init__(self, name, samplingRate, soundLevelDataQueue, temperatureDataQueue, temperatureVisualQueue): # TODO: REMOVE VISUAL QUEUE
-        #super().__init__(name, units, samplingRate, startTime, soundLevelDataQueue, AlertDataType.Temperature)
-        self.samplingRate = samplingRate
+    def __init__(self, name, soundLevelSamplingRate, soundLevelDataQueue, temperatureDataQueue):
+        self.samplingRate = soundLevelSamplingRate
         self.soundLevelDataQueue = soundLevelDataQueue
         self.temperatureDataQueue = temperatureDataQueue
-        self.temperatureVisualQueue = temperatureVisualQueue
         self.tempLoopNum = 0
         self.tempLoopMax = self.samplingRate * 4 # Approximately 4s/Temp
         self.adc = ADC()
@@ -147,11 +129,9 @@ class ADCCollection():#DataCollection):
     def readAndSendData(self, *args):
         t = datetime.now()
         soundData = self.adc.readSoundData()
-        #print(f"Sound: {soundData}")
         self.soundLevelDataQueue.put((t, soundData))
         if self.tempLoopNum == 0:
             tempData = self.adc.readTemperatureData()
-            #print(f"Temp: {tempData}")
             self.temperatureDataQueue.put((t, tempData))
         self.tempLoopNum += 1
         if self.tempLoopNum == self.tempLoopMax:

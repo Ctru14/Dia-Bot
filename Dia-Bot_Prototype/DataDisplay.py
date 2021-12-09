@@ -88,7 +88,7 @@ class DataDisplay:
     def tkAddDataPane(self, *args):
         # Top label
         tk.Label(self.tkTop, text=self.name, font="none 12 bold").grid(row=1, column=1, columnspan=5)
-        # Add random graph
+        # Initialize the plot
         self.fig = Figure(figsize=(3,2.5), dpi=80)
         self.fig.patch.set_facecolor("#DBDBDB")
         self.plot1 = self.fig.add_subplot(111)
@@ -107,24 +107,15 @@ class DataDisplay:
         self.ani._start()
 
 
-    # Called by UI thread - after proper changes, this will receive and post a new plot from the visual queue
-    def updateVisual(self, dataViewVars):
-        print(f"UPDATE VISUAL: {self.name} - Note, this does nothing!")
-
     def appendNewData(self, *args):
-        #print(f"Trying to append new {self.name} data...")
-        #t0 = time.time()
         while not self.visualQueue.empty():
             t, data = self.visualQueue.get()
             self.t.append(t)
             self.data.append(data)
         if len(self.t) > 0:
-            #print(f"APPENDING new data to the {self.name} animation! ({self.t[0]}..{self.t[len(self.t)-1]})")
             self.line.set_data(self.t, self.data)
             self.plot1.set_ylim(min(self.data), max(self.data))
             self.plot1.set_xlim(self.t[0], self.t[-1])
-            #t1 = time.time()
-            #print(f"Appended new data to {self.name} graph! Took {1000*(t1-t0)}ms")
         return self.line,
 
 
@@ -220,12 +211,10 @@ class TemperatureDisplay(DataDisplay):
             t, dataC = self.visualQueue.get()
             self.currentTempCelsius = dataC
             self.currentTempFarenheit = dataC * 9 / 5 + 32
-            #print(f"New temperature data! {t}, C={self.currentTempCelsius}, F={self.currentTempFarenheit}")
 
     # Called by UI thread to update temperature printout
     def updateVisual(self):
         self.readNewData()
-        #print(f"Update TEMPERATURE visual: {self.getDisplayText()}")
         self.tempDisplayText.set(self.getDisplayText())
 
     # Overwrite data visuals method: no graph needed
