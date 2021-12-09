@@ -130,8 +130,8 @@ class VibrationProcessing(DataProcessing):
         if not self.zeroPositionQueue.empty():
             msg = self.zeroPositionQueue.get()
             if msg == "ZERO":
-                self.curVel = self.curVel * 0
-                self.curPos = self.curPos * 0
+                self.curVel.multiply(0.0)
+                self.curPos.multiply(0.0)
         # Track position up to the last index
         if self.lastPosIdx == 0 and len(self.dataRaw) > 0:
             self.curVel.t = self.dataRaw[0].t
