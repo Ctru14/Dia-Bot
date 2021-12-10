@@ -107,8 +107,9 @@ class TemperatureCollection(DataCollection):
     def readData(self):
         return self.adc.readTemperatureData()
 
-    # Reads data from given function (DEPRECATED - INSTEAD USES ACD COLLECTION)
+    # Reads data from given function (DEPRECATED - INSTEAD USES ADC COLLECTION)
     def readAndSendData(self, *args):
+        print("!!!!! UNEXPECTED USE OF TemperatureCollection readAndSendData FUNCTION CALL !!!!!")
         t = datetime.now()
         data = self.readData()
         self.dataQueue.put((t, data))

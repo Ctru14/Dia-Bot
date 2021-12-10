@@ -479,7 +479,7 @@ class DiaBotGUI():
         alertThread = DiaThread("alertThread", False, self.startTime, shutdownRespQueue, 1/2, self.generateEvent, "<<alertsEvent>>")
 
         # Data collection threads (separate processes)
-        self.adcCollection = DataCollection.ADCCollection("ADC Collection", self.soundLevelSamplingRate, self.soundLevelDataQueue, self.temperatureDataQueue, self.temperatureVisualQueue)
+        self.adcCollection = DataCollection.ADCCollection("ADC Collection", self.soundLevelSamplingRate, self.soundLevelDataQueue, self.temperatureDataQueue)
         adcCollectionProcess = DiaThread("adcCollectionProcess", useProcesses, self.startTime, shutdownRespQueue, self.soundLevelSamplingRate, self.adcCollection.readAndSendData)
         vibrationCollectionProcess = DiaThread("vibrationCollectionProcess", useProcesses, self.startTime, shutdownRespQueue,  self.vibrationSamplingRate, self.vibrationCollection.readAndSendData)
         
