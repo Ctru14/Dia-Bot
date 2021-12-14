@@ -22,6 +22,22 @@ title {
     text-align: center;
 }
 
+.logoLeft { 
+    position:absolute; 
+    top:0; 
+    left:10%; 
+    width: 167px;
+    height: 70px;
+}
+
+.logoRight { 
+    position:absolute; 
+    top:0; 
+    right:10%; 
+    width: 173px;
+    height: 70px;
+}
+
 
 .teamViewHolder {
     width:  1080px;
@@ -39,6 +55,9 @@ title {
 .profileImage {
     width: 135px;
     height: 135px;
+    border-style: solid;
+    border-width: 3px;
+    border-color: black;
 }
 
 .teamMemberText {
@@ -46,11 +65,8 @@ title {
     color: black;
 }
 
-img {
-    border-style: solid;
-    border-width: 3px;
-    border-color: black;
-}
+/*img {
+}*/
 
 
 .problemStatementHolder {
@@ -76,7 +92,7 @@ img {
 
 .deliverablesBlock {
     width: 800px;
-    height: 300px;
+    height: 350px;
     border-left: thick outset rgb(220, 220, 220);
     border-right: thick outset rgb(220, 220, 220);
     border-bottom: thick outset rgb(220, 220, 220);
@@ -88,4 +104,18 @@ img {
     font-weight: 400;
     text-align: center;
     color: black;
+}
+
+.column2L {
+    float: left;
+    width: 50%;
+    height: 340px;
+    margin-top: 5px;
+}
+
+.column2R {
+    float: right;
+    width: 50%;
+    height: 340px;
+    margin-top: 5px;
 }
