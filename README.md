@@ -1,15 +1,15 @@
 # Dia-Bot Project Overview
 Diagnostic Robot for Georgia Tech Interdisciplinary Capstone Design Fall 2021
 
+Electrical & Software Team
+* Connor Truono
+* Catherine Kasper
+
 Mechanical Team
 * Hunter Present
 * Andrew Galant
 * Douglas Walker
 * Jason Poitter
-
-Electrical & Software Team
-* Connor Truono
-* Catherine Kasper
 
 Full project reports and documentation can be found at the Operation Omega Team Website hosted by the Georgia Tech ECE Senior Design Course: <http://eceseniordesign2021fall.ece.gatech.edu/sd21f09/>
 
@@ -19,7 +19,7 @@ Full project reports and documentation can be found at the Operation Omega Team 
 ## Overview
 
 **To Run the Program**
-Testing with GUI: python3 DiaBotGUI.py
+Testing with GUI: sudo python3 DiaBotGUI.py
 
 
 **Controls:**
@@ -31,17 +31,35 @@ Tag what the function interfaces with
 **Files Code**
 * Alerts.py
 * DataCollection.py
+* DataDisplay.py
 * DataProcessing.py
-* DCMotor.py
+* DCMotor.py (Deprecated for other motor system)
 * DiaBotGUI.py
-* DualHBridge.py
+* DualHBridge.py (Deprecated for other motor system)
+* FileIO.py
 * PiInterface.py
+* Positioning.py
 * robot_test.py (Note: all the functionality has been removed from this file and placed into others.)
 * Threads.py
 
 Pictures
-* frame.png
-* vanderlandeTest.png
+* Assets/
+*   Arrow-Down-Left.jpg
+*   Arrow-Down-Right.jpg
+*   Arrow-Down-S.jpg
+*   Arrow-Down.jpg
+*   Arrow-Left-A.jpg
+*   Arrow-Left.jpg
+*   Arrow-Right-D.jpg
+*   Arrow-Right.jpg
+*   Arrow-Up-Left.jpg
+*   Arrow-Up-Right.jpg
+*   Arrow-Up-W.jpg
+*   Arrow-Up.jpg
+*   Camera-Icon.jpg
+*   Clear-Icon.jpg
+*   Delete-Icon.jpg
+*   Video-Frame.jpg
 
 **Pin Connections**
 | Item | Component Pin | Pi Pin |
@@ -162,7 +180,6 @@ Threading Variables
 * graphRefreshTime
 * programRunning
 * collectData
-* uiMutex
 * startTime
 
 Functions
@@ -170,25 +187,18 @@ Functions
 * elapsedTime #debugging
 * totalElapsedTime
 * setSpeed
-* moveForwardPress() _@toBeFilledIn_
-* movedForwardRelease() _@toBeFilledIn_
-* moveForwardRightPress() _@toBeFilledIn_
-* moveForwardRightRelease() _@toBeFilledIn_
-* moveForwardLeftPress() @toBeFilledIn
-* moveForwardLeftRelease() @toBeFilledIn
-* moveBackwardPress() @toBeFilledIn
-* moveBackwardRelease() @toBeFilledIn
-* moveBackwardRightPress() @toBeFilledIn
-* moveBackwardRightRelease() @toBeFilledIn
-* moveBackwardLeftPress() @toBeFilledIn
-* moveBackwardLeftRelease() @toBeFilledIn
-* moveRightPress() @toBeFilledIn
-* moveRightRelease() @toBeFilledIn
-* moveLeftPress() @toBeFilledIn
-* moveLeftRelease() @toBeFilledIn
-* stopMovement() @toBeFilledIn
-* lock() @toBeFilledIn
+* moveForwardPress()
+* moveForwardRightPress()
+* moveForwardLeftPress()
+* moveBackwardPress()
+* moveBackwardRightPress()
+* moveBackwardLeftPress()
+* moveRightPress()
+* moveLeftPress()
+* moveRelease()
+* stopMovement()
 * ledOn()
+* ledOff()
 
 
 ## Threads.py
